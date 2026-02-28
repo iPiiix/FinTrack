@@ -29,5 +29,5 @@ class Transaccion(Base):
     id_cuenta = Column(BigInteger, ForeignKey("cuenta.id_cuenta"), nullable=False)
     id_categoria = Column(BigInteger, ForeignKey("categoria.id_categoria"), nullable=True)
 
-    cuenta = relationship("Cuenta", back_populates="transacciones")
+    cuenta = relationship("Cuenta", back_populates="transacciones", foreign_keys=[id_cuenta])
     categoria = relationship("Categoria", back_populates="transacciones")

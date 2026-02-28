@@ -4,15 +4,14 @@ from sqlalchemy.sql import func
 import enum
 from app.database import Base
 
-class TipoCuenta(enum.Enum):
+class TipoCuenta(str, enum.Enum):
     debito = "debito"
     credito = "credito"
     ahorros = "ahorros"
     inversion = "inversion"
 
-
 class Cuenta(Base):
-    __tablename__ = "cuentas"
+    __tablename__ = "cuenta"
 
     id_cuenta = Column(BigInteger, primary_key=True, index=True)
     nombre = Column(String(200), nullable=False)
@@ -26,4 +25,4 @@ class Cuenta(Base):
     id_usuario = Column(BigInteger, ForeignKey("usuarios.id_usuario"), nullable=False)
 
     usuario = relationship("Usuario", back_populates="cuentas")
-    transacciones = relationship("Transaccion", back_populates="cuenta")
+    transacciones = relationship("Transaccion", back_populates="cuenta", foreign_keys="[Transaccion.id_cuenta]")
