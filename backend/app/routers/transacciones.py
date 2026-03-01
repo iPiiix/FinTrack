@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from decimal import Decimal  # 1. Importación necesaria
 from app.database import get_db
-from app.models.transaccion import Transaccion, TipoTransaccion, EstadoTransaccion
+from app.models.transaccion import Transaccion, TipoTransaccion
 from app.models.cuenta import Cuenta
 from app.models.usuario import Usuario
 from app.schemas.transaccion import TransaccionCreate, TransaccionResponse
@@ -26,10 +27,8 @@ def registrar_transaccion(
             detail="La cuenta no existe o no tienes permisos sobre ella"
         )
 
-    impacto = abs(transaccion.cantidad) 
+    impacto = Decimal(str(abs(transaccion.cantidad))) 
     
-    # ⚠️ OJO AQUÍ: Asegúrate de que el campo en tu base de datos se llame 'balance' o 'saldo_actual'. 
-    # En tu schema lo llamaste 'balance', así que usaré 'balance' aquí.
     if transaccion.tipo == TipoTransaccion.gasto: 
         cuenta.balance -= impacto
     else:
