@@ -1,24 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "FinTrack | Institutional WealthTech",
-  description: "Personal Finance Intelligence Platform",
+  title: "FinTrack | Institutional",
+  description: "Advanced Wealth Management",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body className={`${inter.className} bg-black text-zinc-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-200`}>
-        {children}
-      </body>
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
