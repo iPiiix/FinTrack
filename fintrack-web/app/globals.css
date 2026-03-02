@@ -1,127 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #030305;
-  --surface: #0d0d12;
-  --surface2: #13131a;
-  --border: rgba(255,255,255,0.06);
-  --border-accent: rgba(0, 212, 170, 0.25);
-  --green: #00D4AA;
-  --red: #FF3B5C;
-  --gold: #F0B429;
-  --text: #F0F0F5;
-  --muted: #5a5a72;
-  --muted2: #3a3a50;
+  --bg: #000000;
+  --text: #ffffff;
+  --muted: #444444; /* Gris muy oscuro para elementos discretos */
+  --muted-bright: #888888; /* Gris medio para etiquetas */
+  --border: rgba(255, 255, 255, 0.08); /* Borde muy sutil */
 }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'system-ui', sans-serif; /* Tipografía limpia y nativa */
   font-weight: 300;
   overflow-x: hidden;
   min-height: 100vh;
 }
 
-/* Grid background */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0,212,170,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,212,170,0.025) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
-  z-index: 0;
-}
+/* Animaciones suaves */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.5s ease forwards; }
 
-/* Ambient glow */
-body::after {
-  content: '';
-  position: fixed;
-  top: -20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 400px;
-  background: radial-gradient(ellipse, rgba(0,212,170,0.04) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
+/* Scrollbar casi invisible */
+::-webkit-scrollbar { width: 1px; height: 1px;}
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #222; }
 
-/* Typography & Layout*/
-.font-syne { font-family: 'Syne', sans-serif; }
+/* Tipografía */
 .font-mono { font-family: 'DM Mono', monospace; }
-.main-content { margin-left: 220px; padding: 32px 36px; position: relative; z-index: 10; }
+.metric-value { font-family: 'DM Mono', monospace; font-weight: 400; letter-spacing: -0.01em; line-height: 1; }
+.metric-label { font-size: 10px; color: var(--muted-bright); font-family: 'DM Mono', monospace; letter-spacing: 0.15em; text-transform: uppercase; }
 
-/* Cards */
-.glow-card {
-  background: linear-gradient(135deg, rgba(13,13,18,0.95), rgba(19,19,26,0.95));
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s ease;
-}
-.glow-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(0,212,170,0.03), transparent 60%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-.glow-card:hover::before { opacity: 1; }
-.glow-card:hover { border-color: rgba(0,212,170,0.2); transform: translateY(-2px); }
-
-/* Elements */
-.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
-.metric-value { font-family: 'DM Mono', monospace; font-weight: 400; letter-spacing: -0.02em; line-height: 1; }
-.badge-up { background: rgba(0,212,170,0.1); color: var(--green); border: 1px solid rgba(0,212,170,0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: 'DM Mono', monospace; }
-.badge-down { background: rgba(255,59,92,0.1); color: var(--red); border: 1px solid rgba(255,59,92,0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: 'DM Mono', monospace; }
-
-/* Progress */
-.progress-track { width: 100%; height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; margin-top: 12px; }
-.progress-fill { height: 100%; border-radius: 2px; background: var(--green); transition: width 1s ease; box-shadow: 0 0 8px rgba(0,212,170,0.4); }
-
-/* Animations */
-@keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); } 50% { opacity: 0.6; box-shadow: 0 0 16px var(--green); } }
-@keyframes fadeSlide { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { opacity: 0; animation: fadeSlide 0.5s ease forwards; }
-.d1 { animation-delay: 0.1s; } .d2 { animation-delay: 0.2s; } .d3 { animation-delay: 0.3s; }
-
-/* Table */
+/* Data Table */
 .data-table { width: 100%; border-collapse: collapse; }
-.data-table th { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-family: 'DM Mono', monospace; padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; font-weight: 400; }
-.data-table td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); }
-.cat-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-
-/* Ticker */
-.ticker-bar { background: rgba(0,0,0,0.6); border-bottom: 1px solid var(--border); overflow: hidden; height: 32px; }
-.ticker-inner { display: flex; align-items: center; height: 100%; gap: 40px; padding: 0 24px; animation: ticker 30s linear infinite; white-space: nowrap; }
-.ticker-item { display: flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; flex-shrink: 0; }
-@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-
-.ticker-item { 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
-  font-family: 'DM Mono', monospace; 
-  font-size: 10px; 
-  flex-shrink: 0; 
-}
-
-/* --- PEGA AQUÍ EL NUEVO BLOQUE --- */
-.ticker-inner:hover { animation-play-state: paused; }
-
-.ticker-label   { color: var(--muted); }
-.ticker-value   { color: var(--text); }
-.ticker-up      { color: var(--green); }
-.ticker-down    { color: var(--red); }
-.ticker-neutral { color: var(--muted); }
-
-/* Delays extra para las animaciones */
-.d4 { animation-delay: 0.4s; }
-.d5 { animation-delay: 0.5s; }
-.d6 { animation-delay: 0.6s; }
+.data-table th { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted-bright); font-family: 'DM Mono', monospace; padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; font-weight: 400; }
+.data-table td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #F0F0F5;}
