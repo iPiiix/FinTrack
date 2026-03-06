@@ -1,935 +1,820 @@
 "use client";
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Chart from "chart.js/auto";
 
-// ─── CONSTANTS ────────────────────────────────────────────────────────────────
-const API_URL = "http://127.0.0.1:8000/analytics/summary";
-const TOKEN   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzcyNDA1OTMyfQ.3oIpWrxfwakI7cXj23gU05wf0iitoY5n10OS77lhCwY";
+import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  ArrowUpRight,
+  BarChart2,
+  Shield,
+  Zap,
+  TrendingUp,
+  Globe,
+  Lock,
+  Activity,
+  ChevronRight,
+} from "lucide-react";
 
-const P = {
-  bg:           "#09090B",
-  surface:      "#18181B",
-  surfaceHover: "#27272A",
-  border:       "#27272A",
-  borderLight:  "#3F3F46",
-  textPrimary:  "#FAFAFA",
-  textSecondary:"#A1A1AA",
-  textMuted:    "#71717A",
-  textDark:     "#52525B",
-  accent:       "#FFFFFF",
-  positive:     "#10B981",
-  positiveLight:"#34D399",
-  negative:     "#EF4444",
-  negativeLight:"#F87171",
-  warning:      "#F59E0B",
-  blue:         "#3B82F6",
-  blueDim:      "rgba(59,130,246,0.08)",
-};
+/* ============================================================
+   GLOBAL STYLES + FONTS
+============================================================ */
+function GlobalStyles() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,100..900;1,9..40,300&display=swap');
 
-const CHART_LABELS = ["AGO", "SEP", "OCT", "NOV", "DIC", "ENE", "FEB", "MAR"];
-const CHART_NET    = [46200, 47800, 49100, 50400, 49900, 52100, 53600, 54750];
-const CHART_PREV   = [44000, 45500, 47000, 48200, 47800, 49500, 51000, 52300];
-const CHART_FLOW   = [420, 680, 350, 500, -180, 820, 380, 280];
+      :root {
+        --bg: #09090B;
+        --white: #FAFAF9;
+        --accent: #E8FF47;
+      }
 
-const TRANSACTIONS = [
-  { id:"TX-901", name:"Nómina JP Morgan",    category:"INCOME",     account:"Principal", amount: 5000.00, date:"01 MAR 26", status:"SETTLED" },
-  { id:"TX-902", name:"Vanguard S&P 500",    category:"INVESTMENT", account:"Inversión", amount:-1000.00, date:"28 FEB 26", status:"SETTLED" },
-  { id:"TX-903", name:"AWS Cloud Hosting",   category:"SOFTWARE",   account:"Tarjeta",   amount:  -45.00, date:"25 FEB 26", status:"SETTLED" },
-  { id:"TX-904", name:"Dividendo Apple",     category:"INCOME",     account:"Principal", amount:   18.40, date:"20 FEB 26", status:"SETTLED" },
-  { id:"TX-905", name:"Alquiler Despacho",   category:"EXPENSE",    account:"Tarjeta",   amount: -320.00, date:"15 FEB 26", status:"SETTLED" },
-  { id:"TX-906", name:"Suscripción Stripe",  category:"SOFTWARE",   account:"Tarjeta",   amount:  -29.00, date:"12 FEB 26", status:"SETTLED" },
-  { id:"TX-907", name:"Consultoría Alpha",   category:"INCOME",     account:"Principal", amount: 2400.00, date:"05 FEB 26", status:"SETTLED" },
-  { id:"TX-908", name:"Bonos Tesoro ES",     category:"INVESTMENT", account:"Inversión", amount:-5000.00, date:"02 FEB 26", status:"SETTLED" },
-  { id:"TX-909", name:"Cena Directivos",     category:"EXPENSE",    account:"Tarjeta",   amount: -180.50, date:"28 ENE 26", status:"SETTLED" },
-  { id:"TX-910", name:"Intereses Cuenta",    category:"INCOME",     account:"Principal", amount:    4.20, date:"15 ENE 26", status:"PENDING" },
-  { id:"TX-911", name:"Adobe Creative",      category:"SOFTWARE",   account:"Tarjeta",   amount:  -54.99, date:"10 ENE 26", status:"SETTLED" },
-  { id:"TX-912", name:"ETF MSCI World",      category:"INVESTMENT", account:"Inversión", amount:-2500.00, date:"05 ENE 26", status:"SETTLED" },
-  { id:"TX-913", name:"Consultoría Beta",    category:"INCOME",     account:"Principal", amount: 3200.00, date:"28 DIC 25", status:"SETTLED" },
-  { id:"TX-914", name:"Seguro Médico",       category:"EXPENSE",    account:"Tarjeta",   amount: -189.00, date:"01 DIC 25", status:"SETTLED" },
-];
+      html { scroll-behavior: smooth; }
+      body { background: var(--bg); }
 
-const TICKERS = [
-  { label:"IBEX 35", value:"11.234", change:"+1.2%", positive:true  },
-  { label:"S&P 500", value:"5.120",  change:"+0.8%", positive:true  },
-  { label:"NASDAQ",  value:"18.340", change:"+1.1%", positive:true  },
-  { label:"BTC/EUR", value:"62.410", change:"−0.5%", positive:false },
-  { label:"EURIBOR", value:"3.84%",  change:"0.0%",  positive:null  },
-  { label:"EUR/USD", value:"1.085",  change:"+0.1%", positive:true  },
-  { label:"GOLD",    value:"2.312",  change:"+0.3%", positive:true  },
-  { label:"WTI OIL", value:"79.40",  change:"−0.7%", positive:false },
-  { label:"DAX",     value:"17.890", change:"+0.5%", positive:true  },
-];
+      /* ── Ticker ── */
+      @keyframes ticker {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+      .ticker-track { display: inline-block; animation: ticker 44s linear infinite; white-space: nowrap; }
 
-const ALLOCATION = [
-  { label:"RENTA VARIABLE", pct:58, value:31755, color: P.accent        },
-  { label:"LIQUIDEZ",       pct:24, value:13140, color: P.textSecondary },
-  { label:"RENTA FIJA",     pct:12, value: 6570, color: P.textMuted     },
-  { label:"CRYPTO",         pct: 6, value: 3285, color: P.textDark      },
-];
+      /* ── Orb pulse rings ── */
+      @keyframes orbPulse {
+        0%   { transform: scale(1);    opacity: .18; }
+        50%  { transform: scale(1.06); opacity: .08; }
+        100% { transform: scale(1);    opacity: .18; }
+      }
+      @keyframes orbRing1 {
+        0%   { transform: scale(.85); opacity: .12; }
+        50%  { transform: scale(1.12); opacity: .05; }
+        100% { transform: scale(.85); opacity: .12; }
+      }
+      @keyframes orbRing2 {
+        0%   { transform: scale(.7);  opacity: .08; }
+        50%  { transform: scale(1.2); opacity: .03; }
+        100% { transform: scale(.7);  opacity: .08; }
+      }
+      @keyframes orbRing3 {
+        0%   { transform: scale(.55); opacity: .06; }
+        50%  { transform: scale(1.3); opacity: .02; }
+        100% { transform: scale(.55); opacity: .06; }
+      }
+      @keyframes orbRotate {
+        0%   { transform: rotate(0deg);   }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes orbGlow {
+        0%,100% { opacity: .55; }
+        50%      { opacity: .75; }
+      }
 
-const PORTFOLIO = [
-  { name:"Apple Inc.",  ticker:"AAPL",   shares:12,   price:178.50, value:2142,  gain:+18.4 },
-  { name:"Vanguard S&P",ticker:"VOO",    shares:8,    price:412.30, value:3298,  gain:+22.1 },
-  { name:"Tesla Inc.",  ticker:"TSLA",   shares:5,    price:185.20, value: 926,  gain: -8.3 },
-  { name:"MSCI World",  ticker:"IWDA",   shares:25,   price: 98.40, value:2460,  gain:+14.2 },
-  { name:"Bitcoin",     ticker:"BTC",    shares:0.05, price:62410,  value:3121,  gain: -2.1 },
-  { name:"Bonos ES 10Y",ticker:"BONO10", shares:50,   price: 95.20, value:4760,  gain: +1.8 },
-];
+      /* ── Scanline ── */
+      @keyframes scanDown {
+        0%   { transform: translateY(-2px); opacity: .4; }
+        100% { transform: translateY(100vh); opacity: 0; }
+      }
 
-// ─── UTILITIES ─────────────────────────────────────────────────────────────────
-const fmt = (n: number, d = 2) => Math.abs(n).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d });
+      /* ── Hero char animation ── */
+      .hero-char {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(80px) skewX(-6deg);
+        transition: opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1);
+      }
+      .hero-char.in { opacity: 1; transform: translateY(0) skewX(0deg); }
 
-// ─── TICKER BAR ─────────────────────────────────────────────────────────────────
+      /* ── Slogan word animation ── */
+      .slogan-word {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(28px);
+        transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+      }
+      .slogan-word.in { opacity: 1; transform: translateY(0); }
+
+      /* ── Generic reveal ── */
+      .reveal-up {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
+      }
+      .reveal-up.in { opacity: 1; transform: translateY(0); }
+
+      /* ── Line grow ── */
+      .line-grow {
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 1.1s cubic-bezier(.16,1,.3,1);
+      }
+      .line-grow.in { transform: scaleX(1); }
+
+      /* ── Scroll indicator ── */
+      @keyframes scrollLine {
+        0%   { transform: translateY(-100%); }
+        100% { transform: translateY(220%); }
+      }
+
+      /* ── Pulse ── */
+      @keyframes pls { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+      /* ── Grain ── */
+      .grain::after {
+        content: '';
+        position: fixed; inset: -200%;
+        width: 400%; height: 400%;
+        pointer-events: none; z-index: 250;
+        opacity: .018;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        background-size: 180px 180px;
+        animation: grn .45s steps(1) infinite;
+      }
+      @keyframes grn {
+        0%,100%{transform:translate(0,0)} 10%{transform:translate(-2%,-3%)} 20%{transform:translate(3%,2%)}
+        30%{transform:translate(-1%,4%)} 40%{transform:translate(4%,-1%)} 50%{transform:translate(-3%,3%)}
+        60%{transform:translate(2%,-4%)} 70%{transform:translate(-4%,1%)} 80%{transform:translate(1%,2%)} 90%{transform:translate(3%,-2%)}
+      }
+
+      /* ── Marquee ── */
+      @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+      .marquee-inner { animation: marquee 22s linear infinite; display: inline-flex; align-items: baseline; white-space: nowrap; }
+
+      /* ── Bento hover ── */
+      .bcard { transition: border-color .3s ease, background .3s ease; }
+      .bcard:hover { border-color: rgba(232,255,71,.22) !important; }
+
+      /* ── Terminal row ── */
+      .trow { transition: background .18s ease; }
+      .trow:hover { background: rgba(232,255,71,.022); }
+      .trow:hover .tick-label { color: #FAFAF9 !important; }
+
+      /* ── Subtle grid line across whole page ── */
+      .page-grid {
+        background-image:
+          linear-gradient(rgba(255,255,255,.008) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,.008) 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
+
+      /* ── Scrollbar ── */
+      ::-webkit-scrollbar { width: 3px; }
+      ::-webkit-scrollbar-track { background: var(--bg); }
+      ::-webkit-scrollbar-thumb { background: #27272A; }
+    `}</style>
+  );
+}
+
+/* ============================================================
+   TICKER
+============================================================ */
 function TickerBar() {
-  const items = [...TICKERS, ...TICKERS, ...TICKERS];
+  const seg = "OWN YOUR FUTURE  •  KNOW YOUR NUMBERS  •  NET WORTH TRACKING  •  CASH FLOW ANALYSIS  •  ASSET ALLOCATION  •  AES-256 ENCRYPTION  •  PORTFOLIO MANAGEMENT  •  ";
   return (
-    <div style={{ background: P.surfaceHover, borderBottom: `1px solid ${P.border}`, height: 28, overflow: "hidden", display: "flex", alignItems: "center", position: "relative" }}>
-      <style>{`
-        @keyframes tickerMove { from{transform:translateX(0)} to{transform:translateX(-33.33%)} }
-        .t-scroll { display:flex; gap:0; animation:tickerMove 60s linear infinite; white-space:nowrap; }
-        .t-item { display:flex; align-items:center; gap:10px; padding:0 28px; border-right:1px solid ${P.border}; height:28px; }
-      `}</style>
-      <div style={{ position:"absolute", left:0, top:0, bottom:0, width:60, background:`linear-gradient(to right, ${P.surfaceHover}, transparent)`, zIndex:2, pointerEvents:"none" }}/>
-      <div style={{ position:"absolute", right:0, top:0, bottom:0, width:60, background:`linear-gradient(to left, ${P.surfaceHover}, transparent)`, zIndex:2, pointerEvents:"none" }}/>
-      <div className="t-scroll">
-        {items.map((t, i) => (
-          <div key={i} className="t-item">
-            <span style={{ color:P.textDark, fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:10, letterSpacing:"0.08em" }}>{t.label}</span>
-            <span style={{ color:P.textPrimary, fontFamily:"'IBM Plex Mono',monospace", fontWeight:600, fontSize:11 }}>{t.value}</span>
-            <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, fontWeight:500, color: t.positive === true ? P.positiveLight : t.positive === false ? P.negativeLight : P.textMuted }}>{t.change}</span>
-          </div>
-        ))}
+    <div className="fixed top-0 left-0 right-0 z-50 overflow-hidden border-b border-zinc-800/80 bg-[#09090B]/90 backdrop-blur-md py-2">
+      <div className="ticker-track font-mono text-[10px] tracking-[0.28em] text-zinc-600">
+        {seg.repeat(7)}
       </div>
     </div>
   );
 }
 
-// ─── TOP BAR ────────────────────────────────────────────────────────────────────
-function TopBar({ time, activeTab, setActiveTab, loading, toggleDrawer }: any) {
-  const NAV = ["OVERVIEW", "TRANSACTIONS", "PORTFOLIO", "ANALYTICS", "SETTINGS"];
+/* ============================================================
+   NAV
+============================================================ */
+function Nav() {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
   return (
-    <header style={{ background:P.surface, borderBottom:`1px solid ${P.border}`, height:56, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 0 0 32px", position:"sticky", top:0, zIndex:40 }}>
-      {/* Brand */}
-      <div style={{ display:"flex", alignItems:"center", gap:20, flexShrink:0 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <div style={{ width:20, height:20, border:`1px solid ${P.textMuted}`, display:"flex", alignItems:"center", justifyContent:"center", borderRadius:2 }}>
-            <div style={{ width:8, height:8, background:P.accent }}/>
+    <nav
+      className="fixed left-0 right-0 z-40 transition-all duration-700"
+      style={{
+        top: 33,
+        background: scrolled ? "rgba(9,9,11,0.96)" : "transparent",
+        backdropFilter: scrolled ? "blur(14px)" : "none",
+        borderBottom: scrolled ? "1px solid #27272A" : "1px solid transparent",
+      }}
+    >
+      <div className="mx-auto flex max-w-screen-xl items-center justify-between px-8 py-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-5 w-5 items-center justify-center border border-[#E8FF47]">
+            <div className="h-1.5 w-1.5 bg-[#E8FF47]" />
           </div>
-          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:14, fontWeight:700, letterSpacing:"0.1em", color:P.accent }}>FINTRACK</span>
+          <span className="font-mono text-[11px] tracking-[0.35em] text-[#FAFAF9]">FINTRACK</span>
         </div>
-        <div style={{ width:1, height:24, background:P.border }}/>
-        <span style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:P.textMuted, letterSpacing:"0.1em", fontWeight:500 }}>INSTITUTIONAL</span>
-      </div>
-
-      {/* Nav */}
-      <nav style={{ display:"flex", height:"100%", marginLeft:32 }}>
-        {NAV.map((item, i) => (
-          <button key={item} onClick={() => setActiveTab(item)}
-            style={{ background: item === activeTab ? P.bg : "transparent", border:"none", borderLeft:`1px solid ${P.border}`, borderRight: i === NAV.length-1 ? `1px solid ${P.border}` : "none", padding:"0 22px", height:"100%", color: item === activeTab ? P.accent : P.textMuted, fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight: item === activeTab ? 600 : 500, letterSpacing:"0.05em", cursor:"pointer", transition:"all 0.15s", whiteSpace:"nowrap" }}
-            onMouseEnter={e => { if (item !== activeTab) (e.currentTarget as HTMLElement).style.color = P.textSecondary; }}
-            onMouseLeave={e => { if (item !== activeTab) (e.currentTarget as HTMLElement).style.color = P.textMuted; }}
-          >{item}</button>
-        ))}
-      </nav>
-
-      {/* Actions */}
-      <div style={{ display:"flex", alignItems:"center", gap:20, padding:"0 24px", marginLeft:"auto", flexShrink:0 }}>
-        <button onClick={toggleDrawer} style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 14px", background:P.accent, color:P.bg, border:"none", borderRadius:3, fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:700, letterSpacing:"0.06em", cursor:"pointer" }}>
-          + NEW ENTRY
+        <div className="hidden items-center gap-12 md:flex">
+          {["Features", "Ledger", "Portfolio", "Security"].map((item) => (
+            <a key={item} href="#"
+              className="font-mono text-[10px] tracking-[0.22em] text-zinc-600 transition-colors duration-200 hover:text-zinc-200">
+              {item.toUpperCase()}
+            </a>
+          ))}
+        </div>
+        <button className="group flex items-center gap-2 border border-zinc-700 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-200 transition-all duration-200 hover:border-[#E8FF47] hover:bg-[#E8FF47] hover:text-black">
+          START TRACKING
+          <ArrowUpRight size={11} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </button>
-        <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-          <div style={{ width:6, height:6, borderRadius:"50%", background: loading ? P.warning : P.positive, boxShadow: loading ? "none" : `0 0 6px ${P.positive}` }}/>
-          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:500, color:P.textMuted, letterSpacing:"0.05em" }}>{loading ? "SYNCING..." : "LIVE DATAFEED"}</span>
-        </div>
-        <div style={{ width:1, height:24, background:P.border }}/>
-        <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.textSecondary, letterSpacing:"0.05em" }}>{time} CET</span>
       </div>
-    </header>
+    </nav>
   );
 }
 
-// ─── OVERVIEW ───────────────────────────────────────────────────────────────────
-function OverviewView({ analytics, loading, transactions }: any) {
-  const chartRef = useRef<HTMLCanvasElement>(null);
-  const chartInst = useRef<any>(null);
-  const [period, setPeriod] = useState("3M");
-  const PERIODS = ["1M","3M","6M","YTD","ALL"];
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-    if (chartInst.current) chartInst.current.destroy();
-    Chart.defaults.color = "#333330";
-    Chart.defaults.color = P.textMuted;
-    Chart.defaults.font.family = "'IBM Plex Mono', monospace";
-    if (chartInst.current) chartInst.current.destroy();
-    chartInst.current = new Chart(chartRef.current, {
-      type: "line",
-      data: {
-        labels: CHART_LABELS,
-        datasets: [
-          {
-            type: "line" as any, label: "NET WORTH", data: CHART_NET,
-            borderColor: P.accent, borderWidth: 1.5, tension: 0,
-            pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: P.accent,
-            pointHoverBorderColor: P.bg, pointHoverBorderWidth: 2,
-            yAxisID: "y", fill: true,
-            backgroundColor: (ctx: any) => {
-              const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
-              gradient.addColorStop(0, "rgba(255,255,255,0.06)");
-              gradient.addColorStop(1, "rgba(255,255,255,0)");
-              return gradient;
-            },
-          },
-          {
-            type: "line" as any, label: "PREV PERIOD", data: CHART_PREV,
-            borderColor: P.textDark, borderWidth: 1, tension: 0,
-            borderDash: [4,4], pointRadius: 0, yAxisID: "y",
-          },
-          {
-            type: "bar" as any, label: "CASH FLOW", data: CHART_FLOW,
-            backgroundColor: (ctx: any) => (ctx.raw as number) >= 0 ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)",
-            borderColor: (ctx: any) => (ctx.raw as number) >= 0 ? P.positive : P.negative,
-            borderWidth: 1, borderRadius: 2, yAxisID: "y1",
-          },
-        ],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: P.surfaceHover, borderColor: P.borderLight, borderWidth: 1,
-            padding: 14, cornerRadius: 4, displayColors: true, boxPadding: 6,
-            titleColor: P.textMuted, bodyColor: P.textPrimary,
-            titleFont: { size: 10, family: "'Inter',sans-serif", weight: "600" },
-            bodyFont: { size: 13, family: "'IBM Plex Mono',monospace" },
-            callbacks: {
-              title: (i: any) => i[0]?.label ?? "",
-              label: (ctx: any) => ` ${ctx.dataset.label}  €${fmt(ctx.parsed.y, 0)}`,
-            },
-          },
-        },
-        scales: {
-          x: { grid:{ display:false }, border:{ display:false }, ticks:{ color:P.textDark, font:{ size:10 }, letterSpacing:"0.05em" } },
-          y: { display:false, min: 44000 },
-          y1:{ display:false, position:"right", min:-800, max:3000 },
-        },
-      },
-    });
-    return () => { chartInst.current?.destroy(); };
-  }, []);
-
-  const savingsRate = analytics.tasa_ahorro_pct || 0;
-  const totalPortfolio = PORTFOLIO.reduce((s,a) => s + a.value, 0);
-
+/* ============================================================
+   ANIMATED ORB — the centrepiece
+============================================================ */
+function Orb() {
   return (
-    <div className="fade-up">
-      {/* ── KPI Row ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", borderBottom:`1px solid ${P.border}` }}>
-        {[
-          {
-            label:"TOTAL BALANCE", unit:"EUR",
-            value: loading ? "——" : `€ ${fmt(analytics.patrimonio_neto, 0)}`,
-            color: loading ? P.textDark : P.accent,
-            sub: "↑ 13.6% YTD", subColor: P.positiveLight,
-            extra: (
-              <div style={{ marginTop:8, height:"1px", background:`linear-gradient(to right, ${P.accent}, transparent)` }}/>
-            ),
-          },
-          {
-            label:"CASH FLOW (30D)", unit:"EUR",
-            value: loading ? "——" : `+ € ${fmt(analytics.flujo_caja_neto, 0)}`,
-            color: loading ? P.textDark : P.positiveLight,
-            sub: `IN ${fmt(analytics.total_ingresos,0)} · OUT ${fmt(analytics.total_gastos,0)}`,
-            subColor: P.textMuted,
-          },
-          {
-            label:"SAVINGS RATE", unit:"PCT",
-            value: loading ? "——" : `${savingsRate.toFixed(1)}%`,
-            color: loading ? P.textDark : P.textSecondary,
-            sub: savingsRate >= 50 ? "↑ TARGET MET" : "↓ BELOW TARGET",
-            subColor: savingsRate >= 50 ? P.positiveLight : P.negativeLight,
-            extra: (
-              <div style={{ marginTop:12, height:2, background:P.surfaceHover, borderRadius:1, overflow:"hidden" }}>
-                <div style={{ height:"100%", width:`${Math.min(savingsRate,100)}%`, background: savingsRate >= 50 ? P.positive : P.warning, transition:"width 1s ease", borderRadius:1 }}/>
-              </div>
-            ),
-          },
-          {
-            label:"PORTFOLIO VALUE", unit:"EUR",
-            value: `€ ${fmt(totalPortfolio, 0)}`,
-            color: P.textSecondary,
-            sub: "↑ 14.2% rentab. media",
-            subColor: P.positiveLight,
-          },
-        ].map((kpi, i) => (
-          <div key={kpi.label} style={{ padding:32, borderRight: i < 3 ? `1px solid ${P.border}` : "none", display:"flex", flexDirection:"column", justifyContent:"space-between", minHeight:160 }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-              <span className="corp-label">{kpi.label}</span>
-              <span style={{ color:P.textDark, fontSize:10, fontFamily:"'Inter',sans-serif", fontWeight:500 }}>{kpi.unit}</span>
-            </div>
-            <div>
-              <div className="kpi-value" style={{ color: kpi.color }}>{kpi.value}</div>
-              <div style={{ marginTop:8, fontSize:11, color:kpi.subColor, fontFamily:"'Inter',sans-serif", fontWeight:500 }}>{kpi.sub}</div>
-              {kpi.extra}
-            </div>
-          </div>
-        ))}
-      </div>
+    <div
+      className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+      aria-hidden
+    >
+      {/* Outermost diffuse glow — very large, very soft */}
+      <div
+        style={{
+          position: "absolute",
+          width: "900px",
+          height: "900px",
+          borderRadius: "50%",
+          background: "radial-gradient(ellipse at center, rgba(232,255,71,.07) 0%, transparent 68%)",
+          filter: "blur(40px)",
+          animation: "orbPulse 8s ease-in-out infinite",
+        }}
+      />
 
-      {/* ── Chart + Allocation + Transactions ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 320px" }}>
+      {/* Ring 3 — outermost traced ring */}
+      <div
+        style={{
+          position: "absolute",
+          width: "680px",
+          height: "680px",
+          borderRadius: "50%",
+          border: "1px solid rgba(232,255,71,.05)",
+          animation: "orbRing3 11s ease-in-out infinite",
+        }}
+      />
 
-        {/* Chart */}
-        <div style={{ borderRight:`1px solid ${P.border}` }}>
-          <div style={{ padding:"28px 32px 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-            <div>
-              <span className="corp-label">PATRIMONIO & FLUJO DE CAJA</span>
-              <div style={{ marginTop:6, display:"flex", gap:20 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                  <div style={{ width:20, height:1, background:P.accent }}/>
-                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:P.textMuted }}>Net Worth</span>
-                </div>
-                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                  <div style={{ width:20, height:1, background:P.textDark, borderTop:"1px dashed" }}/>
-                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:P.textMuted }}>Prev. Period</span>
-                </div>
-                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                  <div style={{ width:10, height:10, background:"rgba(16,185,129,0.3)", border:`1px solid ${P.positive}` }}/>
-                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:P.textMuted }}>Cash Flow</span>
-                </div>
-              </div>
-            </div>
-            <div style={{ display:"flex", gap:3 }}>
-              {PERIODS.map(p => (
-                <button key={p} onClick={() => setPeriod(p)}
-                  className={period === p ? "tab-active" : "tab-inactive"}>{p}</button>
-              ))}
-            </div>
-          </div>
-          <div style={{ height:300, padding:"16px 16px 16px 0" }}>
-            <canvas ref={chartRef}/>
-          </div>
+      {/* Ring 2 */}
+      <div
+        style={{
+          position: "absolute",
+          width: "520px",
+          height: "520px",
+          borderRadius: "50%",
+          border: "1px solid rgba(232,255,71,.08)",
+          animation: "orbRing2 9s ease-in-out infinite",
+        }}
+      />
 
-          {/* Monthly heatmap strip */}
-          <div style={{ borderTop:`1px solid ${P.border}`, padding:"20px 32px" }}>
-            <span className="corp-label" style={{ display:"block", marginBottom:12 }}>FLUJO MENSUAL · INTENSIDAD</span>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(8,1fr)", gap:4 }}>
-              {CHART_FLOW.map((f, i) => {
-                const isPos = f >= 0;
-                const intensity = Math.min(Math.abs(f) / 900, 1);
-                return (
-                  <div key={i} style={{ borderRadius:3, padding:"8px 6px", textAlign:"center", background: isPos ? `rgba(16,185,129,${0.04 + intensity*0.22})` : `rgba(239,68,68,${0.04 + intensity*0.18})`, border:`1px solid ${isPos ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}` }}>
-                    <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:P.textDark, marginBottom:4 }}>{CHART_LABELS[i]}</div>
-                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, fontWeight:600, color: isPos ? P.positiveLight : P.negativeLight }}>
-                     {isPos?"+":"-"}{fmt(Math.abs(f),0)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+      {/* Ring 1 — closest ring, slightly brighter */}
+      <div
+        style={{
+          position: "absolute",
+          width: "380px",
+          height: "380px",
+          borderRadius: "50%",
+          border: "1px solid rgba(232,255,71,.13)",
+          animation: "orbRing1 7s ease-in-out infinite",
+        }}
+      />
 
-        {/* Right panel: Allocation + Recent Tx */}
-        <div style={{ display:"flex", flexDirection:"column" }}>
+      {/* Rotating dashed orbit */}
+      <div
+        style={{
+          position: "absolute",
+          width: "460px",
+          height: "460px",
+          borderRadius: "50%",
+          border: "1px dashed rgba(232,255,71,.06)",
+          animation: "orbRotate 40s linear infinite",
+        }}
+      />
 
-          {/* Asset Allocation */}
-          <div style={{ padding:"28px 28px 24px", borderBottom:`1px solid ${P.border}` }}>
-            <span className="corp-label" style={{ display:"block", marginBottom:16 }}>ASSET ALLOCATION</span>
-            {/* Segmented bar */}
-            <div style={{ display:"flex", height:6, gap:2, marginBottom:18, borderRadius:2, overflow:"hidden" }}>
-              {ALLOCATION.map(a => <div key={a.label} style={{ flex:a.pct, background:a.color, opacity: a.color === P.textDark ? 1 : 0.9 }}/>)}
-            </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:11 }}>
-              {ALLOCATION.map(a => (
-                <div key={a.label} style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                    <div style={{ width:8, height:8, borderRadius:2, background:a.color }}/>
-                    <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:P.textMuted, fontWeight:500 }}>{a.label}</span>
-                  </div>
-                  <div style={{ display:"flex", gap:14, alignItems:"center" }}>
-                    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.textDark }}>{a.pct}%</span>
-                    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.textSecondary }}>€{fmt(a.value,0)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Inner orb — the actual glowing sphere */}
+      <div
+        style={{
+          position: "absolute",
+          width: "260px",
+          height: "260px",
+          borderRadius: "50%",
+          background: "radial-gradient(circle at 38% 36%, rgba(232,255,71,.22) 0%, rgba(232,255,71,.06) 45%, transparent 70%)",
+          filter: "blur(28px)",
+          animation: "orbGlow 6s ease-in-out infinite",
+        }}
+      />
 
-          {/* Recent Settlements */}
-          <div>
-            <div style={{ padding:"20px 28px 12px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`1px solid ${P.border}` }}>
-              <span className="corp-label">RECENT SETTLEMENTS</span>
-              <button className="btn-text" style={{ fontSize:10 }}>ALL →</button>
-            </div>
-            <div>
-              {transactions.slice(0,5).map((tx: any, i: number) => {
-                const isPos = tx.amount > 0;
-                return (
-                  <div key={tx.id} className="row-hover" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 28px", borderBottom:`1px solid ${P.border}` }}>
-                    <div style={{ display:"flex", flexDirection:"column", gap:3, flex:1, minWidth:0 }}>
-                      <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:500, fontSize:12, color:P.textPrimary, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{tx.name}</span>
-                      <span className="data-dim" style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:P.textDark }}>{tx.date} · {tx.category}</span>
-                    </div>
-                    <div style={{ textAlign:"right", flexShrink:0, marginLeft:12 }}>
-                      <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color: isPos ? P.positiveLight : P.textPrimary }}>
-                        {isPos ? "+" : "−"}€{fmt(Math.abs(tx.amount))}
-                      </div>
-                      {tx.status === "PENDING" && (
-                        <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:600, color:P.warning, letterSpacing:"0.06em" }}>PENDING</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Specular highlight — tiny bright spot */}
+      <div
+        style={{
+          position: "absolute",
+          width: "80px",
+          height: "80px",
+          borderRadius: "50%",
+          background: "radial-gradient(circle at 40% 35%, rgba(255,255,255,.09) 0%, transparent 65%)",
+          filter: "blur(8px)",
+          transform: "translate(-30px, -20px)",
+        }}
+      />
+
+      {/* Hard centre dot */}
+      <div
+        style={{
+          position: "absolute",
+          width: "6px",
+          height: "6px",
+          borderRadius: "50%",
+          background: "rgba(232,255,71,.55)",
+          boxShadow: "0 0 12px 3px rgba(232,255,71,.25)",
+          animation: "orbGlow 6s ease-in-out infinite",
+        }}
+      />
+
+      {/* Horizontal equator line — very faint */}
+      <div
+        style={{
+          position: "absolute",
+          width: "380px",
+          height: "1px",
+          background: "linear-gradient(90deg, transparent, rgba(232,255,71,.07), transparent)",
+        }}
+      />
     </div>
   );
 }
 
-// ─── TRANSACTIONS ────────────────────────────────────────────────────────────────
-function TransactionsView({ transactions }: any) {
-  const [filter, setFilter] = useState("ALL");
-  const [search, setSearch] = useState("");
-  const FILTERS = ["ALL","INCOME","EXPENSE","INVESTMENT","SOFTWARE"];
+/* ============================================================
+   HERO
+============================================================ */
+function Hero() {
+  const parallaxRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState(0);
 
-  const filtered = useMemo(() => {
-    let r = filter === "ALL" ? transactions : transactions.filter((t: any) => t.category === filter);
-    if (search.trim()) r = r.filter((t: any) =>
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.id.toLowerCase().includes(search.toLowerCase())
-    );
-    return r;
-  }, [transactions, filter, search]);
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), 120);
+    const t2 = setTimeout(() => setPhase(2), 380);
+    const t3 = setTimeout(() => setPhase(3), 900);
+    const t4 = setTimeout(() => setPhase(4), 1350);
+    return () => [t1, t2, t3, t4].forEach(clearTimeout);
+  }, []);
 
-  const totals = useMemo(() => ({
-    income:  filtered.filter((t:any) => t.amount > 0).reduce((s:number,t:any) => s+t.amount, 0),
-    expense: filtered.filter((t:any) => t.amount < 0).reduce((s:number,t:any) => s+t.amount, 0),
-  }), [filtered]);
+  useEffect(() => {
+    if (phase >= 2) document.querySelectorAll(".hero-char").forEach((el, i) =>
+      setTimeout(() => el.classList.add("in"), i * 52));
+    if (phase >= 3) document.querySelectorAll(".slogan-word").forEach((el, i) =>
+      setTimeout(() => el.classList.add("in"), i * 65));
+    if (phase >= 1) document.querySelectorAll(".line-grow").forEach(el => el.classList.add("in"));
+    if (phase >= 4) document.querySelectorAll(".reveal-up").forEach((el, i) =>
+      setTimeout(() => el.classList.add("in"), i * 85));
+  }, [phase]);
+
+  const onMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    if (!parallaxRef.current) return;
+    const mx = (e.clientX / window.innerWidth  - .5) * 20;
+    const my = (e.clientY / window.innerHeight - .5) * 10;
+    parallaxRef.current.style.transform = `translate(${mx * .25}px, ${my * .25}px)`;
+  }, []);
+
+  const splitChars = (txt: string) =>
+    txt.split("").map((ch, i) => (
+      <span key={i} className="hero-char" style={{ transitionDelay: `${i * 52}ms` }}>{ch}</span>
+    ));
+
+  const sloganWords = (line: string, base = 0) =>
+    line.split(" ").map((w, i) => (
+      <span key={i} className="slogan-word" style={{ transitionDelay: `${base + i * 65}ms` }}>
+        {w}{i < line.split(" ").length - 1 ? "\u00A0" : ""}
+      </span>
+    ));
 
   return (
-    <div className="fade-up" style={{ padding:40 }}>
-      {/* Header */}
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:28 }}>
-        <div>
-          <h2 style={{ fontFamily:"'Inter',sans-serif", fontSize:22, fontWeight:600, color:P.textPrimary, letterSpacing:"-0.02em", marginBottom:6 }}>General Ledger</h2>
-          <span className="corp-label">REGISTRO HISTÓRICO COMPLETO · {filtered.length} ENTRADAS</span>
+    <section
+      onMouseMove={onMouseMove}
+      className="relative flex min-h-screen flex-col justify-end overflow-hidden px-10 pb-20 pt-28"
+    >
+
+      {/* ── Animated orb — sits behind everything ── */}
+      <Orb />
+
+      {/* ── Subtle page grid ── */}
+      <div className="pointer-events-none absolute inset-0 page-grid opacity-60" />
+
+      {/* ── Scanning beam ── */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div style={{
+          position: "absolute", left: 0, right: 0, height: 1,
+          background: "linear-gradient(90deg, transparent, rgba(232,255,71,.05), transparent)",
+          animation: "scanDown 11s linear infinite",
+        }} />
+      </div>
+
+      {/* ── Corner crosshairs ── */}
+      {([
+        { top: "14%",  left:  "5%" },
+        { top: "14%",  right: "5%" },
+        { bottom: "20%", left: "5%" },
+        { bottom: "20%", right: "5%" },
+      ] as React.CSSProperties[]).map((pos, i) => (
+        <div key={i} className="pointer-events-none absolute" style={pos}>
+          <div className="relative h-8 w-8 opacity-25">
+            <div className="absolute left-0 top-1/2 h-px w-full bg-zinc-600" />
+            <div className="absolute left-1/2 top-0 h-full w-px bg-zinc-600" />
+            <div className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 bg-[#E8FF47]" />
+          </div>
         </div>
-        <div style={{ display:"flex", gap:12, alignItems:"center" }}>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.positiveLight }}>IN +€{fmt(totals.income,0)}</div>
-          <div style={{ width:1, height:16, background:P.border }}/>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.negativeLight }}>OUT −€{fmt(Math.abs(totals.expense),0)}</div>
+      ))}
+
+      {/* ── Vertical side label ── */}
+      <div
+        className="pointer-events-none absolute bottom-1/2 left-6 origin-center -rotate-90 font-mono text-[8px] tracking-[0.5em] text-zinc-800"
+        style={{ whiteSpace: "nowrap" }}
+      >
+        FINTRACK · WEALTH OS · 2026
+      </div>
+
+      {/* ── Ghost outline behind title ── */}
+      <div
+        className="pointer-events-none absolute inset-0 flex items-end overflow-hidden pb-10 pl-8 select-none"
+        style={{
+          fontFamily: "'Bebas Neue', sans-serif",
+          fontSize: "clamp(130px, 22vw, 320px)",
+          letterSpacing: "-0.04em",
+          lineHeight: .86,
+          color: "transparent",
+          WebkitTextStroke: "1px rgba(255,255,255,.022)",
+        }}
+      >
+        FINTRACK
+      </div>
+
+      {/* ── Parallax content group ── */}
+      <div ref={parallaxRef} className="relative z-10" style={{ transition: "transform .08s linear" }}>
+
+        {/* Pre-label */}
+        <div className="mb-6 flex items-center gap-4 reveal-up" style={{ transitionDelay: "0ms" }}>
+          <div className="line-grow h-px w-10 bg-[#E8FF47]" />
+          <span className="font-mono text-[10px] tracking-[0.4em] text-zinc-500">
+            WEALTH MANAGEMENT PLATFORM — v1.0
+          </span>
+        </div>
+
+        {/* FINTRACK — giant */}
+        <div
+          className="overflow-hidden leading-none"
+          style={{
+            fontFamily: "'Bebas Neue', sans-serif",
+            fontSize: "clamp(100px, 19vw, 270px)",
+            letterSpacing: "-0.035em",
+            lineHeight: .86,
+            color: "#FAFAF9",
+          }}
+        >
+          {splitChars("FINTRACK")}
+        </div>
+
+        {/* Slogan */}
+        <div className="mt-5 overflow-hidden">
+          <div style={{
+            fontFamily: "'Bebas Neue', sans-serif",
+            fontSize: "clamp(26px, 4vw, 58px)",
+            letterSpacing: "0.06em",
+            lineHeight: 1,
+            color: "#E8FF47",
+          }}>
+            {sloganWords("OWN YOUR FUTURE. KNOW YOUR NUMBERS.", 0)}
+          </div>
         </div>
       </div>
 
-      {/* Controls */}
-      <div style={{ display:"flex", gap:12, marginBottom:20, alignItems:"center" }}>
-        {/* Search */}
-        <div style={{ flex:1, display:"flex", alignItems:"center", gap:8, background:P.surfaceHover, border:`1px solid ${P.border}`, borderRadius:4, padding:"8px 14px" }}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke={P.textDark} strokeWidth="1.5"><circle cx="5" cy="5" r="4"/><path d="M11 11L8 8"/></svg>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre o ID..."
-            style={{ background:"transparent", border:"none", outline:"none", fontFamily:"'Inter',sans-serif", fontSize:12, color:P.textPrimary, flex:1, caretColor:P.accent }}/>
-          {search && <button onClick={() => setSearch("")} style={{ background:"transparent", border:"none", color:P.textDark, cursor:"pointer", fontSize:14, lineHeight:1 }}>×</button>}
+      {/* ── Bottom row ── */}
+      <div className="relative z-10 mt-14 flex flex-col items-start gap-10 md:flex-row md:items-end md:justify-between">
+
+        {/* Description */}
+        <div className="max-w-sm reveal-up" style={{ transitionDelay: "0ms" }}>
+          <p className="font-light leading-relaxed text-zinc-500" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>
+            Institutional-grade financial tracking for the modern investor. Unify your cash flow, analyze your asset allocation, and master your ledger with absolute privacy.
+          </p>
         </div>
-        {/* Filter pills */}
-        <div style={{ display:"flex", border:`1px solid ${P.border}`, borderRadius:4, overflow:"hidden" }}>
-          {FILTERS.map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              style={{ background: filter===f ? P.borderLight : "transparent", color: filter===f ? P.accent : P.textMuted, border:"none", padding:"8px 16px", fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:11, cursor:"pointer", letterSpacing:"0.04em", borderRight:`1px solid ${P.border}`, transition:"all 0.15s" }}>
-              {f}
+
+        {/* CTAs */}
+        <div className="flex flex-col items-end gap-3">
+          <div className="flex items-center gap-3 reveal-up" style={{ transitionDelay: "90ms" }}>
+            <button className="group flex items-center gap-2.5 bg-[#E8FF47] px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-black transition-all duration-200 hover:bg-white">
+              OPEN DASHBOARD
+              <ArrowUpRight size={12} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
-          ))}
+            <button className="border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 transition-all duration-200 hover:border-zinc-500 hover:text-zinc-200">
+              EXPLORE FEATURES
+            </button>
+          </div>
+          <span className="reveal-up font-mono text-[9px] tracking-[0.2em] text-zinc-700" style={{ transitionDelay: "180ms" }}>
+            NO CREDIT CARD REQUIRED · SECURE SETUP
+          </span>
         </div>
       </div>
 
-      {/* Table */}
-      <div style={{ border:`1px solid ${P.border}`, borderRadius:6, overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"100px 90px 3fr 1.3fr 1.2fr 130px 110px", padding:"13px 24px", borderBottom:`1px solid ${P.border}`, background:P.surface }}>
-          {["FECHA","TX ID","DESCRIPCIÓN","CATEGORÍA","CUENTA","IMPORTE (EUR)","ESTADO"].map((h, i) => (
-            <span key={h} className="corp-label" style={{ textAlign: i >= 5 ? "right" : "left" }}>{h}</span>
-          ))}
-        </div>
-        <div style={{ maxHeight:"calc(100vh - 320px)", overflowY:"auto", background:P.bg }}>
-          {filtered.length === 0 ? (
-            <div style={{ padding:48, textAlign:"center", fontFamily:"'Inter',sans-serif", fontSize:13, color:P.textDark }}>
-              No se encontraron transacciones
-            </div>
-          ) : filtered.map((tx: any) => {
-            const isPos = tx.amount > 0;
-            return (
-              <div key={tx.id} className="row-hover" style={{ display:"grid", gridTemplateColumns:"100px 90px 3fr 1.3fr 1.2fr 130px 110px", padding:"15px 24px", borderBottom:`1px solid ${P.border}`, alignItems:"center" }}>
-                <span className="data-dim" style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.textMuted }}>{tx.date}</span>
-                <span className="data-dim" style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:P.textDark }}>{tx.id}</span>
-                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:500, color:P.textPrimary }}>{tx.name}</span>
-                <span className="data-dim" style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:P.textSecondary }}>{tx.category}</span>
-                <span className="data-dim" style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:P.textSecondary }}>{tx.account}</span>
-                <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:13, textAlign:"right", fontWeight:500, color: isPos ? P.positiveLight : P.textPrimary }}>
-                  {isPos ? "+" : "−"}€{fmt(Math.abs(tx.amount))}
-                </span>
-                <div style={{ display:"flex", justifyContent:"flex-end" }}>
-                  <span style={{ display:"inline-block", padding:"3px 8px", borderRadius:3, background: tx.status==="SETTLED" ? P.surfaceHover : "rgba(245,158,11,0.1)", color: tx.status==="SETTLED" ? P.textMuted : P.warning, fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:9, letterSpacing:"0.08em", border: tx.status==="PENDING" ? `1px solid rgba(245,158,11,0.3)` : `1px solid ${P.border}` }}>
-                    {tx.status}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+      {/* ── Bottom accent line ── */}
+      <div
+        className="pointer-events-none absolute bottom-0 left-10 right-10 h-px"
+        style={{ background: "linear-gradient(90deg, #E8FF47, transparent)", opacity: .15 }}
+      />
+
+      {/* ── Scroll indicator ── */}
+      <div
+        className="reveal-up absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2"
+        style={{ transitionDelay: "270ms" }}
+      >
+        <div className="h-10 w-px overflow-hidden bg-zinc-800">
+          <div className="h-full w-full bg-zinc-500" style={{ animation: "scrollLine 2.2s ease-in-out infinite" }} />
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
-// ─── PORTFOLIO ───────────────────────────────────────────────────────────────────
-function PortfolioView() {
-  const total = PORTFOLIO.reduce((s,a) => s+a.value, 0);
-  const totalGain = 4240;
-
-  return (
-    <div className="fade-up" style={{ padding:40 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:28 }}>
-        <div>
-          <h2 style={{ fontFamily:"'Inter',sans-serif", fontSize:22, fontWeight:600, color:P.textPrimary, letterSpacing:"-0.02em", marginBottom:6 }}>Portfolio</h2>
-          <span className="corp-label">POSICIONES ABIERTAS · {PORTFOLIO.length} ACTIVOS</span>
-        </div>
-        <div style={{ display:"flex", gap:28 }}>
-          {[
-            { l:"VALOR TOTAL",   v:`€ ${fmt(total,0)}`,    c:P.textSecondary },
-            { l:"GANANCIA NO REALIZADA", v:`+€ ${fmt(totalGain,0)}`, c:P.positiveLight },
-            { l:"RENTAB. MEDIA", v:`+14.2%`,               c:P.positiveLight },
-          ].map(k => (
-            <div key={k.l} style={{ textAlign:"right" }}>
-              <div className="corp-label" style={{ marginBottom:6 }}>{k.l}</div>
-              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:20, color:k.c }}>{k.v}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ border:`1px solid ${P.border}`, borderRadius:6, overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"2.5fr 80px 1fr 1fr 1fr 100px", padding:"13px 24px", borderBottom:`1px solid ${P.border}`, background:P.surface }}>
-          {["ACTIVO","TICKER","PRECIO","VALOR","% CARTERA","RENTAB."].map((h, i) => (
-            <span key={h} className="corp-label" style={{ textAlign: i > 0 ? "right" : "left" }}>{h}</span>
-          ))}
-        </div>
-        <div style={{ background:P.bg }}>
-          {PORTFOLIO.map((a, i) => {
-            const isPos = a.gain > 0;
-            const pct = (a.value / total * 100).toFixed(1);
-            return (
-              <div key={a.ticker} className="row-hover" style={{ display:"grid", gridTemplateColumns:"2.5fr 80px 1fr 1fr 1fr 100px", padding:"18px 24px", borderBottom: i < PORTFOLIO.length-1 ? `1px solid ${P.border}` : "none", alignItems:"center" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                  <div style={{ width:34, height:34, borderRadius:4, background:P.surfaceHover, border:`1px solid ${P.border}`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, fontWeight:700, color:P.textMuted }}>{a.ticker.slice(0,3)}</span>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:500, color:P.textPrimary }}>{a.name}</div>
-                    <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:P.textDark, marginTop:2 }}>{a.shares} {a.shares < 1 ? "BTC" : "uds"}</div>
-                  </div>
-                </div>
-                <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:P.textSecondary, textAlign:"right" }}>€{fmt(a.price,2)}</span>
-                <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:13, fontWeight:500, color:P.textPrimary, textAlign:"right" }}>€{fmt(a.value,0)}</span>
-                <div style={{ textAlign:"right" }}>
-                  <div style={{ height:4, background:P.surfaceHover, borderRadius:2, overflow:"hidden", marginBottom:4 }}>
-                    <div style={{ height:"100%", width:`${pct}%`, background:P.textDark, borderRadius:2 }}/>
-                  </div>
-                  <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.textMuted }}>{pct}%</span>
-                </div>
-                <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:13, fontWeight:600, textAlign:"right", color: isPos ? P.positiveLight : P.negativeLight }}>
-                  {isPos?"+":""}{a.gain}%
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── ANALYTICS ───────────────────────────────────────────────────────────────────
-function AnalyticsView() {
-  const catBarRef = useRef<HTMLCanvasElement>(null);
-  const catBarInst = useRef<any>(null);
-
-  const catData = useMemo(() => {
-    const map: Record<string, { income:number; expense:number }> = {};
-    TRANSACTIONS.forEach(t => {
-      if (!map[t.category]) map[t.category] = { income:0, expense:0 };
-      if (t.amount > 0) map[t.category].income += t.amount;
-      else map[t.category].expense += Math.abs(t.amount);
-    });
-    return map;
-  }, []);
-
+/* ============================================================
+   ANIMATED NUMBER
+============================================================ */
+function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: string; prefix?: string; suffix?: string }) {
+  const [display, setDisplay] = useState("0");
+  const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
-    if (!catBarRef.current) return;
-    if (catBarInst.current) catBarInst.current.destroy();
-    const cats = Object.keys(catData);
-    catBarInst.current = new Chart(catBarRef.current, {
-      type:"bar",
-      data:{
-        labels: cats,
-        datasets:[
-          { label:"INGRESOS", data: cats.map(c => catData[c].income), backgroundColor:"rgba(16,185,129,0.2)", borderColor:P.positive, borderWidth:1, borderRadius:2 },
-          { label:"GASTOS",   data: cats.map(c => catData[c].expense), backgroundColor:"rgba(239,68,68,0.15)", borderColor:P.negative, borderWidth:1, borderRadius:2 },
-        ],
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:P.surfaceHover, borderColor:P.borderLight, borderWidth:1, titleColor:P.textMuted, bodyColor:P.textPrimary, padding:12, cornerRadius:4, titleFont:{ size:10, family:"'Inter',sans-serif" }, bodyFont:{ size:13, family:"'IBM Plex Mono',monospace" } } },
-        scales:{
-          x:{ grid:{ display:false }, border:{ display:false }, ticks:{ color:P.textDark, font:{ size:10 } } },
-          y:{ grid:{ color:P.border }, border:{ display:false }, ticks:{ color:P.textDark, font:{ size:10 }, callback:(v:any) => `€${(v/1000).toFixed(0)}K` } },
-        },
-      },
-    });
-    return () => { catBarInst.current?.destroy(); };
-  }, []);
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      obs.disconnect();
+      const target = parseFloat(value.replace(/,/g, ""));
+      const dur = 1600, start = performance.now();
+      const animate = (now: number) => {
+        const p = Math.min((now - start) / dur, 1);
+        const eased = 1 - Math.pow(1 - p, 4);
+        const cur = target * eased;
+        setDisplay(value.includes(",") ? Math.floor(cur).toLocaleString("en-US") : cur.toFixed(2));
+        if (p < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+    }, { threshold: .35 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [value]);
+  return <span ref={ref}>{prefix}{display}{suffix}</span>;
+}
 
+/* ============================================================
+   STAT BLOCK
+============================================================ */
+function StatBlock({ value, label, prefix = "", suffix = "" }: { value: string; label: string; prefix?: string; suffix?: string }) {
   return (
-    <div className="fade-up" style={{ padding:40 }}>
-      <div style={{ marginBottom:28 }}>
-        <h2 style={{ fontFamily:"'Inter',sans-serif", fontSize:22, fontWeight:600, color:P.textPrimary, letterSpacing:"-0.02em", marginBottom:6 }}>Analytics</h2>
-        <span className="corp-label">ANÁLISIS FINANCIERO DETALLADO</span>
+    <div className="border-l border-zinc-800 pl-8">
+      <div className="font-black text-white" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(2.4rem,4.5vw,4rem)", letterSpacing: "-.01em", lineHeight: 1 }}>
+        {prefix}<AnimatedNumber value={value} />{suffix}
+      </div>
+      <div className="mt-2 font-mono text-[10px] tracking-[0.28em] text-zinc-600">{label}</div>
+    </div>
+  );
+}
+
+/* ============================================================
+   TERMINAL DATA
+============================================================ */
+const terminalData = [
+  { ticker: "SPX",  name: "S&P 500",       price: "5,891.24",  chg: "+0.43%", vol: "Live",   pos: true,  bar: 72 },
+  { ticker: "AAPL", name: "Apple Inc.",     price: "178.50",    chg: "+1.21%", vol: "Live",   pos: true,  bar: 48 },
+  { ticker: "BTC",  name: "Bitcoin/EUR",    price: "62,410.50", chg: "−2.10%", vol: "Live",   pos: false, bar: 88 },
+  { ticker: "VOO",  name: "Vanguard S&P",   price: "412.30",    chg: "+0.84%", vol: "Live",   pos: true,  bar: 61 },
+  { ticker: "TSLA", name: "Tesla Inc.",     price: "185.20",    chg: "−1.12%", vol: "Live",   pos: false, bar: 35 },
+  { ticker: "CASH", name: "EUR Liquidity",  price: "1.0000",    chg: "0.00%",  vol: "Static", pos: true,  bar: 53 },
+];
+
+function TerminalRow({ item, i }: { item: typeof terminalData[0]; i: number }) {
+  const [vis, setVis] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVis(true); obs.disconnect(); } }, { threshold: .1 });
+      if (ref.current) obs.observe(ref.current);
+      return () => obs.disconnect();
+    }, i * 75);
+    return () => clearTimeout(t);
+  }, [i]);
+  return (
+    <div ref={ref} className="trow grid items-center border-b border-zinc-800/50 px-6 py-4"
+      style={{ gridTemplateColumns: "1fr 1fr 80px 80px 120px", opacity: vis ? 1 : 0, transform: vis ? "none" : "translateX(-10px)", transition: `opacity .55s ease ${i*65}ms, transform .55s cubic-bezier(.16,1,.3,1) ${i*65}ms` }}>
+      <div>
+        <div className="tick-label font-mono text-[11px] font-medium tracking-[0.15em] text-zinc-400 transition-colors duration-200">{item.ticker}</div>
+        <div className="mt-0.5 font-mono text-[9px] tracking-wider text-zinc-700">{item.name}</div>
+      </div>
+      <div className="font-mono text-sm tabular-nums text-zinc-100">{item.price}</div>
+      <div className="font-mono text-[11px] tabular-nums" style={{ color: item.pos ? "#E8FF47" : "#FF5757" }}>{item.chg}</div>
+      <div className="font-mono text-[10px] text-zinc-600">{item.vol}</div>
+      <div className="flex items-center pr-2">
+        <div className="flex-1 rounded-sm" style={{ height: 2, background: "#1c1c1e" }}>
+          <div style={{ width: vis ? `${item.bar}%` : "0%", height: "100%", background: item.pos ? "#E8FF47" : "#FF5757", opacity: .65, transition: `width 1.3s cubic-bezier(.16,1,.3,1) ${650 + i*90}ms`, borderRadius: 1 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   BENTO CARD
+============================================================ */
+function FeatureCard({ icon: Icon, label, title, description, accent, className = "" }: {
+  icon: React.ElementType; label: string; title: string; description: string; accent?: boolean; className?: string;
+}) {
+  return (
+    <div className={`bcard group relative flex flex-col justify-between overflow-hidden border p-9 ${accent ? "border-[#E8FF47] bg-[#E8FF47]" : "border-zinc-800 bg-[#0d0d10]"} ${className}`}>
+      <div className={`absolute right-0 top-0 h-px w-12 transition-all duration-500 group-hover:w-24 ${accent ? "bg-black/15" : "bg-[#E8FF47]/15"}`} />
+      <div className={`absolute right-0 top-0 h-12 w-px transition-all duration-500 group-hover:h-24 ${accent ? "bg-black/15" : "bg-[#E8FF47]/15"}`} />
+      <div>
+        <div className="mb-7 flex items-center gap-3">
+          <Icon size={14} className={accent ? "text-black/50" : "text-zinc-600"} strokeWidth={1.5} />
+          <span className={`font-mono text-[9px] tracking-[0.32em] ${accent ? "text-black/45" : "text-zinc-700"}`}>{label}</span>
+        </div>
+        <h3 className={`mb-3 leading-tight ${accent ? "text-black" : "text-white"}`}
+          style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(18px,1.8vw,26px)", letterSpacing: "0.03em" }}>
+          {title}
+        </h3>
+        <p className={`text-sm font-light leading-relaxed ${accent ? "text-black/55" : "text-zinc-600"}`} style={{ fontFamily: "'DM Sans',sans-serif" }}>
+          {description}
+        </p>
+      </div>
+      <div className="mt-8 flex items-center gap-2">
+        <span className={`font-mono text-[9px] tracking-[0.2em] ${accent ? "text-black/40" : "text-zinc-700"}`}>EXPLORE</span>
+        <ChevronRight size={10} className={`transition-transform duration-200 group-hover:translate-x-1 ${accent ? "text-black/40" : "text-zinc-700"}`} />
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   SECTION LABEL
+============================================================ */
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <div className="mb-12 flex items-center gap-4">
+      <div className="h-px w-5 bg-[#E8FF47]" />
+      <span className="font-mono text-[9px] tracking-[0.42em] text-zinc-600">{children}</span>
+    </div>
+  );
+}
+
+/* ============================================================
+   PAGE
+============================================================ */
+export default function FinTrackLanding() {
+  return (
+    <div className="grain min-h-screen bg-[#09090B] text-white antialiased" style={{ fontFamily: "'DM Sans',sans-serif" }}>
+      <GlobalStyles />
+      <TickerBar />
+      <Nav />
+
+      <Hero />
+
+      {/* ── STATS BAND ── */}
+      <section className="border-y border-zinc-800 px-10 py-20">
+        <div className="mx-auto max-w-screen-xl">
+          <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
+            <StatBlock value="100"  label="DATA OWNERSHIP"          suffix="%" />
+            <StatBlock value="256"  label="AES ENCRYPTION"          suffix="-BIT" />
+            <StatBlock value="0"    label="DATA SOLD TO 3RD PARTIES" />
+            <StatBlock value="1"    label="SOURCE OF TRUTH"          />
+          </div>
+        </div>
+      </section>
+
+      {/* ── SCROLLING SLOGAN DIVIDER ── */}
+      <div className="overflow-hidden border-b border-zinc-800/60 py-10">
+        <div className="marquee-inner gap-24">
+          {Array(8).fill(null).map((_, i) => (
+            <span key={i} style={{
+              fontFamily: "'Bebas Neue',sans-serif",
+              fontSize: "clamp(52px,7vw,96px)",
+              letterSpacing: "0.04em",
+              color: i % 2 === 0 ? "#FAFAF9" : "transparent",
+              WebkitTextStroke: i % 2 !== 0 ? "1.5px #252528" : undefined,
+              paddingRight: 96,
+            }}>
+              OWN YOUR FUTURE · KNOW YOUR NUMBERS
+            </span>
+          ))}
+        </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:20 }}>
-        {/* Category breakdown */}
-        <div style={{ border:`1px solid ${P.border}`, borderRadius:6, padding:28, background:P.bg }}>
-          <span className="corp-label" style={{ display:"block", marginBottom:20 }}>INGRESOS VS GASTOS POR CATEGORÍA</span>
-          <div style={{ display:"flex", gap:16, marginBottom:16 }}>
-            {[{ l:"INGRESOS", c:P.positive }, { l:"GASTOS", c:P.negative }].map(l => (
-              <div key={l.l} style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <div style={{ width:12, height:3, background:l.c, borderRadius:1 }}/>
-                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:P.textMuted }}>{l.l}</span>
+      {/* ── TERMINAL DATA ── */}
+      <section className="px-10 py-32">
+        <div className="mx-auto max-w-screen-xl">
+          <div className="grid grid-cols-1 gap-20 lg:grid-cols-[260px_1fr]">
+            <div>
+              <SectionLabel>MARKET INTEGRATION</SectionLabel>
+              <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(44px,5vw,68px)", letterSpacing: ".02em", lineHeight: .95, color: "#FAFAF9" }}>
+                YOUR WEALTH<br />AGAINST<br />THE MARKET.
+              </h2>
+              <p className="mt-6 text-sm font-light leading-relaxed text-zinc-600">
+                Track your custom asset allocation alongside real-time feeds from global equities, commodities, and digital assets.
+              </p>
+              <div className="mt-8 flex items-center gap-3">
+                <div className="h-1.5 w-1.5 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
+                <span className="font-mono text-[9px] tracking-[0.3em] text-zinc-700">PORTFOLIO DEMO VIEW</span>
               </div>
+            </div>
+            <div className="border border-zinc-800 bg-zinc-950">
+              <div className="grid border-b border-zinc-800 bg-zinc-900/30 px-6 py-3"
+                style={{ gridTemplateColumns: "1fr 1fr 80px 80px 120px" }}>
+                {["ASSET", "LAST PRICE", "CHG", "FEED", "ALLOCATION"].map(h => (
+                  <span key={h} className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">{h}</span>
+                ))}
+              </div>
+              {terminalData.map((item, i) => <TerminalRow key={item.ticker} item={item} i={i} />)}
+              <div className="border-t border-zinc-800/50 px-6 py-3 text-right">
+                <span className="font-mono text-[9px] tracking-[0.2em] text-zinc-800">UNIFIED DASHBOARD TECHNOLOGY</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── BENTO FEATURES ── */}
+      <section className="px-10 py-24">
+        <div className="mx-auto max-w-screen-xl">
+          <div className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div>
+              <SectionLabel>CAPABILITIES</SectionLabel>
+              <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(44px,5.5vw,80px)", color: "#FAFAF9", letterSpacing: ".02em", lineHeight: .92 }}>
+                YOUR FINANCIAL TRUTH.<br />FINALLY UNIFIED.
+              </h2>
+            </div>
+            <p className="max-w-xs text-sm font-light leading-relaxed text-zinc-600 md:text-right">
+              Every tool you need to control your cash flow, analyze your portfolio, and protect your data.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-px bg-zinc-800 md:grid-cols-3">
+            <FeatureCard icon={Activity} label="GENERAL LEDGER" title="The ultimate source of truth"
+              description="Record every income and expense with absolute precision. Categorize transactions, track multiple accounts, and maintain a spotless financial history."
+              accent className="md:col-span-2 md:row-span-2" />
+            <FeatureCard icon={BarChart2} label="CASH FLOW" title="Monitor your burn rate"
+              description="Visualize incoming capital versus outgoing expenses. Track your monthly savings rate to hit every target." />
+            <FeatureCard icon={Globe} label="PORTFOLIO" title="Asset allocation tracking"
+              description="Manage stocks, crypto, real estate, and liquidity in one dashboard. See exactly where your wealth is deployed." />
+            <FeatureCard icon={TrendingUp} label="NET WORTH" title="Visualize your trajectory"
+              description="Watch your wealth grow over time. Historical charting compares current versus previous periods seamlessly." />
+            <FeatureCard icon={Zap} label="DATA ENTRY" title="Frictionless updates"
+              description="A quick-entry command drawer lets you log transactions in seconds. No complex menus, straight to the ledger." />
+            <FeatureCard icon={Lock} label="SECURITY" title="AES-256 Encryption"
+              description="Your data is encrypted, private, and never sold. We treat your financial history with institutional-grade security." />
+            <FeatureCard icon={Shield} label="ANALYTICS" title="Deep dive into spending"
+              description="Automatic breakdown of your top expenses and income streams. Understand exactly where your money goes every month."
+              className="md:col-span-2" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="border-t border-zinc-800 px-10 py-40">
+        <div className="mx-auto max-w-screen-xl">
+          <div className="relative overflow-hidden">
+            <div className="pointer-events-none absolute -right-8 -bottom-12 select-none leading-none text-transparent"
+              style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "28vw", WebkitTextStroke: "1px #17171a" }}>
+              FT
+            </div>
+            <div className="relative z-10 flex flex-col gap-14 md:flex-row md:items-end md:justify-between">
+              <div>
+                <SectionLabel>GET STARTED</SectionLabel>
+                <h2 className="leading-none text-white"
+                  style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(56px,11vw,150px)", letterSpacing: "-.02em" }}>
+                  TAKE CONTROL<br />
+                  <span style={{ color: "#E8FF47" }}>OF YOUR CAPITAL.</span>
+                </h2>
+              </div>
+              <div className="flex flex-col gap-4">
+                <button className="group flex items-center gap-3 border border-[#E8FF47] px-9 py-5 font-mono text-[10px] tracking-[0.22em] text-[#E8FF47] transition-all duration-200 hover:bg-[#E8FF47] hover:text-black">
+                  CREATE YOUR ACCOUNT
+                  <ArrowUpRight size={12} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </button>
+                <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-700">FREE FOR PERSONAL USE</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-zinc-800 px-10 py-10">
+        <div className="mx-auto flex max-w-screen-xl flex-col items-center justify-between gap-6 md:flex-row">
+          <div className="flex items-center gap-3">
+            <div className="flex h-4 w-4 items-center justify-center border border-[#E8FF47]">
+              <div className="h-1 w-1 bg-[#E8FF47]" />
+            </div>
+            <span className="font-mono text-[10px] tracking-[0.35em] text-zinc-600">FINTRACK</span>
+          </div>
+          <span className="font-mono text-[9px] tracking-[0.18em] text-zinc-800">
+            © 2026 FINTRACK WEALTH OS · OWN YOUR FUTURE · KNOW YOUR NUMBERS
+          </span>
+          <div className="flex gap-8">
+            {["PRIVACY", "TERMS", "SECURITY"].map(l => (
+              <a key={l} href="#" className="font-mono text-[9px] tracking-[0.22em] text-zinc-700 transition-colors hover:text-zinc-400">{l}</a>
             ))}
           </div>
-          <div style={{ height:220 }}><canvas ref={catBarRef}/></div>
         </div>
-
-        {/* Top expenses */}
-        <div style={{ border:`1px solid ${P.border}`, borderRadius:6, padding:28, background:P.bg }}>
-          <span className="corp-label" style={{ display:"block", marginBottom:20 }}>MAYORES MOVIMIENTOS</span>
-          <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
-            {[...TRANSACTIONS].sort((a,b) => Math.abs(b.amount)-Math.abs(a.amount)).slice(0,6).map((tx, i) => {
-              const isPos = tx.amount > 0;
-              const maxAmt = Math.abs(TRANSACTIONS.reduce((m,t) => Math.abs(t.amount) > m ? Math.abs(t.amount) : m, 0));
-              const barW = (Math.abs(tx.amount) / maxAmt * 100).toFixed(1);
-              return (
-                <div key={tx.id} style={{ padding:"11px 0", borderBottom: i<5 ? `1px solid ${P.border}` : "none" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                    <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:P.textPrimary }}>{tx.name}</span>
-                    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color: isPos ? P.positiveLight : P.negativeLight }}>
-                      {isPos?"+":"−"}€{fmt(Math.abs(tx.amount),0)}
-                    </span>
-                  </div>
-                  <div style={{ height:2, background:P.surfaceHover, borderRadius:1, overflow:"hidden" }}>
-                    <div style={{ height:"100%", width:`${barW}%`, background: isPos ? P.positive : P.negative, borderRadius:1, opacity:0.6 }}/>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Monthly summary grid */}
-      <div style={{ border:`1px solid ${P.border}`, borderRadius:6, padding:28, background:P.bg }}>
-        <span className="corp-label" style={{ display:"block", marginBottom:20 }}>RESUMEN MENSUAL · AGO 25 – MAR 26</span>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(8,1fr)", gap:8 }}>
-          {CHART_LABELS.map((label, i) => {
-            const flow = CHART_FLOW[i];
-            const net = CHART_NET[i];
-            const isPos = flow >= 0;
-            return (
-              <div key={label} style={{ border:`1px solid ${P.border}`, borderRadius:4, padding:14, background:P.surface }}>
-                <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:P.textDark, letterSpacing:"0.08em", marginBottom:10 }}>{label}</div>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:14, fontWeight:600, color:P.textSecondary, marginBottom:6 }}>€{(net/1000).toFixed(1)}K</div>
-                <div style={{ height:1, background:P.border, marginBottom:6 }}/>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color: isPos ? P.positiveLight : P.negativeLight }}>
-                  {isPos?"+":"−"}€{fmt(Math.abs(flow),0)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      </footer>
     </div>
-  );
-}
-
-// ─── SETTINGS ────────────────────────────────────────────────────────────────────
-function SettingsView() {
-  const [notif, setNotif] = useState(true);
-  const [twofa, setTwofa] = useState(true);
-  const [sync,  setSync]  = useState(false);
-
-  const Toggle = ({ val, set }: { val:boolean; set:(v:boolean)=>void }) => (
-    <div onClick={() => set(!val)} style={{ width:36, height:20, borderRadius:10, background: val ? P.positive : P.border, cursor:"pointer", transition:"background 0.2s", position:"relative", flexShrink:0 }}>
-      <div style={{ position:"absolute", top:3, left: val ? 19 : 3, width:14, height:14, borderRadius:"50%", background:P.accent, transition:"left 0.2s" }}/>
-    </div>
-  );
-
-  const Section = ({ title, children }: any) => (
-    <div style={{ border:`1px solid ${P.border}`, borderRadius:6, overflow:"hidden", marginBottom:16 }}>
-      <div style={{ padding:"12px 24px", borderBottom:`1px solid ${P.border}`, background:P.surface }}>
-        <span className="corp-label">{title}</span>
-      </div>
-      {children}
-    </div>
-  );
-
-  const Row = ({ label, desc, right }: any) => (
-    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"18px 24px", borderBottom:`1px solid ${P.border}` }}>
-      <div>
-        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:500, color:P.textPrimary }}>{label}</div>
-        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:P.textMuted, marginTop:3 }}>{desc}</div>
-      </div>
-      {right}
-    </div>
-  );
-
-  return (
-    <div className="fade-up" style={{ padding:40, maxWidth:720 }}>
-      <div style={{ marginBottom:28 }}>
-        <h2 style={{ fontFamily:"'Inter',sans-serif", fontSize:22, fontWeight:600, color:P.textPrimary, letterSpacing:"-0.02em", marginBottom:6 }}>Settings</h2>
-        <span className="corp-label">CONFIGURACIÓN DEL SISTEMA</span>
-      </div>
-
-      <Section title="CUENTA">
-        <Row label="Nombre completo" desc="Jorge Martínez García" right={<span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.textDark }}>EDIT</span>}/>
-        <Row label="Email institucional" desc="j.martinez@jpmorgan.com" right={<span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.textDark }}>EDIT</span>}/>
-        <Row label="Plan activo" desc="Institutional Pro — todos los módulos activos" right={<span style={{ padding:"3px 10px", borderRadius:3, background:"rgba(16,185,129,0.1)", border:`1px solid rgba(16,185,129,0.2)`, fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:600, color:P.positiveLight }}>ACTIVO</span>}/>
-      </Section>
-
-      <Section title="SEGURIDAD">
-        <Row label="Autenticación 2FA" desc="Capa adicional de seguridad mediante app autenticadora" right={<Toggle val={twofa} set={setTwofa}/>}/>
-        <Row label="Cifrado de sesión" desc="AES-256 activo en todas las conexiones" right={<span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:P.positiveLight }}>SECURE ✓</span>}/>
-        <div style={{ padding:"18px 24px" }}>
-          <button style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, color:P.negativeLight, background:"transparent", border:`1px solid rgba(239,68,68,0.2)`, borderRadius:3, padding:"7px 14px", cursor:"pointer", letterSpacing:"0.05em" }}>CERRAR TODAS LAS SESIONES</button>
-        </div>
-      </Section>
-
-      <Section title="SISTEMA">
-        <Row label="Notificaciones push" desc="Alertas de movimientos, límites y alertas de precio" right={<Toggle val={notif} set={setNotif}/>}/>
-        <Row label="Sincronización automática" desc="Actualizar datos cada 5 minutos" right={<Toggle val={sync} set={setSync}/>}/>
-        <Row label="Zona horaria" desc="Europe/Madrid (CET/CEST)" right={null}/>
-        <Row label="Divisa base" desc="EUR · Euro" right={null}/>
-        <div style={{ borderTop:`1px solid ${P.border}` }}/>
-      </Section>
-    </div>
-  );
-}
-
-// ─── DRAWER ──────────────────────────────────────────────────────────────────────
-function Drawer({ isOpen, onClose, addToast }: any) {
-  const [type, setType] = useState("INFLOW");
-
-  if (!isOpen) return null;
-
-  const handleSubmit = () => {
-    onClose();
-    addToast("Transacción registrada correctamente", "success");
-  };
-
-  return (
-    <>
-      <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.65)", backdropFilter:"blur(4px)", zIndex:200 }} onClick={onClose}/>
-      <div className="drawer-slide" style={{ position:"fixed", top:0, right:0, bottom:0, width:460, background:P.surface, borderLeft:`1px solid ${P.border}`, zIndex:201, display:"flex", flexDirection:"column" }}>
-        
-        <div style={{ padding:"28px 32px", borderBottom:`1px solid ${P.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div>
-            <span style={{ fontFamily:"'Inter',sans-serif", fontSize:16, fontWeight:600, color:P.accent }}>Record New Entry</span>
-            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:P.textMuted, marginTop:4 }}>Añadir al libro mayor</div>
-          </div>
-          <button onClick={onClose} style={{ background:"transparent", border:`1px solid ${P.border}`, borderRadius:3, width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center", color:P.textMuted, cursor:"pointer", fontSize:14 }}>×</button>
-        </div>
-
-        <div style={{ flex:1, overflowY:"auto", padding:"28px 32px", display:"flex", flexDirection:"column", gap:22 }}>
-          
-          {/* Type */}
-          <div>
-            <label className="form-label">TIPO DE OPERACIÓN</label>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:8 }}>
-              {[
-                { val:"INFLOW",  label:"↓ ENTRADA", color:P.positiveLight },
-                { val:"OUTFLOW", label:"↑ SALIDA",  color:P.negativeLight },
-              ].map(t => (
-                <button key={t.val} onClick={() => setType(t.val)}
-                  style={{ padding:"11px", border:`1px solid ${type===t.val ? t.color : P.border}`, borderRadius:4, background: type===t.val ? "transparent" : "transparent", color: type===t.val ? t.color : P.textMuted, fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:11, cursor:"pointer", letterSpacing:"0.06em", transition:"all 0.15s" }}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Amount */}
-          <div>
-            <label className="form-label">IMPORTE (EUR)</label>
-            <input type="number" step="0.01" placeholder="0.00" className="input-inst" style={{ marginTop:8 }}/>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="form-label">DESCRIPCIÓN</label>
-            <input type="text" placeholder="Ej. Factura cliente..." className="input-inst" style={{ marginTop:8 }}/>
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="form-label">CATEGORÍA</label>
-            <select className="input-inst" style={{ marginTop:8 }}>
-              <option value="" disabled>Seleccionar...</option>
-              {["INCOME","EXPENSE","INVESTMENT","SOFTWARE"].map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
-
-          {/* Account */}
-          <div>
-            <label className="form-label">CUENTA</label>
-            <select className="input-inst" style={{ marginTop:8 }}>
-              <option value="" disabled>Seleccionar...</option>
-              {["Principal","Tarjeta","Inversión"].map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
-
-          {/* Date */}
-          <div>
-            <label className="form-label">FECHA DE LIQUIDACIÓN</label>
-            <input type="date" className="input-inst" defaultValue={new Date().toISOString().split("T")[0]} style={{ marginTop:8 }}/>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="form-label">NOTAS (OPCIONAL)</label>
-            <textarea placeholder="Observaciones adicionales..." className="input-inst" style={{ marginTop:8, resize:"vertical", minHeight:72 }}/>
-          </div>
-        </div>
-
-        <div style={{ padding:"24px 32px", borderTop:`1px solid ${P.border}`, display:"flex", gap:12, background:P.bg }}>
-          <button onClick={onClose} style={{ flex:1, padding:"11px", background:"transparent", border:`1px solid ${P.border}`, borderRadius:4, color:P.textSecondary, fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:12, cursor:"pointer", letterSpacing:"0.05em" }}>CANCELAR</button>
-          <button onClick={handleSubmit} style={{ flex:2, padding:"11px", background:P.accent, border:"none", borderRadius:4, color:P.bg, fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:12, cursor:"pointer", letterSpacing:"0.06em" }}>COMMIT ENTRY</button>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ─── ROOT ─────────────────────────────────────────────────────────────────────────
-export default function FinTrackInstitutional() {
-  const [time, setTime]         = useState("--:--:--");
-  const [loading, setLoading]   = useState(true);
-  const [activeTab, setActiveTab] = useState("OVERVIEW");
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [toasts, setToasts]     = useState<any[]>([]);
-  const [analytics, setAnalytics] = useState({
-    patrimonio_neto:0, flujo_caja_neto:0, total_ingresos:0, total_gastos:0, tasa_ahorro_pct:0,
-  });
-
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date().toLocaleTimeString("es-ES", { hour12:false })), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    fetch(API_URL, { headers:{ Authorization:`Bearer ${TOKEN}` } })
-      .then(r => r.json())
-      .then(data => { if (data.patrimonio_neto !== undefined) setAnalytics(data); setLoading(false); })
-      .catch(() => {
-        setTimeout(() => {
-          setAnalytics({ patrimonio_neto:54750.20, flujo_caja_neto:5420.00, total_ingresos:8400.00, total_gastos:2980.00, tasa_ahorro_pct:64.5 });
-          setLoading(false);
-        }, 900);
-      });
-  }, []);
-
-  const addToast = useCallback((msg: string, type = "info") => {
-    const id = Date.now();
-    setToasts(p => [...p, { id, msg, type }]);
-    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
-  }, []);
-
-  const VIEWS: Record<string, React.ReactNode> = {
-    OVERVIEW:     <OverviewView analytics={analytics} loading={loading} transactions={TRANSACTIONS}/>,
-    TRANSACTIONS: <TransactionsView transactions={TRANSACTIONS}/>,
-    PORTFOLIO:    <PortfolioView/>,
-    ANALYTICS:    <AnalyticsView/>,
-    SETTINGS:     <SettingsView/>,
-  };
-
-  return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
-        *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-        body { background:${P.bg}; color:${P.textSecondary}; font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; }
-        input, select, textarea, button { font-family:inherit; }
-        select option { background:${P.surface}; }
-
-        .corp-label { font-family:'Inter',sans-serif; font-size:10px; font-weight:600; color:${P.textMuted}; letter-spacing:0.07em; text-transform:uppercase; }
-        .kpi-value  { font-family:'IBM Plex Mono',monospace; font-size:36px; font-weight:400; letter-spacing:-0.02em; line-height:1; transition:color 0.4s; }
-        .form-label { font-family:'Inter',sans-serif; font-size:10px; font-weight:600; color:${P.textMuted}; letter-spacing:0.07em; text-transform:uppercase; }
-
-        .row-hover { transition:background 0.15s; cursor:pointer; }
-        .row-hover:hover { background:${P.surfaceHover}; }
-        .row-hover:hover .data-dim { color:${P.textSecondary} !important; }
-        .data-dim { transition:color 0.15s; }
-
-        .tab-active  { background:${P.borderLight}; color:${P.textPrimary}; border:1px solid transparent; font-family:'Inter',sans-serif; font-weight:600; font-size:11px; padding:5px 13px; cursor:default; border-radius:3px; }
-        .tab-inactive{ background:transparent; color:${P.textMuted}; border:1px solid transparent; font-family:'Inter',sans-serif; font-weight:500; font-size:11px; padding:5px 13px; cursor:pointer; transition:all 0.15s; border-radius:3px; }
-        .tab-inactive:hover { color:${P.textPrimary}; background:${P.surfaceHover}; }
-
-        .btn-text { background:transparent; border:none; color:${P.textDark}; font-family:'Inter',sans-serif; font-weight:600; font-size:11px; letter-spacing:0.05em; cursor:pointer; transition:color 0.15s; }
-        .btn-text:hover { color:${P.textPrimary}; }
-
-        .input-inst { width:100%; background:${P.bg}; border:1px solid ${P.borderLight}; padding:11px 14px; color:${P.textPrimary}; font-size:13px; outline:none; transition:border-color 0.15s; border-radius:4px; display:block; }
-        .input-inst:focus { border-color:${P.textSecondary}; }
-        .input-inst::placeholder { color:${P.textDark}; }
-
-        @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-        .fade-up { animation:fadeUp 0.35s cubic-bezier(0.16,1,0.3,1) both; }
-
-        @keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
-        .drawer-slide { animation:slideInRight 0.3s cubic-bezier(0.16,1,0.3,1); }
-
-        @keyframes toastIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
-        .toast-in { animation:toastIn 0.3s cubic-bezier(0.16,1,0.3,1); }
-
-        ::-webkit-scrollbar { width:5px; height:5px; }
-        ::-webkit-scrollbar-track { background:${P.bg}; }
-        ::-webkit-scrollbar-thumb { background:${P.borderLight}; border-radius:3px; }
-        ::-webkit-scrollbar-thumb:hover { background:${P.textMuted}; }
-      `}</style>
-
-      <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
-        <TickerBar/>
-        <TopBar time={time} activeTab={activeTab} setActiveTab={setActiveTab} loading={loading} toggleDrawer={() => setDrawerOpen(true)}/>
-        <main style={{ flex:1, display:"flex", flexDirection:"column" }}>
-          {VIEWS[activeTab]}
-        </main>
-        <footer style={{ borderTop:`1px solid ${P.border}`, padding:"16px 32px", display:"flex", justifyContent:"space-between", background:P.surface }}>
-          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:500, color:P.textDark, letterSpacing:"0.06em" }}>FINTRACK CORE SYSTEM v2.1 · ALL SYSTEMS NOMINAL</span>
-          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:P.textDark }}>SECURE CONNECTION · AES-256-GCM · TLS 1.3</span>
-        </footer>
-      </div>
-
-      <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} addToast={addToast}/>
-
-      <div style={{ position:"fixed", bottom:24, right:24, display:"flex", flexDirection:"column", gap:8, zIndex:300 }}>
-        {toasts.map(t => (
-          <div key={t.id} className="toast-in" style={{ background:P.surface, border:`1px solid ${t.type==="success" ? "rgba(16,185,129,0.3)" : P.borderLight}`, borderRadius:4, padding:"14px 20px", display:"flex", alignItems:"center", gap:10, boxShadow:"0 10px 40px rgba(0,0,0,0.6)", minWidth:260 }}>
-            <div style={{ width:6, height:6, borderRadius:"50%", background: t.type==="success" ? P.positive : P.blue, flexShrink:0 }}/>
-            <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:500, fontSize:12, color:P.textPrimary }}>{t.msg}</span>
-          </div>
-        ))}
-      </div>
-    </>
   );
 }
