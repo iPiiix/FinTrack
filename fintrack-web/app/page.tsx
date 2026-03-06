@@ -204,10 +204,15 @@ function Nav() {
           <span className="font-mono text-[11px] tracking-[0.35em] text-[#FAFAF9]">FINTRACK</span>
         </div>
         <div className="hidden items-center gap-12 md:flex">
-          {["Features", "Ledger", "Portfolio", "Security"].map((item) => (
-            <a key={item} href="#"
+          {[
+            { label: "Features", href: "#" },
+            { label: "Ledger", href: "#" },
+            { label: "Portfolio", href: "/portfolio" },
+            { label: "Security", href: "#" },
+          ].map((item) => (
+            <a key={item.label} href={item.href}
               className="font-mono text-[10px] tracking-[0.22em] text-zinc-600 transition-colors duration-200 hover:text-zinc-200">
-              {item.toUpperCase()}
+              {item.label.toUpperCase()}
             </a>
           ))}
         </div>
@@ -369,7 +374,7 @@ function Hero() {
 
   const onMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
     if (!parallaxRef.current) return;
-    const mx = (e.clientX / window.innerWidth  - .5) * 20;
+    const mx = (e.clientX / window.innerWidth - .5) * 20;
     const my = (e.clientY / window.innerHeight - .5) * 10;
     parallaxRef.current.style.transform = `translate(${mx * .25}px, ${my * .25}px)`;
   }, []);
@@ -409,8 +414,8 @@ function Hero() {
 
       {/* ── Corner crosshairs ── */}
       {([
-        { top: "14%",  left:  "5%" },
-        { top: "14%",  right: "5%" },
+        { top: "14%", left: "5%" },
+        { top: "14%", right: "5%" },
         { bottom: "20%", left: "5%" },
         { bottom: "20%", right: "5%" },
       ] as React.CSSProperties[]).map((pos, i) => (
@@ -573,41 +578,122 @@ function StatBlock({ value, label, prefix = "", suffix = "" }: { value: string; 
 }
 
 /* ============================================================
-   TERMINAL DATA
+   TERMINAL DATA — live feed
 ============================================================ */
-const terminalData = [
-  { ticker: "SPX",  name: "S&P 500",       price: "5,891.24",  chg: "+0.43%", vol: "Live",   pos: true,  bar: 72 },
-  { ticker: "AAPL", name: "Apple Inc.",     price: "178.50",    chg: "+1.21%", vol: "Live",   pos: true,  bar: 48 },
-  { ticker: "BTC",  name: "Bitcoin/EUR",    price: "62,410.50", chg: "−2.10%", vol: "Live",   pos: false, bar: 88 },
-  { ticker: "VOO",  name: "Vanguard S&P",   price: "412.30",    chg: "+0.84%", vol: "Live",   pos: true,  bar: 61 },
-  { ticker: "TSLA", name: "Tesla Inc.",     price: "185.20",    chg: "−1.12%", vol: "Live",   pos: false, bar: 35 },
-  { ticker: "CASH", name: "EUR Liquidity",  price: "1.0000",    chg: "0.00%",  vol: "Static", pos: true,  bar: 53 },
+const TERMINAL_SYMBOLS = [
+  { symbol: "^GSPC", ticker: "SPX", name: "S&P 500", bar: 72 },
+  { symbol: "AAPL", ticker: "AAPL", name: "Apple Inc.", bar: 48 },
+  { symbol: "BTC-USD", ticker: "BTC", name: "Bitcoin/USD", bar: 88 },
+  { symbol: "VOO", ticker: "VOO", name: "Vanguard S&P", bar: 61 },
+  { symbol: "TSLA", ticker: "TSLA", name: "Tesla Inc.", bar: 35 },
 ];
 
-function TerminalRow({ item, i }: { item: typeof terminalData[0]; i: number }) {
+interface LiveQuote {
+  symbol: string; price: number; changePercent: number;
+}
+
+function useTerminalData() {
+  const [data, setData] = useState<Record<string, LiveQuote>>({});
+  const [updated, setUpdated] = useState<Date | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const syms = TERMINAL_SYMBOLS.map(s => s.symbol).join(",");
+      const res = await fetch(`/api/quote?symbols=${syms}`);
+      const json = await res.json();
+      const map: Record<string, LiveQuote> = {};
+      for (const q of json.quotes ?? []) map[q.symbol] = q;
+      setData(map);
+      setUpdated(new Date());
+    } catch { /* silently fail */ }
+  }, []);
+
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+  }, [load]);
+
+  return { data, updated };
+}
+
+function TerminalRow({ sym, i, quote }: {
+  sym: typeof TERMINAL_SYMBOLS[0]; i: number; quote?: LiveQuote;
+}) {
   const [vis, setVis] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const prevPrice = useRef<number | null>(null);
+  const [flash, setFlash] = useState<"up" | "down" | null>(null);
+
   useEffect(() => {
     const t = setTimeout(() => {
-      const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVis(true); obs.disconnect(); } }, { threshold: .1 });
+      const obs = new IntersectionObserver(([e]) => {
+        if (e.isIntersecting) { setVis(true); obs.disconnect(); }
+      }, { threshold: .1 });
       if (ref.current) obs.observe(ref.current);
       return () => obs.disconnect();
     }, i * 75);
     return () => clearTimeout(t);
   }, [i]);
+
+  // Flash animation when price changes
+  useEffect(() => {
+    if (!quote?.price) return;
+    if (prevPrice.current !== null && prevPrice.current !== quote.price) {
+      setFlash(quote.price > prevPrice.current ? "up" : "down");
+      const t = setTimeout(() => setFlash(null), 800);
+      return () => clearTimeout(t);
+    }
+    prevPrice.current = quote.price;
+  }, [quote?.price]);
+
+  const price = quote?.price ?? 0;
+  const pct = quote?.changePercent ?? 0;
+  const pos = pct >= 0;
+
+  const fmtPrice = price === 0 ? "—" :
+    price < 10 ? price.toFixed(4) :
+      price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtChg = price === 0 ? "—" :
+    `${pos ? "+" : ""}${pct.toFixed(2)}%`;
+
+  // Bar = 52-week position (if available) or abs(pct) capped
+  const barPct = sym.bar;
+
   return (
     <div ref={ref} className="trow grid items-center border-b border-zinc-800/50 px-6 py-4"
-      style={{ gridTemplateColumns: "1fr 1fr 80px 80px 120px", opacity: vis ? 1 : 0, transform: vis ? "none" : "translateX(-10px)", transition: `opacity .55s ease ${i*65}ms, transform .55s cubic-bezier(.16,1,.3,1) ${i*65}ms` }}>
+      style={{
+        gridTemplateColumns: "1fr 1fr 80px 80px 120px",
+        opacity: vis ? 1 : 0,
+        transform: vis ? "none" : "translateX(-10px)",
+        transition: `opacity .55s ease ${i * 65}ms, transform .55s cubic-bezier(.16,1,.3,1) ${i * 65}ms`,
+        background: flash === "up" ? "rgba(232,255,71,.04)" : flash === "down" ? "rgba(255,87,87,.04)" : undefined,
+      }}>
       <div>
-        <div className="tick-label font-mono text-[11px] font-medium tracking-[0.15em] text-zinc-400 transition-colors duration-200">{item.ticker}</div>
-        <div className="mt-0.5 font-mono text-[9px] tracking-wider text-zinc-700">{item.name}</div>
+        <div className="tick-label font-mono text-[11px] font-medium tracking-[0.15em] text-zinc-400 transition-colors duration-200">
+          {sym.ticker}
+        </div>
+        <div className="mt-0.5 font-mono text-[9px] tracking-wider text-zinc-700">{sym.name}</div>
       </div>
-      <div className="font-mono text-sm tabular-nums text-zinc-100">{item.price}</div>
-      <div className="font-mono text-[11px] tabular-nums" style={{ color: item.pos ? "#E8FF47" : "#FF5757" }}>{item.chg}</div>
-      <div className="font-mono text-[10px] text-zinc-600">{item.vol}</div>
+      <div
+        className="font-mono text-sm tabular-nums"
+        style={{ color: flash ? (flash === "up" ? "#E8FF47" : "#FF5757") : "#FAFAF9", transition: "color .4s ease" }}
+      >
+        {fmtPrice}
+      </div>
+      <div className="font-mono text-[11px] tabular-nums" style={{ color: pos ? "#E8FF47" : "#FF5757" }}>
+        {fmtChg}
+      </div>
+      <div className="font-mono text-[10px] text-zinc-600">
+        {price > 0 ? "Live" : "…"}
+      </div>
       <div className="flex items-center pr-2">
         <div className="flex-1 rounded-sm" style={{ height: 2, background: "#1c1c1e" }}>
-          <div style={{ width: vis ? `${item.bar}%` : "0%", height: "100%", background: item.pos ? "#E8FF47" : "#FF5757", opacity: .65, transition: `width 1.3s cubic-bezier(.16,1,.3,1) ${650 + i*90}ms`, borderRadius: 1 }} />
+          <div style={{
+            width: vis ? `${barPct}%` : "0%", height: "100%",
+            background: pos ? "#E8FF47" : "#FF5757", opacity: .65,
+            transition: `width 1.3s cubic-bezier(.16,1,.3,1) ${650 + i * 90}ms`, borderRadius: 1,
+          }} />
         </div>
       </div>
     </div>
@@ -661,6 +747,7 @@ function SectionLabel({ children }: { children: string }) {
    PAGE
 ============================================================ */
 export default function FinTrackLanding() {
+  const { data: liveQuotes, updated } = useTerminalData();
   return (
     <div className="grain min-h-screen bg-[#09090B] text-white antialiased" style={{ fontFamily: "'DM Sans',sans-serif" }}>
       <GlobalStyles />
@@ -673,10 +760,10 @@ export default function FinTrackLanding() {
       <section className="border-y border-zinc-800 px-10 py-20">
         <div className="mx-auto max-w-screen-xl">
           <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
-            <StatBlock value="100"  label="DATA OWNERSHIP"          suffix="%" />
-            <StatBlock value="256"  label="AES ENCRYPTION"          suffix="-BIT" />
-            <StatBlock value="0"    label="DATA SOLD TO 3RD PARTIES" />
-            <StatBlock value="1"    label="SOURCE OF TRUTH"          />
+            <StatBlock value="100" label="DATA OWNERSHIP" suffix="%" />
+            <StatBlock value="256" label="AES ENCRYPTION" suffix="-BIT" />
+            <StatBlock value="0" label="DATA SOLD TO 3RD PARTIES" />
+            <StatBlock value="1" label="SOURCE OF TRUTH" />
           </div>
         </div>
       </section>
@@ -723,9 +810,17 @@ export default function FinTrackLanding() {
                   <span key={h} className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">{h}</span>
                 ))}
               </div>
-              {terminalData.map((item, i) => <TerminalRow key={item.ticker} item={item} i={i} />)}
-              <div className="border-t border-zinc-800/50 px-6 py-3 text-right">
-                <span className="font-mono text-[9px] tracking-[0.2em] text-zinc-800">UNIFIED DASHBOARD TECHNOLOGY</span>
+              {TERMINAL_SYMBOLS.map((sym, i) => (
+                <TerminalRow key={sym.symbol} sym={sym} i={i} quote={liveQuotes[sym.symbol]} />
+              ))}
+              <div className="border-t border-zinc-800/50 px-6 py-3 flex items-center justify-between">
+                <span className="font-mono text-[9px] tracking-[0.2em] text-zinc-800">YAHOO FINANCE · DATA MAY BE DELAYED 15 MIN</span>
+                <div className="flex items-center gap-2">
+                  <div className="h-1 w-1 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
+                  <span className="font-mono text-[9px] tracking-[0.16em] text-zinc-800">
+                    {updated ? `UPDATED ${updated.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}` : "CONNECTING…"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
