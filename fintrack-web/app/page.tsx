@@ -323,7 +323,7 @@ function OverviewView({ analytics, loading, transactions }: any) {
                   <div key={i} style={{ borderRadius:3, padding:"8px 6px", textAlign:"center", background: isPos ? `rgba(16,185,129,${0.04 + intensity*0.22})` : `rgba(239,68,68,${0.04 + intensity*0.18})`, border:`1px solid ${isPos ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}` }}>
                     <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:P.textDark, marginBottom:4 }}>{CHART_LABELS[i]}</div>
                     <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, fontWeight:600, color: isPos ? P.positiveLight : P.negativeLight }}>
-                      {isPos?"+":"-"}{fmt(Math.abs(f),0)}
+                     {isPos?"+":"-"}{fmt(Math.abs(f),0)}
                     </div>
                   </div>
                 );
