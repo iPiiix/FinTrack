@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import Link from "next/link";
 import {
   ArrowUpRight,
   BarChart2,
@@ -37,34 +38,18 @@ function GlobalStyles() {
       }
       .ticker-track { display: inline-block; animation: ticker 44s linear infinite; white-space: nowrap; }
 
-      /* ── Orb pulse rings ── */
-      @keyframes orbPulse {
-        0%   { transform: scale(1);    opacity: .18; }
-        50%  { transform: scale(1.06); opacity: .08; }
-        100% { transform: scale(1);    opacity: .18; }
+      /* ── Ambient gradient drift ── */
+      @keyframes ambientDrift1 {
+        0%   { transform: translate(0, 0) scale(1); }
+        33%  { transform: translate(60px, -40px) scale(1.05); }
+        66%  { transform: translate(-30px, 30px) scale(0.97); }
+        100% { transform: translate(0, 0) scale(1); }
       }
-      @keyframes orbRing1 {
-        0%   { transform: scale(.85); opacity: .12; }
-        50%  { transform: scale(1.12); opacity: .05; }
-        100% { transform: scale(.85); opacity: .12; }
-      }
-      @keyframes orbRing2 {
-        0%   { transform: scale(.7);  opacity: .08; }
-        50%  { transform: scale(1.2); opacity: .03; }
-        100% { transform: scale(.7);  opacity: .08; }
-      }
-      @keyframes orbRing3 {
-        0%   { transform: scale(.55); opacity: .06; }
-        50%  { transform: scale(1.3); opacity: .02; }
-        100% { transform: scale(.55); opacity: .06; }
-      }
-      @keyframes orbRotate {
-        0%   { transform: rotate(0deg);   }
-        100% { transform: rotate(360deg); }
-      }
-      @keyframes orbGlow {
-        0%,100% { opacity: .55; }
-        50%      { opacity: .75; }
+      @keyframes ambientDrift2 {
+        0%   { transform: translate(0, 0) scale(1); }
+        33%  { transform: translate(-50px, 50px) scale(1.03); }
+        66%  { transform: translate(40px, -20px) scale(0.96); }
+        100% { transform: translate(0, 0) scale(1); }
       }
 
       /* ── Scanline ── */
@@ -166,7 +151,7 @@ function GlobalStyles() {
    TICKER
 ============================================================ */
 function TickerBar() {
-  const seg = "OWN YOUR FUTURE  •  KNOW YOUR NUMBERS  •  NET WORTH TRACKING  •  CASH FLOW ANALYSIS  •  ASSET ALLOCATION  •  AES-256 ENCRYPTION  •  PORTFOLIO MANAGEMENT  •  ";
+  const seg = "OWN YOUR FUTURE  •  KNOW YOUR NUMBERS  •  SEGUIMIENTO PATRIMONIAL  •  ANÁLISIS DE FLUJO DE CAJA  •  ASIGNACIÓN DE ACTIVOS  •  CIFRADO AES-256  •  GESTIÓN DE PORTFOLIO  •  ";
   return (
     <div className="fixed top-0 left-0 right-0 z-50 overflow-hidden border-b border-zinc-800/80 bg-[#09090B]/90 backdrop-blur-md py-2">
       <div className="ticker-track font-mono text-[10px] tracking-[0.28em] text-zinc-600">
@@ -198,17 +183,15 @@ function Nav() {
     >
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-8 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-5 w-5 items-center justify-center border border-[#E8FF47]">
-            <div className="h-1.5 w-1.5 bg-[#E8FF47]" />
-          </div>
+          <img src="/unnamed.jpg" alt="FinTrack" className="h-5 w-5 object-contain" />
           <span className="font-mono text-[11px] tracking-[0.35em] text-[#FAFAF9]">FINTRACK</span>
         </div>
         <div className="hidden items-center gap-12 md:flex">
           {[
-            { label: "Features", href: "#" },
-            { label: "Ledger", href: "#" },
+            { label: "Funciones", href: "#" },
+            { label: "Registro", href: "#" },
             { label: "Portfolio", href: "/portfolio" },
-            { label: "Security", href: "#" },
+            { label: "Seguridad", href: "#" },
           ].map((item) => (
             <a key={item.label} href={item.href}
               className="font-mono text-[10px] tracking-[0.22em] text-zinc-600 transition-colors duration-200 hover:text-zinc-200">
@@ -216,131 +199,58 @@ function Nav() {
             </a>
           ))}
         </div>
-        <button className="group flex items-center gap-2 border border-zinc-700 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-200 transition-all duration-200 hover:border-[#E8FF47] hover:bg-[#E8FF47] hover:text-black">
-          START TRACKING
+        <Link href="/auth" className="group flex items-center gap-2 border border-zinc-700 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-200 transition-all duration-200 hover:border-[#E8FF47] hover:bg-[#E8FF47] hover:text-black">
+          EMPEZAR
           <ArrowUpRight size={11} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </button>
+        </Link>
       </div>
     </nav>
   );
 }
 
 /* ============================================================
-   ANIMATED ORB — the centrepiece
+   AMBIENT BACKGROUND — premium gradient mesh
 ============================================================ */
-function Orb() {
+function AmbientBackground() {
   return (
     <div
-      className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
       aria-hidden
     >
-      {/* Outermost diffuse glow — very large, very soft */}
+      {/* Primary accent glow — top right */}
       <div
         style={{
           position: "absolute",
-          width: "900px",
-          height: "900px",
+          top: "5%",
+          right: "10%",
+          width: 700,
+          height: 700,
           borderRadius: "50%",
-          background: "radial-gradient(ellipse at center, rgba(232,255,71,.07) 0%, transparent 68%)",
-          filter: "blur(40px)",
-          animation: "orbPulse 8s ease-in-out infinite",
+          background: "radial-gradient(circle, rgba(232,255,71,.06) 0%, transparent 65%)",
+          filter: "blur(80px)",
+          animation: "ambientDrift1 18s ease-in-out infinite",
         }}
       />
-
-      {/* Ring 3 — outermost traced ring */}
+      {/* Secondary cool glow — bottom left */}
       <div
         style={{
           position: "absolute",
-          width: "680px",
-          height: "680px",
+          bottom: "10%",
+          left: "5%",
+          width: 600,
+          height: 600,
           borderRadius: "50%",
-          border: "1px solid rgba(232,255,71,.05)",
-          animation: "orbRing3 11s ease-in-out infinite",
+          background: "radial-gradient(circle, rgba(120,160,255,.04) 0%, transparent 65%)",
+          filter: "blur(80px)",
+          animation: "ambientDrift2 22s ease-in-out infinite",
         }}
       />
-
-      {/* Ring 2 */}
+      {/* Subtle diagonal gradient overlay */}
       <div
         style={{
           position: "absolute",
-          width: "520px",
-          height: "520px",
-          borderRadius: "50%",
-          border: "1px solid rgba(232,255,71,.08)",
-          animation: "orbRing2 9s ease-in-out infinite",
-        }}
-      />
-
-      {/* Ring 1 — closest ring, slightly brighter */}
-      <div
-        style={{
-          position: "absolute",
-          width: "380px",
-          height: "380px",
-          borderRadius: "50%",
-          border: "1px solid rgba(232,255,71,.13)",
-          animation: "orbRing1 7s ease-in-out infinite",
-        }}
-      />
-
-      {/* Rotating dashed orbit */}
-      <div
-        style={{
-          position: "absolute",
-          width: "460px",
-          height: "460px",
-          borderRadius: "50%",
-          border: "1px dashed rgba(232,255,71,.06)",
-          animation: "orbRotate 40s linear infinite",
-        }}
-      />
-
-      {/* Inner orb — the actual glowing sphere */}
-      <div
-        style={{
-          position: "absolute",
-          width: "260px",
-          height: "260px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle at 38% 36%, rgba(232,255,71,.22) 0%, rgba(232,255,71,.06) 45%, transparent 70%)",
-          filter: "blur(28px)",
-          animation: "orbGlow 6s ease-in-out infinite",
-        }}
-      />
-
-      {/* Specular highlight — tiny bright spot */}
-      <div
-        style={{
-          position: "absolute",
-          width: "80px",
-          height: "80px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle at 40% 35%, rgba(255,255,255,.09) 0%, transparent 65%)",
-          filter: "blur(8px)",
-          transform: "translate(-30px, -20px)",
-        }}
-      />
-
-      {/* Hard centre dot */}
-      <div
-        style={{
-          position: "absolute",
-          width: "6px",
-          height: "6px",
-          borderRadius: "50%",
-          background: "rgba(232,255,71,.55)",
-          boxShadow: "0 0 12px 3px rgba(232,255,71,.25)",
-          animation: "orbGlow 6s ease-in-out infinite",
-        }}
-      />
-
-      {/* Horizontal equator line — very faint */}
-      <div
-        style={{
-          position: "absolute",
-          width: "380px",
-          height: "1px",
-          background: "linear-gradient(90deg, transparent, rgba(232,255,71,.07), transparent)",
+          inset: 0,
+          background: "linear-gradient(135deg, rgba(232,255,71,.015) 0%, transparent 40%, transparent 60%, rgba(120,160,255,.01) 100%)",
         }}
       />
     </div>
@@ -397,8 +307,16 @@ function Hero() {
       className="relative flex min-h-screen flex-col justify-end overflow-hidden px-10 pb-20 pt-28"
     >
 
-      {/* ── Animated orb — sits behind everything ── */}
-      <Orb />
+      {/* ── Ambient gradient background ── */}
+      <AmbientBackground />
+
+      {/* ── Blurred background logo watermark ── */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden" aria-hidden>
+        <img src="/unnamed.jpg" alt="" style={{
+          width: 600, height: 600, objectFit: "contain",
+          opacity: 0.03, filter: "blur(40px)",
+        }} />
+      </div>
 
       {/* ── Subtle page grid ── */}
       <div className="pointer-events-none absolute inset-0 page-grid opacity-60" />
@@ -458,7 +376,7 @@ function Hero() {
         <div className="mb-6 flex items-center gap-4 reveal-up" style={{ transitionDelay: "0ms" }}>
           <div className="line-grow h-px w-10 bg-[#E8FF47]" />
           <span className="font-mono text-[10px] tracking-[0.4em] text-zinc-500">
-            WEALTH MANAGEMENT PLATFORM — v1.0
+            PLATAFORMA DE GESTIÓN FINANCIERA — v1.0
           </span>
         </div>
 
@@ -496,23 +414,23 @@ function Hero() {
         {/* Description */}
         <div className="max-w-sm reveal-up" style={{ transitionDelay: "0ms" }}>
           <p className="font-light leading-relaxed text-zinc-500" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>
-            Institutional-grade financial tracking for the modern investor. Unify your cash flow, analyze your asset allocation, and master your ledger with absolute privacy.
+            Control financiero de nivel institucional para el inversor moderno. Unifica tu flujo de caja, analiza tu asignación de activos y domina tu contabilidad con total privacidad.
           </p>
         </div>
 
         {/* CTAs */}
         <div className="flex flex-col items-end gap-3">
           <div className="flex items-center gap-3 reveal-up" style={{ transitionDelay: "90ms" }}>
-            <button className="group flex items-center gap-2.5 bg-[#E8FF47] px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-black transition-all duration-200 hover:bg-white">
-              OPEN DASHBOARD
+            <Link href="/auth" className="group flex items-center gap-2.5 bg-[#E8FF47] px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-black transition-all duration-200 hover:bg-white">
+              ABRIR DASHBOARD
               <ArrowUpRight size={12} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </button>
-            <button className="border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 transition-all duration-200 hover:border-zinc-500 hover:text-zinc-200">
-              EXPLORE FEATURES
-            </button>
+            </Link>
+            <Link href="#capabilities" className="border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 transition-all duration-200 hover:border-zinc-500 hover:text-zinc-200">
+              VER FUNCIONES
+            </Link>
           </div>
           <span className="reveal-up font-mono text-[9px] tracking-[0.2em] text-zinc-700" style={{ transitionDelay: "180ms" }}>
-            NO CREDIT CARD REQUIRED · SECURE SETUP
+            SIN TARJETA DE CRÉDITO · CONFIGURACIÓN SEGURA
           </span>
         </div>
       </div>
@@ -760,10 +678,10 @@ export default function FinTrackLanding() {
       <section className="border-y border-zinc-800 px-10 py-20">
         <div className="mx-auto max-w-screen-xl">
           <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
-            <StatBlock value="100" label="DATA OWNERSHIP" suffix="%" />
-            <StatBlock value="256" label="AES ENCRYPTION" suffix="-BIT" />
-            <StatBlock value="0" label="DATA SOLD TO 3RD PARTIES" />
-            <StatBlock value="1" label="SOURCE OF TRUTH" />
+            <StatBlock value="100" label="PROPIEDAD DE DATOS" suffix="%" />
+            <StatBlock value="256" label="CIFRADO AES" suffix="-BIT" />
+            <StatBlock value="0" label="DATOS VENDIDOS A TERCEROS" />
+            <StatBlock value="1" label="FUENTE DE VERDAD" />
           </div>
         </div>
       </section>
@@ -791,22 +709,22 @@ export default function FinTrackLanding() {
         <div className="mx-auto max-w-screen-xl">
           <div className="grid grid-cols-1 gap-20 lg:grid-cols-[260px_1fr]">
             <div>
-              <SectionLabel>MARKET INTEGRATION</SectionLabel>
+              <SectionLabel>INTEGRACIÓN DE MERCADO</SectionLabel>
               <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(44px,5vw,68px)", letterSpacing: ".02em", lineHeight: .95, color: "#FAFAF9" }}>
-                YOUR WEALTH<br />AGAINST<br />THE MARKET.
+                TU PATRIMONIO<br />FRENTE AL<br />MERCADO.
               </h2>
               <p className="mt-6 text-sm font-light leading-relaxed text-zinc-600">
-                Track your custom asset allocation alongside real-time feeds from global equities, commodities, and digital assets.
+                Sigue tu asignación de activos junto a datos en tiempo real de renta variable global, materias primas y activos digitales.
               </p>
               <div className="mt-8 flex items-center gap-3">
                 <div className="h-1.5 w-1.5 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
-                <span className="font-mono text-[9px] tracking-[0.3em] text-zinc-700">PORTFOLIO DEMO VIEW</span>
+                <span className="font-mono text-[9px] tracking-[0.3em] text-zinc-700">VISTA DEMO PORTFOLIO</span>
               </div>
             </div>
             <div className="border border-zinc-800 bg-zinc-950">
               <div className="grid border-b border-zinc-800 bg-zinc-900/30 px-6 py-3"
                 style={{ gridTemplateColumns: "1fr 1fr 80px 80px 120px" }}>
-                {["ASSET", "LAST PRICE", "CHG", "FEED", "ALLOCATION"].map(h => (
+                {["ACTIVO", "ÚLTIMO PRECIO", "VAR", "FEED", "ASIGNACIÓN"].map(h => (
                   <span key={h} className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">{h}</span>
                 ))}
               </div>
@@ -814,7 +732,7 @@ export default function FinTrackLanding() {
                 <TerminalRow key={sym.symbol} sym={sym} i={i} quote={liveQuotes[sym.symbol]} />
               ))}
               <div className="border-t border-zinc-800/50 px-6 py-3 flex items-center justify-between">
-                <span className="font-mono text-[9px] tracking-[0.2em] text-zinc-800">YAHOO FINANCE · DATA MAY BE DELAYED 15 MIN</span>
+                <span className="font-mono text-[9px] tracking-[0.2em] text-zinc-800">YAHOO FINANCE · DATOS CON HASTA 15 MIN DE RETRASO</span>
                 <div className="flex items-center gap-2">
                   <div className="h-1 w-1 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
                   <span className="font-mono text-[9px] tracking-[0.16em] text-zinc-800">
@@ -832,38 +750,45 @@ export default function FinTrackLanding() {
         <div className="mx-auto max-w-screen-xl">
           <div className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
-              <SectionLabel>CAPABILITIES</SectionLabel>
+              <SectionLabel>FUNCIONALIDADES</SectionLabel>
               <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(44px,5.5vw,80px)", color: "#FAFAF9", letterSpacing: ".02em", lineHeight: .92 }}>
-                YOUR FINANCIAL TRUTH.<br />FINALLY UNIFIED.
+                TU VERDAD FINANCIERA.<br />POR FIN UNIFICADA.
               </h2>
             </div>
             <p className="max-w-xs text-sm font-light leading-relaxed text-zinc-600 md:text-right">
-              Every tool you need to control your cash flow, analyze your portfolio, and protect your data.
+              Todas las herramientas que necesitas para controlar tu flujo de caja, analizar tu portfolio y proteger tus datos.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-px bg-zinc-800 md:grid-cols-3">
-            <FeatureCard icon={Activity} label="GENERAL LEDGER" title="The ultimate source of truth"
-              description="Record every income and expense with absolute precision. Categorize transactions, track multiple accounts, and maintain a spotless financial history."
+            <FeatureCard icon={Activity} label="LIBRO MAYOR" title="La fuente de verdad definitiva"
+              description="Registra cada ingreso y gasto con precisión absoluta. Categoriza transacciones, gestiona múltiples cuentas y mantén un historial financiero impecable."
               accent className="md:col-span-2 md:row-span-2" />
-            <FeatureCard icon={BarChart2} label="CASH FLOW" title="Monitor your burn rate"
-              description="Visualize incoming capital versus outgoing expenses. Track your monthly savings rate to hit every target." />
-            <FeatureCard icon={Globe} label="PORTFOLIO" title="Asset allocation tracking"
-              description="Manage stocks, crypto, real estate, and liquidity in one dashboard. See exactly where your wealth is deployed." />
-            <FeatureCard icon={TrendingUp} label="NET WORTH" title="Visualize your trajectory"
-              description="Watch your wealth grow over time. Historical charting compares current versus previous periods seamlessly." />
-            <FeatureCard icon={Zap} label="DATA ENTRY" title="Frictionless updates"
-              description="A quick-entry command drawer lets you log transactions in seconds. No complex menus, straight to the ledger." />
-            <FeatureCard icon={Lock} label="SECURITY" title="AES-256 Encryption"
-              description="Your data is encrypted, private, and never sold. We treat your financial history with institutional-grade security." />
-            <FeatureCard icon={Shield} label="ANALYTICS" title="Deep dive into spending"
-              description="Automatic breakdown of your top expenses and income streams. Understand exactly where your money goes every month."
+            <FeatureCard icon={BarChart2} label="FLUJO DE CAJA" title="Controla tu tasa de gasto"
+              description="Visualiza el capital entrante frente a los gastos salientes. Sigue tu tasa de ahorro mensual para alcanzar cada objetivo." />
+            <FeatureCard icon={Globe} label="PORTFOLIO" title="Seguimiento de asignación de activos"
+              description="Gestiona acciones, crypto, inmuebles y liquidez en un solo dashboard. Mira exactamente dónde está desplegado tu patrimonio." />
+            <FeatureCard icon={TrendingUp} label="PATRIMONIO NETO" title="Visualiza tu trayectoria"
+              description="Observa cómo crece tu patrimonio con el tiempo. Los gráficos históricos comparan periodos actuales con anteriores de forma fluida." />
+            <FeatureCard icon={Zap} label="ENTRADA DE DATOS" title="Actualizaciones sin fricción"
+              description="Un cajón de entrada rápida te permite registrar transacciones en segundos. Sin menús complejos, directo al registro." />
+            <FeatureCard icon={Lock} label="SEGURIDAD" title="Cifrado AES-256"
+              description="Tus datos están cifrados, son privados y nunca se venden. Tratamos tu historial financiero con seguridad de nivel institucional." />
+            <FeatureCard icon={Shield} label="ANALÍTICAS" title="Análisis profundo de gastos"
+              description="Desglose automático de tus principales gastos y fuentes de ingreso. Entiende exactamente a dónde va tu dinero cada mes."
               className="md:col-span-2" />
           </div>
         </div>
       </section>
 
       {/* ── CTA ── */}
-      <section className="border-t border-zinc-800 px-10 py-40">
+      <section className="relative border-t border-zinc-800 px-10 py-40 overflow-hidden">
+        {/* Large centered background logo */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
+          <img src="/unnamed.jpg" alt="" style={{
+            width: 1400, height: 1400, objectFit: "contain",
+            opacity: 0.025, filter: "blur(6px)",
+          }} />
+        </div>
         <div className="mx-auto max-w-screen-xl">
           <div className="relative overflow-hidden">
             <div className="pointer-events-none absolute -right-8 -bottom-12 select-none leading-none text-transparent"
@@ -872,19 +797,19 @@ export default function FinTrackLanding() {
             </div>
             <div className="relative z-10 flex flex-col gap-14 md:flex-row md:items-end md:justify-between">
               <div>
-                <SectionLabel>GET STARTED</SectionLabel>
+                <SectionLabel>EMPIEZA YA</SectionLabel>
                 <h2 className="leading-none text-white"
                   style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(56px,11vw,150px)", letterSpacing: "-.02em" }}>
-                  TAKE CONTROL<br />
-                  <span style={{ color: "#E8FF47" }}>OF YOUR CAPITAL.</span>
+                  TOMA EL CONTROL<br />
+                  <span style={{ color: "#E8FF47" }}>DE TU CAPITAL.</span>
                 </h2>
               </div>
               <div className="flex flex-col gap-4">
-                <button className="group flex items-center gap-3 border border-[#E8FF47] px-9 py-5 font-mono text-[10px] tracking-[0.22em] text-[#E8FF47] transition-all duration-200 hover:bg-[#E8FF47] hover:text-black">
-                  CREATE YOUR ACCOUNT
+                <Link href="/auth" className="group flex items-center gap-3 border border-[#E8FF47] px-9 py-5 font-mono text-[10px] tracking-[0.22em] text-[#E8FF47] transition-all duration-200 hover:bg-[#E8FF47] hover:text-black">
+                  CREAR TU CUENTA
                   <ArrowUpRight size={12} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </button>
-                <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-700">FREE FOR PERSONAL USE</p>
+                </Link>
+                <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-700">GRATIS PARA USO PERSONAL</p>
               </div>
             </div>
           </div>
@@ -895,18 +820,16 @@ export default function FinTrackLanding() {
       <footer className="border-t border-zinc-800 px-10 py-10">
         <div className="mx-auto flex max-w-screen-xl flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-3">
-            <div className="flex h-4 w-4 items-center justify-center border border-[#E8FF47]">
-              <div className="h-1 w-1 bg-[#E8FF47]" />
-            </div>
+            <img src="/unnamed.jpg" alt="FinTrack" className="h-4 w-4 object-contain" />
             <span className="font-mono text-[10px] tracking-[0.35em] text-zinc-600">FINTRACK</span>
           </div>
           <span className="font-mono text-[9px] tracking-[0.18em] text-zinc-800">
             © 2026 FINTRACK WEALTH OS · OWN YOUR FUTURE · KNOW YOUR NUMBERS
           </span>
           <div className="flex gap-8">
-            {["PRIVACY", "TERMS", "SECURITY"].map(l => (
-              <a key={l} href="#" className="font-mono text-[9px] tracking-[0.22em] text-zinc-700 transition-colors hover:text-zinc-400">{l}</a>
-            ))}
+            <Link href="/legal" className="font-mono text-[9px] tracking-[0.22em] text-zinc-700 transition-colors hover:text-zinc-400">LEGAL</Link>
+            <Link href="/terms" className="font-mono text-[9px] tracking-[0.22em] text-zinc-700 transition-colors hover:text-zinc-400">TÉRMINOS</Link>
+            <Link href="/cookies" className="font-mono text-[9px] tracking-[0.22em] text-zinc-700 transition-colors hover:text-zinc-400">COOKIES</Link>
           </div>
         </div>
       </footer>

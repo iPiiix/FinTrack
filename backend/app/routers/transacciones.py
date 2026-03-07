@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from decimal import Decimal  # 1. Importación necesaria
+from decimal import Decimal
+from typing import List
 from app.database import get_db
 from app.models.transaccion import Transaccion, TipoTransaccion
 from app.models.cuenta import Cuenta
@@ -9,6 +10,23 @@ from app.schemas.transaccion import TransaccionCreate, TransaccionResponse
 from app.routers.deps import get_current_user
 
 router = APIRouter()
+
+
+@router.get("/", response_model=List[TransaccionResponse])
+def listar_transacciones(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """List all transactions for the current user, sorted by date desc."""
+    transacciones = (
+        db.query(Transaccion)
+        .join(Cuenta, Transaccion.id_cuenta == Cuenta.id_cuenta)
+        .filter(Cuenta.id_usuario == current_user.id_usuario)
+        .order_by(Transaccion.fecha.desc())
+        .all()
+    )
+    return transacciones
+
 
 @router.post("/", response_model=TransaccionResponse, status_code=status.HTTP_201_CREATED)
 def registrar_transaccion(
@@ -27,9 +45,9 @@ def registrar_transaccion(
             detail="La cuenta no existe o no tienes permisos sobre ella"
         )
 
-    impacto = Decimal(str(abs(transaccion.cantidad))) 
-    
-    if transaccion.tipo == TipoTransaccion.gasto: 
+    impacto = Decimal(str(abs(transaccion.cantidad)))
+
+    if transaccion.tipo == TipoTransaccion.gasto:
         cuenta.balance -= impacto
     else:
         cuenta.balance += impacto
@@ -45,7 +63,7 @@ def registrar_transaccion(
     )
 
     db.add(nueva_transaccion)
-    
+
     try:
         db.commit()
         db.refresh(nueva_transaccion)

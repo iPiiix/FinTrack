@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "FinTrack | Institutional",
   description: "Advanced Wealth Management",
+  icons: {
+    icon: "/unnamed.jpg",
+    shortcut: "/unnamed.jpg",
+    apple: "/unnamed.jpg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

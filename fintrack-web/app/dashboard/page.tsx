@@ -1,65 +1,52 @@
-﻿"use client";
+// @ts-nocheck
+"use client";
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Chart from "chart.js/auto";
+import { useRouter } from "next/navigation";
+
+// ─── CHART.JS LAZY LOAD ───────────────────────────────────────────────────────
+let ChartJS: any = null;
+const loadChart = () => {
+  if (typeof window !== "undefined" && !ChartJS) {
+    return import("chart.js/auto").then(m => { ChartJS = m.default || m; return ChartJS; }).catch(() => null);
+  }
+  return Promise.resolve(ChartJS);
+};
 
 // ─── BACKEND ──────────────────────────────────────────────────────────────────
-const API_URL = "http://127.0.0.1:8000/analytics/summary";
-const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzcyNDA1OTMyfQ.3oIpWrxfwakI7cXj23gU05wf0iitoY5n10OS77lhCwY";
+const API = "http://127.0.0.1:8000";
 
-// ─── STATIC DATA ──────────────────────────────────────────────────────────────
-const CHART_LABELS = ["AGO", "SEP", "OCT", "NOV", "DIC", "ENE", "FEB", "MAR"];
-const CHART_NET = [46200, 47800, 49100, 50400, 49900, 52100, 53600, 54750];
-const CHART_PREV = [44000, 45500, 47000, 48200, 47800, 49500, 51000, 52300];
-const CHART_FLOW = [420, 680, 350, 500, -180, 820, 380, 280];
+function getToken() { return typeof window !== "undefined" ? localStorage.getItem("fintrack_token") : null; }
+function authHeaders() { return { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" }; }
 
-const TRANSACTIONS = [
-  { id: "TX-901", name: "Nómina JP Morgan", category: "INCOME", account: "Principal", amount: 5000.00, date: "01 MAR 26", status: "SETTLED" },
-  { id: "TX-902", name: "Vanguard S&P 500", category: "INVESTMENT", account: "Inversión", amount: -1000.00, date: "28 FEB 26", status: "SETTLED" },
-  { id: "TX-903", name: "AWS Cloud Hosting", category: "SOFTWARE", account: "Tarjeta", amount: -45.00, date: "25 FEB 26", status: "SETTLED" },
-  { id: "TX-904", name: "Dividendo Apple", category: "INCOME", account: "Principal", amount: 18.40, date: "20 FEB 26", status: "SETTLED" },
-  { id: "TX-905", name: "Alquiler Despacho", category: "EXPENSE", account: "Tarjeta", amount: -320.00, date: "15 FEB 26", status: "SETTLED" },
-  { id: "TX-906", name: "Suscripción Stripe", category: "SOFTWARE", account: "Tarjeta", amount: -29.00, date: "12 FEB 26", status: "SETTLED" },
-  { id: "TX-907", name: "Consultoría Alpha", category: "INCOME", account: "Principal", amount: 2400.00, date: "05 FEB 26", status: "SETTLED" },
-  { id: "TX-908", name: "Bonos Tesoro ES", category: "INVESTMENT", account: "Inversión", amount: -5000.00, date: "02 FEB 26", status: "SETTLED" },
-  { id: "TX-909", name: "Cena Directivos", category: "EXPENSE", account: "Tarjeta", amount: -180.50, date: "28 ENE 26", status: "SETTLED" },
-  { id: "TX-910", name: "Intereses Cuenta", category: "INCOME", account: "Principal", amount: 4.20, date: "15 ENE 26", status: "PENDING" },
-  { id: "TX-911", name: "Adobe Creative", category: "SOFTWARE", account: "Tarjeta", amount: -54.99, date: "10 ENE 26", status: "SETTLED" },
-  { id: "TX-912", name: "ETF MSCI World", category: "INVESTMENT", account: "Inversión", amount: -2500.00, date: "05 ENE 26", status: "SETTLED" },
-  { id: "TX-913", name: "Consultoría Beta", category: "INCOME", account: "Principal", amount: 3200.00, date: "28 DIC 25", status: "SETTLED" },
-  { id: "TX-914", name: "Seguro Médico", category: "EXPENSE", account: "Tarjeta", amount: -189.00, date: "01 DIC 25", status: "SETTLED" },
-];
-
-const PORTFOLIO = [
-  { name: "Apple Inc.", ticker: "AAPL", shares: 12, price: 178.50, value: 2142, gain: +18.4 },
-  { name: "Vanguard S&P", ticker: "VOO", shares: 8, price: 412.30, value: 3298, gain: +22.1 },
-  { name: "Tesla Inc.", ticker: "TSLA", shares: 5, price: 185.20, value: 926, gain: -8.3 },
-  { name: "MSCI World", ticker: "IWDA", shares: 25, price: 98.40, value: 2460, gain: +14.2 },
-  { name: "Bitcoin", ticker: "BTC", shares: 0.05, price: 62410, value: 3121, gain: -2.1 },
-  { name: "Bonos ES 10Y", ticker: "BONO10", shares: 50, price: 95.20, value: 4760, gain: +1.8 },
-];
-
-const ALLOCATION = [
-  { label: "RENTA VARIABLE", pct: 58, value: 31755 },
-  { label: "LIQUIDEZ", pct: 24, value: 13140 },
-  { label: "RENTA FIJA", pct: 12, value: 6570 },
-  { label: "CRYPTO", pct: 6, value: 3285 },
-];
-
-const TICKERS = [
-  { label: "IBEX 35", value: "11.234", change: "+1.2%", pos: true },
-  { label: "S&P 500", value: "5.120", change: "+0.8%", pos: true },
-  { label: "NASDAQ", value: "18.340", change: "+1.1%", pos: true },
-  { label: "BTC/EUR", value: "62.410", change: "−0.5%", pos: false },
-  { label: "EURIBOR", value: "3.84%", change: "0.0%", pos: null },
-  { label: "EUR/USD", value: "1.085", change: "+0.1%", pos: true },
-  { label: "GOLD", value: "2.312", change: "+0.3%", pos: true },
-  { label: "WTI OIL", value: "79.40", change: "−0.7%", pos: false },
-  { label: "DAX", value: "17.890", change: "+0.5%", pos: true },
-];
+async function apiFetch(path) {
+  const res = await fetch(`${API}${path}`, { headers: authHeaders() });
+  if (res.status === 401) { localStorage.removeItem("fintrack_token"); window.location.href = "/auth"; return null; }
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
-const fmt = (n: number, d = 2) =>
-  Math.abs(n).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmt = (n, d = 2) => Math.abs(n).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d });
+const MONTHS = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+
+function groupByMonth(transactions) {
+  const now = new Date();
+  const labels = [];
+  const flows = [];
+  const nets = [];
+  for (let i = 7; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    labels.push(MONTHS[d.getMonth()]);
+    const monthTxs = transactions.filter(t => t.fecha && t.fecha.startsWith(key));
+    const flow = monthTxs.reduce((s, t) => s + (t.tipo === "ingreso" ? Math.abs(t.cantidad) : -Math.abs(t.cantidad)), 0);
+    flows.push(Math.round(flow));
+    nets.push(0);
+  }
+  let running = 0;
+  flows.forEach((f, i) => { running += f; nets[i] = running; });
+  return { labels, flows, nets };
+}
 
 // ─── GLOBAL STYLES ────────────────────────────────────────────────────────────
 function Styles() {
@@ -67,378 +54,211 @@ function Styles() {
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html { font-size: 16px; }
-      body { background: #09090B; color: #A1A1AA; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+      body { background: #09090B; color: #FAFAF9; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
       input, select, textarea, button { font-family: inherit; }
       select option { background: #18181B; }
-
       .mono { font-family: 'IBM Plex Mono', monospace; }
-      .lbl  { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #52525B; }
-
-      /* KPI number */
-      .kpi-num { font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; color: #FAFAFA; transition: color 0.4s; }
-
-      /* Hover rows */
-      .row { transition: background 0.12s; }
-      .row:hover { background: #18181B; }
-
-      /* Period tab */
-      .ptab { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; padding: 4px 10px; border: 1px solid transparent; cursor: pointer; transition: all 0.15s; color: #52525B; background: transparent; }
-      .ptab:hover { color: #A1A1AA; }
+      .lbl { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #52525B; }
+      .kpi-num { font-family: 'IBM Plex Mono', monospace; font-size: 32px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; color: #FAFAFA; transition: color 0.4s; }
+      .row { transition: background 0.18s ease; }
+      .row:hover { background: rgba(255,255,255,0.025); }
+      .ptab { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; padding: 5px 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; color: #52525B; background: transparent; border-radius: 2px; }
+      .ptab:hover { color: #A1A1AA; background: rgba(255,255,255,0.03); }
       .ptab.on { color: #FAFAFA; border-color: #3F3F46; background: #27272A; }
-
-      /* Nav tab */
-      .ntab { height: 100%; padding: 0 20px; border: none; border-left: 1px solid #27272A; background: transparent; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.07em; cursor: pointer; transition: all 0.15s; color: #52525B; white-space: nowrap; }
-      .ntab:hover { color: #A1A1AA; }
-      .ntab.on { background: #09090B; color: #FAFAFA; font-weight: 600; }
-
-      /* Input */
-      .inp { width: 100%; background: #09090B; border: 1px solid #27272A; padding: 10px 14px; color: #FAFAFA; font-size: 12px; outline: none; transition: border-color 0.15s; display: block; }
-      .inp:focus { border-color: #71717A; }
+      .ntab { height: 100%; padding: 0 22px; border: none; border-left: 1px solid #27272A; background: transparent; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s ease; color: #52525B; white-space: nowrap; position: relative; }
+      .ntab:hover { color: #A1A1AA; background: rgba(255,255,255,0.02); }
+      .ntab.on { background: rgba(255,255,255,0.03); color: #FAFAFA; font-weight: 600; }
+      .ntab.on::after { content: ''; position: absolute; bottom: 0; left: 22px; right: 22px; height: 1px; background: rgba(255,255,255,0.3); }
+      .inp { width: 100%; background: #0D0D0F; border: 1px solid #27272A; padding: 11px 14px; color: #FAFAFA; font-size: 12px; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; display: block; }
+      .inp:focus { border-color: #52525B; box-shadow: 0 0 0 3px rgba(255,255,255,0.03); }
       .inp::placeholder { color: #3F3F46; }
-
-      /* Allocation bar segment */
-      .alloc-bar > div { transition: opacity 0.2s; }
-      .alloc-bar:hover > div { opacity: 0.35; }
-      .alloc-bar > div:hover { opacity: 1 !important; }
-
-      /* Animate in */
-      @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-      .vu { animation: fadeUp 0.3s cubic-bezier(0.16,1,0.3,1) both; }
-
-      @keyframes slideRight { from { transform:translateX(100%); } to { transform:translateX(0); } }
-      .drawer { animation: slideRight 0.28s cubic-bezier(0.16,1,0.3,1); }
-
-      @keyframes toastIn { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:translateX(0); } }
-      .toast { animation: toastIn 0.25s cubic-bezier(0.16,1,0.3,1); }
-
-      @keyframes ticker { from { transform:translateX(0); } to { transform:translateX(-33.333%); } }
-      .tk { display:flex; animation:ticker 60s linear infinite; white-space:nowrap; }
-
-      ::-webkit-scrollbar { width:4px; height:4px; }
-      ::-webkit-scrollbar-track { background:#09090B; }
-      ::-webkit-scrollbar-thumb { background:#27272A; }
-      ::-webkit-scrollbar-thumb:hover { background:#3F3F46; }
+      @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+      .vu { animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+      @keyframes slideRight { from { transform:translateX(100%); opacity: 0; } to { transform:translateX(0); opacity: 1; } }
+      .drawer { animation: slideRight 0.32s cubic-bezier(0.16,1,0.3,1); }
+      @keyframes toastIn { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:translateX(0); } }
+      .toast { animation: toastIn 0.28s cubic-bezier(0.16,1,0.3,1); }
+      @keyframes livePulse { 0%,100% { box-shadow: 0 0 4px #10B981; } 50% { box-shadow: 0 0 9px #10B981, 0 0 18px rgba(16,185,129,0.3); } }
+      .live-dot { animation: livePulse 2.5s ease-in-out infinite; }
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-track { background: #09090B; }
+      ::-webkit-scrollbar-thumb { background: #27272A; border-radius: 2px; }
+      ::-webkit-scrollbar-thumb:hover { background: #3F3F46; }
     `}</style>
   );
 }
 
-// ─── TICKER BAR ───────────────────────────────────────────────────────────────
-function TickerBar() {
-  const items = [...TICKERS, ...TICKERS, ...TICKERS];
+// ─── EMPTY STATE ──────────────────────────────────────────────────────────────
+function EmptyState({ title, desc }) {
   return (
-    <div className="overflow-hidden border-b border-zinc-800 bg-zinc-950" style={{ height: 26 }}>
-      <div className="tk h-full items-center" style={{ display: "flex" }}>
-        {items.map((t, i) => (
-          <div key={i} className="flex items-center gap-2.5 border-r border-zinc-800 px-6 h-full" style={{ flexShrink: 0 }}>
-            <span className="lbl">{t.label}</span>
-            <span className="mono text-[11px] font-medium text-zinc-200 tabular-nums">{t.value}</span>
-            <span className={`mono text-[10px] tabular-nums ${t.pos === true ? "text-emerald-500" : t.pos === false ? "text-red-400" : "text-zinc-600"}`}>
-              {t.change}
-            </span>
-          </div>
-        ))}
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 40px", textAlign: "center" }}>
+      <img src="/unnamed.jpg" alt="FinTrack" style={{ width: 48, height: 48, objectFit: "contain", marginBottom: 24, opacity: 0.4 }} />
+      <div style={{ fontSize: 14, fontWeight: 500, color: "#71717A", marginBottom: 8 }}>{title}</div>
+      <div style={{ fontSize: 12, color: "#3F3F46", maxWidth: 320 }}>{desc}</div>
     </div>
   );
 }
 
 // ─── TOP BAR ──────────────────────────────────────────────────────────────────
-const NAV = ["OVERVIEW", "TRANSACTIONS", "PORTFOLIO", "ANALYTICS", "SETTINGS"];
+const NAV = ["OVERVIEW", "TRANSACTIONS", "PORTFOLIO", "SETTINGS"];
 
-function TopBar({ time, tab, setTab, loading, openDrawer }: {
-  time: string; tab: string; setTab: (t: string) => void; loading: boolean; openDrawer: () => void;
-}) {
+function TopBar({ time, tab, setTab, loading, openDrawer }) {
   return (
-    <header className="sticky top-0 z-40 flex items-center border-b border-zinc-800 bg-zinc-950" style={{ height: 52 }}>
-      {/* Brand */}
-      <div className="flex items-center gap-2.5 px-6 border-r border-zinc-800 h-full flex-shrink-0">
-        <div className="w-4 h-4 border border-zinc-600 flex items-center justify-center">
-          <div className="w-1.5 h-1.5 bg-white" />
-        </div>
-        <span className="font-bold text-[11px] tracking-[0.12em] text-white">FINTRACK</span>
-        <span className="text-[9px] tracking-[0.1em] text-zinc-700 font-medium ml-1">INSTITUTIONAL</span>
+    <header style={{ position: "sticky", top: 0, zIndex: 40, display: "flex", alignItems: "center", borderBottom: "1px solid #1C1C1F", background: "rgba(9,9,11,0.97)", backdropFilter: "blur(12px)", height: 56 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 28px", borderRight: "1px solid #1C1C1F", height: "100%", flexShrink: 0 }}>
+        <img src="/unnamed.jpg" alt="FinTrack" style={{ width: 22, height: 22, objectFit: "contain" }} />
+        <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: "0.13em", color: "white" }}>FINTRACK</span>
       </div>
-
-      {/* Nav */}
-      <nav className="flex h-full">
+      <nav style={{ display: "flex", height: "100%" }}>
         {NAV.map((item, i) => (
-          <button key={item} onClick={() => setTab(item)}
-            className={`ntab ${tab === item ? "on" : ""}`}
-            style={{ borderRight: i === NAV.length - 1 ? "1px solid #27272A" : undefined }}>
-            {item}
-          </button>
+          <button key={item} onClick={() => setTab(item)} className={`ntab ${tab === item ? "on" : ""}`}
+            style={{ borderRight: i === NAV.length - 1 ? "1px solid #1C1C1F" : undefined }}>{item}</button>
         ))}
       </nav>
-
-      {/* Right */}
-      <div className="ml-auto flex items-center gap-5 px-6 flex-shrink-0">
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 20, padding: "0 28px", flexShrink: 0 }}>
         <button onClick={openDrawer}
-          className="flex items-center gap-1.5 bg-white text-black font-semibold tracking-[0.06em] text-[10px] px-4 py-2 hover:bg-zinc-200 transition-colors">
-          + NEW ENTRY
-        </button>
-        <div className="flex items-center gap-2">
-          <div className={`w-1.5 h-1.5 rounded-full ${loading ? "bg-amber-400" : "bg-emerald-500"}`}
-            style={loading ? {} : { boxShadow: "0 0 5px #10B981" }} />
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "white", color: "black", fontWeight: 700, letterSpacing: "0.07em", fontSize: 10, padding: "8px 16px", border: "none", cursor: "pointer", transition: "background 0.15s ease", borderRadius: 1 }}
+          onMouseEnter={e => e.currentTarget.style.background = "#E4E4E7"}
+          onMouseLeave={e => e.currentTarget.style.background = "white"}>+ NEW ENTRY</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className={loading ? "" : "live-dot"} style={{ width: 6, height: 6, borderRadius: "50%", background: loading ? "#FBBF24" : "#10B981", flexShrink: 0 }} />
           <span className="lbl">{loading ? "SYNCING…" : "LIVE"}</span>
         </div>
-        <div className="w-px h-5 bg-zinc-800" />
-        <span className="mono text-[11px] text-zinc-500 tabular-nums">{time} CET</span>
+        <div style={{ width: 1, height: 20, background: "#1C1C1F" }} />
+        <span className="mono" style={{ fontSize: 11, color: "#52525B" }}>{time} CET</span>
       </div>
     </header>
   );
 }
 
 // ─── OVERVIEW ─────────────────────────────────────────────────────────────────
-function OverviewView({ analytics, loading, transactions }: any) {
-  const chartRef = useRef<HTMLCanvasElement>(null);
-  const chartInst = useRef<any>(null);
-  const [period, setPeriod] = useState("3M");
-  const PERIODS = ["1M", "3M", "6M", "YTD", "ALL"];
+function OverviewView({ analytics, loading, transactions }) {
+  const chartRef = useRef(null);
+  const chartInst = useRef(null);
+  const { labels, flows, nets } = useMemo(() => groupByMonth(transactions), [transactions]);
 
   useEffect(() => {
-    if (!chartRef.current) return;
-    chartInst.current?.destroy();
-    Chart.defaults.font.family = "'IBM Plex Mono', monospace";
-    chartInst.current = new Chart(chartRef.current, {
-      type: "line",
-      data: {
-        labels: CHART_LABELS,
-        datasets: [
-          {
-            type: "line" as any, label: "NET WORTH", data: CHART_NET,
-            borderColor: "#FFFFFF", borderWidth: 1, tension: 0.3,
-            pointRadius: 0, pointHoverRadius: 4,
-            pointBackgroundColor: "#FFFFFF", yAxisID: "y", fill: true,
-            backgroundColor: (ctx: any) => {
-              const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 280);
-              g.addColorStop(0, "rgba(255,255,255,0.05)");
-              g.addColorStop(1, "rgba(255,255,255,0)");
-              return g;
-            },
-          },
-          {
-            type: "line" as any, label: "PREV PERIOD", data: CHART_PREV,
-            borderColor: "#3F3F46", borderWidth: 1, tension: 0.3,
-            borderDash: [3, 4], pointRadius: 0, yAxisID: "y",
-          },
-          {
-            type: "bar" as any, label: "CASH FLOW", data: CHART_FLOW,
-            backgroundColor: (ctx: any) =>
-              (ctx.raw as number) >= 0 ? "rgba(255,255,255,0.07)" : "rgba(239,68,68,0.12)",
-            borderColor: (ctx: any) =>
-              (ctx.raw as number) >= 0 ? "rgba(255,255,255,0.25)" : "rgba(239,68,68,0.4)",
-            borderWidth: 1, yAxisID: "y1",
-          },
-        ],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "#18181B", borderColor: "#3F3F46", borderWidth: 1,
-            padding: 12, cornerRadius: 2, displayColors: true, boxPadding: 5,
-            titleColor: "#52525B", bodyColor: "#FAFAFA",
-            titleFont: { size: 10, family: "'Inter',sans-serif", weight: "600" as any },
-            bodyFont: { size: 12, family: "'IBM Plex Mono',monospace" },
-            callbacks: {
-              title: (i: any) => i[0]?.label ?? "",
-              label: (ctx: any) => `  ${ctx.dataset.label}  €${fmt(ctx.parsed.y, 0)}`,
-            },
-          },
+    let destroyed = false;
+    loadChart().then(C => {
+      if (!C || !chartRef.current || destroyed) return;
+      chartInst.current?.destroy();
+      C.defaults.font.family = "'IBM Plex Mono', monospace";
+      chartInst.current = new C(chartRef.current, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            { type: "line", label: "CASH FLOW ACUM.", data: nets, borderColor: "#FFFFFF", borderWidth: 1.5, tension: 0.35, pointRadius: 0, pointHoverRadius: 5, yAxisID: "y", fill: true,
+              backgroundColor: ctx => { const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 280); g.addColorStop(0, "rgba(255,255,255,0.06)"); g.addColorStop(1, "rgba(255,255,255,0)"); return g; } },
+            { type: "bar", label: "FLUJO MENSUAL", data: flows, backgroundColor: ctx => ctx.raw >= 0 ? "rgba(255,255,255,0.06)" : "rgba(239,68,68,0.1)", borderColor: ctx => ctx.raw >= 0 ? "rgba(255,255,255,0.2)" : "rgba(239,68,68,0.35)", borderWidth: 1, yAxisID: "y1", borderRadius: 1 },
+          ],
         },
-        scales: {
-          x: {
-            grid: { display: false }, border: { display: false },
-            ticks: { color: "#3F3F46", font: { size: 9 }, letterSpacing: "0.05em" as any }
-          },
-          y: { display: false, min: 44000 },
-          y1: { display: false, position: "right", min: -800, max: 3000 },
+        options: {
+          responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: "#18181B", borderColor: "#3F3F46", borderWidth: 1, padding: 14, cornerRadius: 3, titleColor: "#52525B", bodyColor: "#FAFAFA", titleFont: { size: 10, family: "'Inter',sans-serif", weight: "600" }, bodyFont: { size: 12, family: "'IBM Plex Mono',monospace" }, callbacks: { label: ctx => `  ${ctx.dataset.label}  €${fmt(ctx.parsed.y, 0)}` } } },
+          scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: "#3F3F46", font: { size: 9 } } }, y: { display: false }, y1: { display: false, position: "right" } },
         },
-      },
+      });
     });
-    return () => { chartInst.current?.destroy(); };
-  }, []);
+    return () => { destroyed = true; chartInst.current?.destroy(); };
+  }, [labels, flows, nets]);
 
   const savingsRate = analytics.tasa_ahorro_pct || 0;
-  const totalPortfolio = PORTFOLIO.reduce((s, a) => s + a.value, 0);
-
   const kpis = [
-    {
-      label: "NET WORTH", unit: "EUR",
-      value: loading ? "——" : `€ ${fmt(analytics.patrimonio_neto, 0)}`,
-      bright: !loading,
-      sub: "↑ 13.6% YTD", subPos: true,
-      extra: <div className="mt-3 h-px bg-gradient-to-r from-white/20 to-transparent" />,
-    },
-    {
-      label: "CASH FLOW · 30D", unit: "EUR",
-      value: loading ? "——" : `+ € ${fmt(analytics.flujo_caja_neto, 0)}`,
-      bright: false,
-      sub: loading ? "" : `IN ${fmt(analytics.total_ingresos, 0)} · OUT ${fmt(analytics.total_gastos, 0)}`,
-      subPos: true,
-    },
-    {
-      label: "SAVINGS RATE", unit: "PCT",
-      value: loading ? "——" : `${savingsRate.toFixed(1)}%`,
-      bright: false,
-      sub: savingsRate >= 50 ? "↑ TARGET MET" : "↓ BELOW TARGET",
-      subPos: savingsRate >= 50,
-      extra: (
-        <div className="mt-3 h-0.5 bg-zinc-800 overflow-hidden">
-          <div className="h-full bg-white/40 transition-all duration-1000"
-            style={{ width: `${Math.min(savingsRate, 100)}%` }} />
-        </div>
-      ),
-    },
-    {
-      label: "PORTFOLIO VALUE", unit: "EUR",
-      value: `€ ${fmt(totalPortfolio, 0)}`,
-      bright: false,
-      sub: "↑ 14.2% rentab. media", subPos: true,
-    },
+    { label: "NET WORTH", unit: "EUR", value: loading ? "——" : `€ ${fmt(analytics.patrimonio_neto, 0)}`, bright: !loading, extra: <div style={{ marginTop: 14, height: 1, background: "linear-gradient(to right, rgba(255,255,255,0.2), transparent)" }} /> },
+    { label: "CASH FLOW · 30D", unit: "EUR", value: loading ? "——" : `${analytics.flujo_caja_neto >= 0 ? "+" : "−"}€ ${fmt(analytics.flujo_caja_neto, 0)}`, bright: !loading, sub: analytics.flujo_caja_neto >= 0 ? "↑ POSITIVO" : "↓ NEGATIVO", subPos: analytics.flujo_caja_neto >= 0 },
+    { label: "INGRESOS TOTALES", unit: "EUR", value: loading ? "——" : `€ ${fmt(analytics.total_ingresos, 0)}`, bright: !loading },
+    { label: "SAVINGS RATE", unit: "%", value: loading ? "——" : `${fmt(savingsRate, 1)}%`, bright: !loading, sub: savingsRate >= 50 ? "↑ TARGET MET" : "↓ BELOW TARGET", subPos: savingsRate >= 50,
+      extra: <div style={{ marginTop: 14, height: 2, background: "#1C1C1F", overflow: "hidden", borderRadius: 1 }}><div style={{ height: "100%", background: "rgba(255,255,255,0.35)", width: `${Math.min(savingsRate, 100)}%`, transition: "width 1.2s cubic-bezier(0.16,1,0.3,1)", borderRadius: 1 }} /></div> },
   ];
 
   return (
     <div className="vu">
-      {/* KPI strip */}
-      <div className="grid grid-cols-4 border-b border-zinc-800">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", borderBottom: "1px solid #1C1C1F" }}>
         {kpis.map((k, i) => (
-          <div key={k.label} className={`p-8 flex flex-col justify-between min-h-[152px] ${i < 3 ? "border-r border-zinc-800" : ""}`}>
-            <div className="flex justify-between items-start">
+          <div key={k.label} style={{ padding: "36px 36px 32px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 164, borderRight: i < 3 ? "1px solid #1C1C1F" : undefined }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <span className="lbl">{k.label}</span>
-              <span className="lbl opacity-50">{k.unit}</span>
+              <span className="lbl" style={{ opacity: 0.4 }}>{k.unit}</span>
             </div>
             <div>
-              <div className={`kpi-num ${k.bright ? "!text-white" : "!text-zinc-200"}`}>{k.value}</div>
-              {k.sub && (
-                <div className={`mt-2 text-[11px] mono ${k.subPos ? "text-emerald-500/80" : "text-red-400/80"}`}>
-                  {k.sub}
-                </div>
-              )}
+              <div className="kpi-num" style={{ color: k.bright ? "white" : "#E4E4E7" }}>{k.value}</div>
+              {k.sub && <div className="mono" style={{ marginTop: 10, fontSize: 11, color: k.subPos ? "rgba(16,185,129,0.8)" : "rgba(248,113,113,0.8)" }}>{k.sub}</div>}
               {k.extra}
             </div>
           </div>
         ))}
       </div>
-
-      {/* Main grid */}
-      <div className="grid" style={{ gridTemplateColumns: "1fr 300px" }}>
-        {/* Chart panel */}
-        <div className="border-r border-zinc-800">
-          <div className="flex items-center justify-between px-8 pt-7 pb-0">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px" }}>
+        <div style={{ borderRight: "1px solid #1C1C1F" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "32px 36px 0" }}>
             <div>
-              <span className="lbl block mb-3">PATRIMONIO & FLUJO DE CAJA</span>
-              <div className="flex gap-5">
-                {[
-                  { label: "Net Worth", line: "bg-white" },
-                  { label: "Prev. Period", line: "bg-zinc-700", dashed: true },
-                  { label: "Cash Flow", line: "bg-white/20" },
-                ].map(l => (
-                  <div key={l.label} className="flex items-center gap-2">
-                    <div className={`w-5 h-px ${l.line}`}
-                      style={l.dashed ? { borderTop: "1px dashed #3F3F46", background: "none" } : {}} />
-                    <span className="text-[10px] text-zinc-600">{l.label}</span>
+              <span className="lbl" style={{ display: "block", marginBottom: 14 }}>FLUJO DE CAJA</span>
+              <div style={{ display: "flex", gap: 24 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 22, height: 1, borderTop: "1px solid rgba(255,255,255,0.5)" }} /><span style={{ fontSize: 10, color: "#52525B" }}>Acumulado</span></div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 10, height: 10, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }} /><span style={{ fontSize: 10, color: "#52525B" }}>Mensual</span></div>
+              </div>
+            </div>
+          </div>
+          <div style={{ height: 276, padding: "20px 12px 20px 4px" }}>
+            {transactions.length === 0 ? <EmptyState title="Sin datos" desc="Añade tu primera transacción para ver el gráfico" /> : <canvas ref={chartRef} />}
+          </div>
+          <div style={{ borderTop: "1px solid #1C1C1F", padding: "24px 36px 28px" }}>
+            <span className="lbl" style={{ display: "block", marginBottom: 14 }}>FLUJO MENSUAL</span>
+            {flows.length > 0 && flows.some(f => f !== 0) ? (
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${labels.length}, 1fr)`, gap: 5 }}>
+                {flows.map((f, i) => {
+                  const pos = f >= 0;
+                  const intensity = Math.min(Math.abs(f) / (Math.max(...flows.map(Math.abs)) || 1), 1);
+                  return (
+                    <div key={i} style={{ padding: "10px 6px", textAlign: "center", border: "1px solid", background: pos ? `rgba(255,255,255,${0.02 + intensity * 0.07})` : `rgba(239,68,68,${0.03 + intensity * 0.09})`, borderColor: pos ? `rgba(255,255,255,${0.06 + intensity * 0.1})` : `rgba(239,68,68,${0.12 + intensity * 0.12})` }}>
+                      <div className="lbl" style={{ marginBottom: 6 }}>{labels[i]}</div>
+                      <div className="mono" style={{ fontSize: 10, fontWeight: 500, color: pos ? "#D4D4D8" : "#F87171" }}>{pos ? "+" : "−"}{fmt(Math.abs(f), 0)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : <div className="lbl" style={{ color: "#3F3F46" }}>Sin transacciones aún</div>}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ borderBottom: "1px solid #1C1C1F", padding: 28 }}>
+            <span className="lbl" style={{ display: "block", marginBottom: 18 }}>CUENTAS</span>
+            {analytics._cuentas && analytics._cuentas.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {analytics._cuentas.map((c, i) => (
+                  <div key={c.id_cuenta} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: ["#FAFAFA","#71717A","#3F3F46","#27272A"][i % 4], flexShrink: 0 }} />
+                      <span className="lbl">{c.nombre}</span>
+                    </div>
+                    <span className="mono" style={{ fontSize: 10, color: "#71717A" }}>€{fmt(c.balance, 0)}</span>
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="flex gap-1">
-              {PERIODS.map(p => (
-                <button key={p} onClick={() => setPeriod(p)}
-                  className={`ptab ${period === p ? "on" : ""}`}>{p}</button>
-              ))}
-            </div>
+            ) : <div className="lbl" style={{ color: "#3F3F46" }}>Crea tu primera cuenta</div>}
           </div>
-          <div style={{ height: 264, padding: "16px 8px 16px 0" }}>
-            <canvas ref={chartRef} />
-          </div>
-
-          {/* Monthly heatmap */}
-          <div className="border-t border-zinc-800 px-8 py-5">
-            <span className="lbl block mb-3">FLUJO MENSUAL</span>
-            <div className="grid grid-cols-8 gap-1">
-              {CHART_FLOW.map((f, i) => {
-                const pos = f >= 0;
-                const intensity = Math.min(Math.abs(f) / 900, 1);
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 28px", borderBottom: "1px solid #1C1C1F" }}>
+              <span className="lbl">ÚLTIMAS TRANSACCIONES</span>
+            </div>
+            {transactions.length === 0 ? <EmptyState title="Sin transacciones" desc="Añade tu primera entrada con el botón + NEW ENTRY" /> :
+              transactions.slice(0, 6).map(tx => {
+                const pos = tx.tipo === "ingreso";
                 return (
-                  <div key={i} className="py-2 px-1.5 text-center border"
-                    style={{
-                      background: pos ? `rgba(255,255,255,${0.02 + intensity * 0.08})` : `rgba(239,68,68,${0.03 + intensity * 0.1})`,
-                      borderColor: pos ? `rgba(255,255,255,${0.06 + intensity * 0.1})` : `rgba(239,68,68,${0.12 + intensity * 0.12})`,
-                    }}>
-                    <div className="lbl mb-1">{CHART_LABELS[i]}</div>
-                    <div className={`mono text-[10px] font-medium tabular-nums ${pos ? "text-zinc-300" : "text-red-400"}`}>
-                      {pos ? "+" : "−"}{fmt(Math.abs(f), 0)}
+                  <div key={tx.id_transaccion} className="row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", borderBottom: "1px solid rgba(28,28,31,0.8)" }}>
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: "#E4E4E7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginBottom: 4 }}>{tx.nombre}</div>
+                      <div className="lbl">{tx.fecha ? new Date(tx.fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "2-digit" }).toUpperCase() : ""}</div>
+                    </div>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <div className="mono" style={{ fontSize: 12, color: pos ? "#10B981" : "#A1A1AA" }}>{pos ? "+" : "−"}€{fmt(Math.abs(tx.cantidad))}</div>
+                      {tx.estado === "pendiente" && <span style={{ fontSize: 9, fontWeight: 600, color: "#FBBF24", letterSpacing: "0.06em" }}>PENDING</span>}
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Right panel */}
-        <div className="flex flex-col">
-          {/* Allocation */}
-          <div className="border-b border-zinc-800 p-7">
-            <span className="lbl block mb-4">ASSET ALLOCATION</span>
-            {/* Segmented bar */}
-            <div className="alloc-bar flex h-1 gap-0.5 mb-5 overflow-hidden">
-              {ALLOCATION.map((a, i) => (
-                <div key={a.label} className="h-full rounded-none transition-opacity"
-                  style={{
-                    flex: a.pct,
-                    background: i === 0 ? "#FAFAFA" : i === 1 ? "#71717A" : i === 2 ? "#3F3F46" : "#27272A",
-                  }} />
-              ))}
-            </div>
-            <div className="flex flex-col gap-3">
-              {ALLOCATION.map((a, i) => {
-                const clr = i === 0 ? "#FAFAFA" : i === 1 ? "#71717A" : i === 2 ? "#3F3F46" : "#27272A";
-                return (
-                  <div key={a.label} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: clr }} />
-                      <span className="lbl">{a.label}</span>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="mono text-[10px] text-zinc-700 tabular-nums">{a.pct}%</span>
-                      <span className="mono text-[10px] text-zinc-400 tabular-nums">€{fmt(a.value, 0)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Recent */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between px-7 py-4 border-b border-zinc-800">
-              <span className="lbl">RECENT SETTLEMENTS</span>
-              <button className="lbl hover:text-zinc-300 transition-colors">ALL →</button>
-            </div>
-            {transactions.slice(0, 5).map((tx: any) => {
-              const pos = tx.amount > 0;
-              return (
-                <div key={tx.id} className="row flex items-center justify-between px-7 py-3.5 border-b border-zinc-800/60">
-                  <div className="flex flex-col gap-1 flex-1 min-w-0 pr-3">
-                    <span className="text-[12px] font-medium text-zinc-200 truncate">{tx.name}</span>
-                    <span className="lbl">{tx.date} · {tx.category}</span>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className={`mono text-[12px] tabular-nums ${pos ? "text-emerald-500" : "text-zinc-300"}`}>
-                      {pos ? "+" : "−"}€{fmt(Math.abs(tx.amount))}
-                    </div>
-                    {tx.status === "PENDING" && (
-                      <span className="text-[9px] font-semibold text-amber-400 tracking-[0.06em]">PENDING</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+              })
+            }
           </div>
         </div>
       </div>
@@ -446,458 +266,294 @@ function OverviewView({ analytics, loading, transactions }: any) {
   );
 }
 
-// ─── TRANSACTIONS ─────────────────────────────────────────────────────────────
-function TransactionsView({ transactions }: any) {
+// ─── TRANSACTIONS VIEW ────────────────────────────────────────────────────────
+function TransactionsView({ transactions }) {
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
-  const FILTERS = ["ALL", "INCOME", "EXPENSE", "INVESTMENT", "SOFTWARE"];
+  const FILTERS = ["ALL", "ingreso", "gasto", "transferencia"];
 
   const filtered = useMemo(() => {
-    let r = filter === "ALL" ? transactions : transactions.filter((t: any) => t.category === filter);
-    if (search.trim()) r = r.filter((t: any) =>
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.id.toLowerCase().includes(search.toLowerCase())
-    );
+    let r = filter === "ALL" ? transactions : transactions.filter(t => t.tipo === filter);
+    if (search.trim()) r = r.filter(t => t.nombre.toLowerCase().includes(search.toLowerCase()));
     return r;
   }, [transactions, filter, search]);
 
   const totals = useMemo(() => ({
-    income: filtered.filter((t: any) => t.amount > 0).reduce((s: number, t: any) => s + t.amount, 0),
-    expense: filtered.filter((t: any) => t.amount < 0).reduce((s: number, t: any) => s + t.amount, 0),
+    income: filtered.filter(t => t.tipo === "ingreso").reduce((s, t) => s + Math.abs(t.cantidad), 0),
+    expense: filtered.filter(t => t.tipo === "gasto").reduce((s, t) => s + Math.abs(t.cantidad), 0),
   }), [filtered]);
 
-  const COL = "100px 88px 3fr 1.2fr 1.1fr 130px 100px";
+  if (transactions.length === 0) return <EmptyState title="Sin transacciones" desc="Añade tu primera entrada con el botón + NEW ENTRY arriba" />;
 
+  const COL = "100px 3fr 1.1fr 130px 100px";
   return (
-    <div className="vu p-10">
-      <div className="flex items-end justify-between mb-7">
+    <div className="vu" style={{ padding: "44px 48px" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 32 }}>
         <div>
-          <h2 className="text-2xl font-light text-zinc-100 tracking-tight mb-1.5">General Ledger</h2>
+          <h2 style={{ fontSize: 26, fontWeight: 300, color: "#F4F4F5", letterSpacing: "-0.02em", marginBottom: 8 }}>General Ledger</h2>
           <span className="lbl">REGISTRO HISTÓRICO · {filtered.length} ENTRADAS</span>
         </div>
-        <div className="flex items-center gap-5">
-          <span className="mono text-[11px] text-emerald-500 tabular-nums">IN +€{fmt(totals.income, 0)}</span>
-          <div className="w-px h-4 bg-zinc-800" />
-          <span className="mono text-[11px] text-red-400 tabular-nums">OUT −€{fmt(Math.abs(totals.expense), 0)}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <span className="mono" style={{ fontSize: 11, color: "#10B981" }}>IN +€{fmt(totals.income, 0)}</span>
+          <div style={{ width: 1, height: 16, background: "#1C1C1F" }} />
+          <span className="mono" style={{ fontSize: 11, color: "#F87171" }}>OUT −€{fmt(totals.expense, 0)}</span>
         </div>
       </div>
-
-      {/* Controls */}
-      <div className="flex gap-3 mb-5">
-        <div className="flex-1 flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-4 py-2.5">
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#52525B" strokeWidth="1.5">
-            <circle cx="5" cy="5" r="4" /><path d="M11 11L8 8" />
-          </svg>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre o ID…"
-            className="bg-transparent border-none outline-none text-[12px] text-zinc-200 flex-1 placeholder-zinc-700 mono" />
-          {search && <button onClick={() => setSearch("")} className="text-zinc-700 hover:text-zinc-400 text-sm">×</button>}
+      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "#0D0D0F", border: "1px solid #1C1C1F", padding: "0 16px", height: 40 }}>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#3F3F46" strokeWidth="1.5"><circle cx="5" cy="5" r="4" /><path d="M11 11L8 8" /></svg>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre…"
+            style={{ background: "transparent", border: "none", outline: "none", fontSize: 12, color: "#E4E4E7", flex: 1, fontFamily: "'IBM Plex Mono', monospace" }} />
+          {search && <button onClick={() => setSearch("")} style={{ color: "#52525B", background: "none", border: "none", cursor: "pointer", fontSize: 16 }}>×</button>}
         </div>
-        <div className="flex border border-zinc-800 overflow-hidden">
+        <div style={{ display: "flex", border: "1px solid #1C1C1F", overflow: "hidden" }}>
           {FILTERS.map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className={`px-4 py-2 text-[10px] font-semibold tracking-[0.05em] border-r border-zinc-800 last:border-r-0 transition-colors ${filter === f ? "bg-zinc-800 text-zinc-100" : "text-zinc-600 hover:text-zinc-300"}`}>
-              {f}
+              style={{ padding: "0 16px", fontSize: 10, fontWeight: 600, letterSpacing: "0.05em", cursor: "pointer", background: filter === f ? "#27272A" : "transparent", color: filter === f ? "#F4F4F5" : "#52525B", height: 40, border: "none", borderRight: "1px solid #1C1C1F", whiteSpace: "nowrap", textTransform: "uppercase" }}>
+              {f === "ALL" ? "TODOS" : f}
             </button>
           ))}
         </div>
       </div>
-
-      {/* Table */}
-      <div className="border border-zinc-800 overflow-hidden">
-        <div className="grid px-6 py-3 border-b border-zinc-800 bg-zinc-900/50" style={{ gridTemplateColumns: COL }}>
-          {["FECHA", "TX ID", "DESCRIPCIÓN", "CATEGORÍA", "CUENTA", "IMPORTE (EUR)", "ESTADO"].map((h, i) => (
-            <span key={h} className="lbl" style={{ textAlign: i >= 5 ? "right" : "left" }}>{h}</span>
+      <div style={{ border: "1px solid #1C1C1F", overflow: "hidden" }}>
+        <div style={{ display: "grid", padding: "12px 24px", borderBottom: "1px solid #1C1C1F", background: "rgba(255,255,255,0.015)", gridTemplateColumns: COL }}>
+          {["FECHA", "DESCRIPCIÓN", "CUENTA", "IMPORTE (EUR)", "ESTADO"].map((h, i) => (
+            <span key={h} className="lbl" style={{ textAlign: i >= 3 ? "right" : "left" }}>{h}</span>
           ))}
         </div>
         <div style={{ maxHeight: "calc(100vh - 310px)", overflowY: "auto" }}>
-          {filtered.length === 0 ? (
-            <div className="py-16 text-center lbl">Sin resultados</div>
-          ) : filtered.map((tx: any) => {
-            const pos = tx.amount > 0;
-            return (
-              <div key={tx.id} className="row grid px-6 py-4 border-b border-zinc-800/60 items-center"
-                style={{ gridTemplateColumns: COL }}>
-                <span className="mono text-[10px] text-zinc-600 tabular-nums">{tx.date}</span>
-                <span className="mono text-[9px] text-zinc-700">{tx.id}</span>
-                <span className="text-[12px] font-medium text-zinc-200">{tx.name}</span>
-                <span className="text-[10px] text-zinc-600 uppercase tracking-wider">{tx.category}</span>
-                <span className="text-[10px] text-zinc-600">{tx.account}</span>
-                <span className={`mono text-[12px] tabular-nums font-medium text-right ${pos ? "text-emerald-500" : "text-zinc-200"}`}>
-                  {pos ? "+" : "−"}€{fmt(Math.abs(tx.amount))}
-                </span>
-                <div className="flex justify-end">
-                  <span className={`text-[9px] font-semibold tracking-[0.07em] px-2 py-1 border
-                    ${tx.status === "SETTLED" ? "border-zinc-800 text-zinc-700" : "border-amber-400/30 text-amber-400 bg-amber-400/5"}`}>
-                    {tx.status}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── PORTFOLIO ────────────────────────────────────────────────────────────────
-function PortfolioView() {
-  const total = PORTFOLIO.reduce((s, a) => s + a.value, 0);
-  const totalGain = 4240;
-  const COL = "2.5fr 70px 1fr 1fr 1fr 90px";
-
-  return (
-    <div className="vu p-10">
-      <div className="flex items-end justify-between mb-7">
-        <div>
-          <h2 className="text-2xl font-light text-zinc-100 tracking-tight mb-1.5">Portfolio</h2>
-          <span className="lbl">POSICIONES ABIERTAS · {PORTFOLIO.length} ACTIVOS</span>
-        </div>
-        <div className="flex gap-8">
-          {[
-            { l: "VALOR TOTAL", v: `€ ${fmt(total, 0)}`, c: "text-zinc-300" },
-            { l: "GANANCIA NO REALIZADA", v: `+€ ${fmt(totalGain, 0)}`, c: "text-emerald-500" },
-            { l: "RENTAB. MEDIA", v: "+14.2%", c: "text-emerald-500" },
-          ].map(k => (
-            <div key={k.l} className="text-right">
-              <div className="lbl mb-1.5">{k.l}</div>
-              <div className={`mono text-xl ${k.c} tabular-nums`}>{k.v}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="border border-zinc-800 overflow-hidden">
-        <div className="grid px-6 py-3 border-b border-zinc-800 bg-zinc-900/50" style={{ gridTemplateColumns: COL }}>
-          {["ACTIVO", "TICKER", "PRECIO", "VALOR", "% CARTERA", "RENTAB."].map((h, i) => (
-            <span key={h} className="lbl" style={{ textAlign: i > 0 ? "right" : "left" }}>{h}</span>
-          ))}
-        </div>
-        <div>
-          {PORTFOLIO.map((a, i) => {
-            const pos = a.gain > 0;
-            const pct = (a.value / total * 100).toFixed(1);
-            return (
-              <div key={a.ticker} className="row grid px-6 py-4 border-b border-zinc-800/60 items-center"
-                style={{ gridTemplateColumns: COL, borderBottom: i < PORTFOLIO.length - 1 ? undefined : "none" }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border border-zinc-800 bg-zinc-900 flex items-center justify-center flex-shrink-0">
-                    <span className="mono text-[9px] font-semibold text-zinc-500">{a.ticker.slice(0, 3)}</span>
-                  </div>
-                  <div>
-                    <div className="text-[12px] font-medium text-zinc-200">{a.name}</div>
-                    <div className="lbl mt-0.5">{a.shares} {a.shares < 1 ? "BTC" : "uds"}</div>
-                  </div>
-                </div>
-                <span className="mono text-[11px] text-zinc-500 tabular-nums text-right">€{fmt(a.price, 2)}</span>
-                <span className="mono text-[13px] font-medium text-zinc-200 tabular-nums text-right">€{fmt(a.value, 0)}</span>
-                <div className="text-right">
-                  <div className="h-0.5 bg-zinc-800 overflow-hidden mb-1.5">
-                    <div className="h-full bg-zinc-600" style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className="mono text-[10px] text-zinc-600 tabular-nums">{pct}%</span>
-                </div>
-                <span className={`mono text-[13px] font-semibold tabular-nums text-right ${pos ? "text-emerald-500" : "text-red-400"}`}>
-                  {pos ? "+" : ""}{a.gain}%
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── ANALYTICS ────────────────────────────────────────────────────────────────
-function AnalyticsView() {
-  const barRef = useRef<HTMLCanvasElement>(null);
-  const barInst = useRef<any>(null);
-
-  const catData = useMemo(() => {
-    const map: Record<string, { income: number; expense: number }> = {};
-    TRANSACTIONS.forEach(t => {
-      if (!map[t.category]) map[t.category] = { income: 0, expense: 0 };
-      if (t.amount > 0) map[t.category].income += t.amount;
-      else map[t.category].expense += Math.abs(t.amount);
-    });
-    return map;
-  }, []);
-
-  useEffect(() => {
-    if (!barRef.current) return;
-    barInst.current?.destroy();
-    const cats = Object.keys(catData);
-    barInst.current = new Chart(barRef.current, {
-      type: "bar",
-      data: {
-        labels: cats,
-        datasets: [
-          {
-            label: "INGRESOS", data: cats.map(c => catData[c].income),
-            backgroundColor: "rgba(255,255,255,0.07)", borderColor: "rgba(255,255,255,0.2)", borderWidth: 1
-          },
-          {
-            label: "GASTOS", data: cats.map(c => catData[c].expense),
-            backgroundColor: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)", borderWidth: 1
-          },
-        ],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }, tooltip: {
-            backgroundColor: "#18181B", borderColor: "#3F3F46", borderWidth: 1,
-            padding: 12, cornerRadius: 2, titleColor: "#52525B", bodyColor: "#FAFAFA",
-            titleFont: { size: 10, family: "'Inter',sans-serif", weight: "600" as any },
-            bodyFont: { size: 12, family: "'IBM Plex Mono',monospace" },
-          }
-        },
-        scales: {
-          x: { grid: { display: false }, border: { display: false }, ticks: { color: "#3F3F46", font: { size: 9 } } },
-          y: {
-            grid: { color: "rgba(63,63,70,0.4)" }, border: { display: false },
-            ticks: { color: "#3F3F46", font: { size: 9 }, callback: (v: any) => `€${(v / 1000).toFixed(0)}K` }
-          },
-        },
-      },
-    });
-    return () => { barInst.current?.destroy(); };
-  }, [catData]);
-
-  const sorted = [...TRANSACTIONS].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)).slice(0, 6);
-  const maxAmt = Math.abs(sorted[0]?.amount ?? 1);
-
-  return (
-    <div className="vu p-10">
-      <div className="mb-7">
-        <h2 className="text-2xl font-light text-zinc-100 tracking-tight mb-1.5">Analytics</h2>
-        <span className="lbl">ANÁLISIS FINANCIERO DETALLADO</span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        {/* Bar chart */}
-        <div className="border border-zinc-800 p-7">
-          <span className="lbl block mb-4">INGRESOS VS GASTOS POR CATEGORÍA</span>
-          <div className="flex gap-5 mb-4">
-            {[{ l: "INGRESOS", c: "bg-white/30" }, { l: "GASTOS", c: "bg-red-500/30" }].map(x => (
-              <div key={x.l} className="flex items-center gap-2">
-                <div className={`w-5 h-0.5 ${x.c}`} />
-                <span className="text-[10px] text-zinc-600">{x.l}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ height: 200 }}><canvas ref={barRef} /></div>
-        </div>
-
-        {/* Top movements */}
-        <div className="border border-zinc-800 p-7">
-          <span className="lbl block mb-4">MAYORES MOVIMIENTOS</span>
-          <div className="flex flex-col gap-0">
-            {sorted.map((tx, i) => {
-              const pos = tx.amount > 0;
-              const barW = (Math.abs(tx.amount) / maxAmt * 100).toFixed(1);
+          {filtered.length === 0 ? <div style={{ padding: "64px 0", textAlign: "center" }} className="lbl">Sin resultados</div> :
+            filtered.map(tx => {
+              const pos = tx.tipo === "ingreso";
               return (
-                <div key={tx.id} className="py-2.5 border-b border-zinc-800/60 last:border-0">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-[12px] text-zinc-300">{tx.name}</span>
-                    <span className={`mono text-[11px] tabular-nums ${pos ? "text-emerald-500" : "text-red-400"}`}>
-                      {pos ? "+" : "−"}€{fmt(Math.abs(tx.amount), 0)}
-                    </span>
+                <div key={tx.id_transaccion} className="row" style={{ display: "grid", padding: "16px 24px", borderBottom: "1px solid rgba(28,28,31,0.6)", alignItems: "center", gridTemplateColumns: COL }}>
+                  <span className="mono" style={{ fontSize: 10, color: "#52525B" }}>{tx.fecha ? new Date(tx.fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "2-digit" }).toUpperCase() : "—"}</span>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: "#E4E4E7" }}>{tx.nombre}</span>
+                  <span style={{ fontSize: 10, color: "#52525B" }}>Cuenta #{tx.id_cuenta}</span>
+                  <span className="mono" style={{ fontSize: 12, fontWeight: 500, textAlign: "right", color: pos ? "#10B981" : "#D4D4D8" }}>{pos ? "+" : "−"}€{fmt(Math.abs(tx.cantidad))}</span>
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.07em", padding: "4px 8px", border: "1px solid", borderColor: tx.estado === "completada" ? "#1C1C1F" : "rgba(251,191,36,0.3)", color: tx.estado === "completada" ? "#3F3F46" : "#FBBF24", background: tx.estado === "pendiente" ? "rgba(251,191,36,0.04)" : "transparent", textTransform: "uppercase" }}>{tx.estado}</span>
                   </div>
-                  <div className="h-px bg-zinc-800 overflow-hidden">
-                    <div className="h-full" style={{ width: `${barW}%`, background: pos ? "rgba(255,255,255,0.2)" : "rgba(239,68,68,0.3)" }} />
+                </div>
+              );
+            })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PORTFOLIO VIEW (LIVE YAHOO FINANCE) ──────────────────────────────────────
+const DEFAULT_TICKERS = ["AAPL", "VOO", "TSLA", "IWDA.AS", "BTC-EUR", "MSFT"];
+
+function PortfolioView() {
+  const [quotes, setQuotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tickers, setTickers] = useState(DEFAULT_TICKERS);
+  const [newTicker, setNewTicker] = useState("");
+
+  const fetchQuotes = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/quote?symbols=${tickers.join(",")}`);
+      if (res.ok) { const data = await res.json(); setQuotes(data.quotes || []); }
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, [tickers]);
+
+  useEffect(() => { fetchQuotes(); const iv = setInterval(fetchQuotes, 30000); return () => clearInterval(iv); }, [fetchQuotes]);
+
+  const addTicker = () => { if (newTicker.trim() && !tickers.includes(newTicker.trim().toUpperCase())) { setTickers(p => [...p, newTicker.trim().toUpperCase()]); setNewTicker(""); } };
+  const removeTicker = (t) => setTickers(p => p.filter(x => x !== t));
+
+  const total = quotes.reduce((s, q) => s + q.price, 0);
+
+  return (
+    <div className="vu" style={{ padding: "44px 48px" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 32 }}>
+        <div>
+          <h2 style={{ fontSize: 26, fontWeight: 300, color: "#F4F4F5", letterSpacing: "-0.02em", marginBottom: 8 }}>Portfolio</h2>
+          <span className="lbl">COTIZACIONES EN TIEMPO REAL · YAHOO FINANCE · {quotes.length} ACTIVOS</span>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <input value={newTicker} onChange={e => setNewTicker(e.target.value)} placeholder="Añadir ticker…"
+            onKeyDown={e => e.key === "Enter" && addTicker()}
+            style={{ background: "#0D0D0F", border: "1px solid #27272A", padding: "8px 14px", color: "#FAFAFA", fontSize: 11, outline: "none", width: 140, fontFamily: "'IBM Plex Mono', monospace" }} />
+          <button onClick={addTicker}
+            style={{ background: "white", color: "black", border: "none", padding: "8px 16px", fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", cursor: "pointer" }}>ADD</button>
+        </div>
+      </div>
+      {loading ? <EmptyState title="Cargando..." desc="Obteniendo cotizaciones en tiempo real" /> :
+        quotes.length === 0 ? <EmptyState title="Sin datos" desc="No se pudieron obtener cotizaciones" /> : (
+          <div style={{ border: "1px solid #1C1C1F", overflow: "hidden" }}>
+            <div style={{ display: "grid", padding: "12px 24px", borderBottom: "1px solid #1C1C1F", background: "rgba(255,255,255,0.015)", gridTemplateColumns: "2.5fr 1fr 1fr 1fr 90px" }}>
+              {["ACTIVO", "PRECIO", "CAMBIO", "VOLUMEN", ""].map((h, i) => (
+                <span key={h} className="lbl" style={{ textAlign: i > 0 ? "right" : "left" }}>{h}</span>
+              ))}
+            </div>
+            {quotes.map((q, i) => {
+              const pos = q.change >= 0;
+              return (
+                <div key={q.symbol} className="row" style={{ display: "grid", padding: "18px 24px", borderBottom: i < quotes.length - 1 ? "1px solid rgba(28,28,31,0.6)" : "none", alignItems: "center", gridTemplateColumns: "2.5fr 1fr 1fr 1fr 90px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <div style={{ width: 36, height: 36, border: "1px solid #1C1C1F", background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span className="mono" style={{ fontSize: 9, fontWeight: 600, color: "#52525B" }}>{q.symbol.slice(0, 4)}</span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "#E4E4E7", marginBottom: 3 }}>{q.name || q.symbol}</div>
+                      <div className="lbl">{q.symbol} · {q.currency}</div>
+                    </div>
+                  </div>
+                  <span className="mono" style={{ fontSize: 13, fontWeight: 500, color: "#D4D4D8", textAlign: "right" }}>{q.currency === "EUR" ? "€" : "$"}{fmt(q.price, 2)}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: pos ? "#10B981" : "#F87171" }}>{pos ? "+" : ""}{q.changePercent?.toFixed(2)}%</span>
+                    <div className="mono" style={{ fontSize: 10, color: "#52525B", marginTop: 2 }}>{pos ? "+" : ""}{q.change?.toFixed(2)}</div>
+                  </div>
+                  <span className="mono" style={{ fontSize: 11, color: "#52525B", textAlign: "right" }}>{q.volume ? (q.volume / 1e6).toFixed(1) + "M" : "—"}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <button onClick={() => removeTicker(q.symbol)}
+                      style={{ fontSize: 9, color: "#3F3F46", background: "none", border: "1px solid #1C1C1F", padding: "4px 8px", cursor: "pointer", letterSpacing: "0.05em", fontWeight: 600 }}>REMOVE</button>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      </div>
-
-      {/* Monthly grid */}
-      <div className="border border-zinc-800 p-7">
-        <span className="lbl block mb-4">RESUMEN MENSUAL · AGO 25 – MAR 26</span>
-        <div className="grid grid-cols-8 gap-2">
-          {CHART_LABELS.map((label, i) => {
-            const flow = CHART_FLOW[i], net = CHART_NET[i], pos = flow >= 0;
-            return (
-              <div key={label} className="border border-zinc-800 bg-zinc-900/40 p-3.5">
-                <div className="lbl mb-2.5">{label}</div>
-                <div className="mono text-[14px] font-medium text-zinc-300 tabular-nums mb-2">
-                  €{(net / 1000).toFixed(1)}K
-                </div>
-                <div className="h-px bg-zinc-800 mb-2" />
-                <div className={`mono text-[10px] tabular-nums ${pos ? "text-emerald-500/70" : "text-red-400/70"}`}>
-                  {pos ? "+" : "−"}€{fmt(Math.abs(flow), 0)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+        )}
     </div>
   );
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 function SettingsView() {
-  const [notif, setNotif] = useState(true);
-  const [twofa, setTwofa] = useState(true);
-  const [sync, setSync] = useState(false);
+  const router = useRouter();
+  const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("fintrack_user") || "{}") : {};
 
-  const Toggle = ({ val, set }: { val: boolean; set: (v: boolean) => void }) => (
-    <div onClick={() => set(!val)}
-      className="w-9 h-5 cursor-pointer rounded-full relative transition-colors flex-shrink-0"
-      style={{ background: val ? "#FAFAFA" : "#27272A" }}>
-      <div className="absolute top-0.5 w-4 h-4 rounded-full transition-all"
-        style={{ left: val ? "calc(100% - 18px)" : "2px", background: val ? "#09090B" : "#71717A" }} />
-    </div>
-  );
+  const handleLogout = () => {
+    localStorage.removeItem("fintrack_token");
+    localStorage.removeItem("fintrack_user");
+    router.push("/auth");
+  };
 
-  const Sec = ({ title, children }: any) => (
-    <div className="border border-zinc-800 overflow-hidden mb-4">
-      <div className="px-6 py-3 border-b border-zinc-800 bg-zinc-900/50">
-        <span className="lbl">{title}</span>
-      </div>
+  const Sec = ({ title, children }) => (
+    <div style={{ border: "1px solid #1C1C1F", overflow: "hidden", marginBottom: 16 }}>
+      <div style={{ padding: "12px 24px", borderBottom: "1px solid #1C1C1F", background: "rgba(255,255,255,0.015)" }}><span className="lbl">{title}</span></div>
       {children}
     </div>
   );
-
-  const Row = ({ label, desc, right }: any) => (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800/60 last:border-0">
+  const Row = ({ label, desc, right }) => (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid rgba(28,28,31,0.6)" }}>
       <div>
-        <div className="text-[13px] font-medium text-zinc-200">{label}</div>
-        <div className="text-[11px] text-zinc-600 mt-0.5">{desc}</div>
+        <div style={{ fontSize: 13, fontWeight: 500, color: "#E4E4E7", marginBottom: 4 }}>{label}</div>
+        <div style={{ fontSize: 11, color: "#52525B" }}>{desc}</div>
       </div>
       {right}
     </div>
   );
 
   return (
-    <div className="vu p-10" style={{ maxWidth: 720 }}>
-      <div className="mb-7">
-        <h2 className="text-2xl font-light text-zinc-100 tracking-tight mb-1.5">Settings</h2>
+    <div className="vu" style={{ padding: "44px 48px", maxWidth: 740 }}>
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: 26, fontWeight: 300, color: "#F4F4F5", letterSpacing: "-0.02em", marginBottom: 8 }}>Settings</h2>
         <span className="lbl">CONFIGURACIÓN DEL SISTEMA</span>
       </div>
-
-      <Sec title="CUENTA">
-        <Row label="Nombre completo" desc="Jorge Martínez García"
-          right={<span className="lbl hover:text-zinc-300 cursor-pointer transition-colors">EDIT</span>} />
-        <Row label="Email institucional" desc="j.martinez@jpmorgan.com"
-          right={<span className="lbl hover:text-zinc-300 cursor-pointer transition-colors">EDIT</span>} />
-        <Row label="Plan activo" desc="Institutional Pro — todos los módulos activos"
-          right={<span className="text-[9px] font-semibold tracking-[0.08em] px-2.5 py-1 border border-emerald-500/20 text-emerald-500 bg-emerald-500/5">ACTIVO</span>} />
+      <Sec title="PERFIL">
+        <Row label="Nombre" desc={user.nombre || "—"} />
+        <Row label="Email" desc={user.email || "—"}
+          right={<span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.09em", padding: "5px 10px", border: "1px solid", borderColor: user.email_verificado ? "rgba(16,185,129,0.2)" : "rgba(251,191,36,0.3)", color: user.email_verificado ? "#10B981" : "#FBBF24", background: user.email_verificado ? "rgba(16,185,129,0.04)" : "rgba(251,191,36,0.04)" }}>{user.email_verificado ? "VERIFICADO" : "PENDIENTE"}</span>} />
       </Sec>
-
       <Sec title="SEGURIDAD">
-        <Row label="Autenticación 2FA" desc="Capa adicional de seguridad mediante app autenticadora"
-          right={<Toggle val={twofa} set={setTwofa} />} />
-        <Row label="Cifrado de sesión" desc="AES-256 activo en todas las conexiones"
-          right={<span className="mono text-[10px] text-emerald-500">SECURE ✓</span>} />
-        <div className="px-6 py-4">
-          <button className="text-[10px] font-semibold text-red-400 tracking-[0.06em] border border-red-400/20 px-4 py-2 hover:bg-red-400/5 transition-colors">
-            CERRAR TODAS LAS SESIONES
+        <Row label="Cifrado de sesión" desc="AES-256 activo"
+          right={<span className="mono" style={{ fontSize: 10, color: "#10B981" }}>SECURE ✓</span>} />
+        <div style={{ padding: "16px 24px" }}>
+          <button onClick={handleLogout}
+            style={{ fontSize: 10, fontWeight: 600, color: "#F87171", letterSpacing: "0.06em", border: "1px solid rgba(248,113,113,0.2)", padding: "8px 16px", background: "transparent", cursor: "pointer" }}>
+            CERRAR SESIÓN
           </button>
         </div>
-      </Sec>
-
-      <Sec title="SISTEMA">
-        <Row label="Notificaciones push" desc="Alertas de movimientos y límites de precio"
-          right={<Toggle val={notif} set={setNotif} />} />
-        <Row label="Sincronización automática" desc="Actualizar datos cada 5 minutos"
-          right={<Toggle val={sync} set={setSync} />} />
-        <Row label="Zona horaria" desc="Europe/Madrid (CET/CEST)" right={null} />
-        <Row label="Divisa base" desc="EUR · Euro" right={null} />
       </Sec>
     </div>
   );
 }
 
 // ─── DRAWER ───────────────────────────────────────────────────────────────────
-function Drawer({ isOpen, onClose, addToast }: any) {
-  const [type, setType] = useState("INFLOW");
+function Drawer({ isOpen, onClose, onSave, cuentas, categorias }) {
+  const [type, setType] = useState("ingreso");
+  const [cantidad, setCantidad] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [idCuenta, setIdCuenta] = useState("");
+  const [idCategoria, setIdCategoria] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
   if (!isOpen) return null;
+
+  const handleSave = async () => {
+    if (!cantidad || !nombre || !idCuenta) { setError("Completa importe, descripción y cuenta"); return; }
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`${API}/transactions/`, {
+        method: "POST", headers: authHeaders(),
+        body: JSON.stringify({ cantidad: parseFloat(cantidad), tipo: type, nombre, id_cuenta: parseInt(idCuenta), id_categoria: idCategoria ? parseInt(idCategoria) : null, estado: "completada" }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => null); throw new Error(e?.detail || "Error"); }
+      onSave();
+      onClose();
+    } catch (e) { setError(e.message); }
+    setSaving(false);
+  };
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50" onClick={onClose} />
-      <div className="drawer fixed top-0 right-0 bottom-0 w-[440px] bg-zinc-950 border-l border-zinc-800 z-50 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-zinc-800">
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", zIndex: 50 }} onClick={onClose} />
+      <div className="drawer" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: 460, background: "#0C0C0E", borderLeft: "1px solid #1C1C1F", zIndex: 50, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "28px 32px", borderBottom: "1px solid #1C1C1F" }}>
           <div>
-            <div className="text-base font-medium text-white tracking-tight">Record New Entry</div>
-            <div className="text-[11px] text-zinc-600 mt-0.5">Añadir al libro mayor</div>
+            <div style={{ fontSize: 15, fontWeight: 500, color: "white", marginBottom: 4 }}>Nueva Transacción</div>
+            <div style={{ fontSize: 11, color: "#52525B" }}>Registro en el libro mayor</div>
           </div>
-          <button onClick={onClose}
-            className="w-7 h-7 border border-zinc-800 text-zinc-500 hover:text-zinc-200 hover:border-zinc-600 transition-colors flex items-center justify-center text-sm">
-            ×
-          </button>
+          <button onClick={onClose} style={{ width: 30, height: 30, border: "1px solid #27272A", color: "#71717A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, background: "transparent" }}>×</button>
         </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-6">
-          {/* Type */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 24 }}>
           <div>
-            <label className="lbl block mb-2.5">TIPO DE OPERACIÓN</label>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { val: "INFLOW", label: "↓ ENTRADA", c: "text-emerald-500 border-emerald-500/40" },
-                { val: "OUTFLOW", label: "↑ SALIDA", c: "text-red-400 border-red-400/40" },
-              ].map(t => (
+            <label className="lbl" style={{ display: "block", marginBottom: 10 }}>TIPO</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {[{ val: "ingreso", label: "↓ INGRESO", c: "#10B981" }, { val: "gasto", label: "↑ GASTO", c: "#F87171" }].map(t => (
                 <button key={t.val} onClick={() => setType(t.val)}
-                  className={`py-3 border text-[10px] font-bold tracking-[0.06em] transition-all ${type === t.val ? t.c + " bg-transparent" : "border-zinc-800 text-zinc-600 hover:border-zinc-600"
-                    }`}>
+                  style={{ padding: "12px 0", border: `1px solid ${type === t.val ? t.c + "60" : "#27272A"}`, fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", cursor: "pointer", color: type === t.val ? t.c : "#52525B", background: "transparent" }}>
                   {t.label}
                 </button>
               ))}
             </div>
           </div>
-
-          {[
-            { label: "IMPORTE (EUR)", type: "number", placeholder: "0.00", step: "0.01" },
-            { label: "DESCRIPCIÓN", type: "text", placeholder: "Ej. Factura cliente…" },
-          ].map(f => (
-            <div key={f.label}>
-              <label className="lbl block mb-2">{f.label}</label>
-              <input type={f.type} placeholder={f.placeholder} step={(f as any).step}
-                className="inp" />
-            </div>
-          ))}
-
-          {[
-            { label: "CATEGORÍA", opts: ["INCOME", "EXPENSE", "INVESTMENT", "SOFTWARE"] },
-            { label: "CUENTA", opts: ["Principal", "Tarjeta", "Inversión"] },
-          ].map(f => (
-            <div key={f.label}>
-              <label className="lbl block mb-2">{f.label}</label>
-              <select className="inp">
-                <option value="" disabled>Seleccionar…</option>
-                {f.opts.map(o => <option key={o}>{o}</option>)}
-              </select>
-            </div>
-          ))}
-
           <div>
-            <label className="lbl block mb-2">FECHA</label>
-            <input type="date" className="inp" defaultValue={new Date().toISOString().split("T")[0]} />
+            <label className="lbl" style={{ display: "block", marginBottom: 8 }}>IMPORTE (EUR)</label>
+            <input type="number" value={cantidad} onChange={e => setCantidad(e.target.value)} placeholder="0.00" className="inp" />
           </div>
-
           <div>
-            <label className="lbl block mb-2">NOTAS (OPCIONAL)</label>
-            <textarea placeholder="Observaciones adicionales…" className="inp" style={{ resize: "vertical", minHeight: 68 }} />
+            <label className="lbl" style={{ display: "block", marginBottom: 8 }}>DESCRIPCIÓN</label>
+            <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej. Nómina, Alquiler…" className="inp" />
           </div>
+          <div>
+            <label className="lbl" style={{ display: "block", marginBottom: 8 }}>CUENTA</label>
+            <select value={idCuenta} onChange={e => setIdCuenta(e.target.value)} className="inp">
+              <option value="">Seleccionar cuenta…</option>
+              {cuentas.map(c => <option key={c.id_cuenta} value={c.id_cuenta}>{c.nombre} (€{fmt(c.balance, 0)})</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="lbl" style={{ display: "block", marginBottom: 8 }}>CATEGORÍA (OPCIONAL)</label>
+            <select value={idCategoria} onChange={e => setIdCategoria(e.target.value)} className="inp">
+              <option value="">Sin categoría</option>
+              {categorias.map(c => <option key={c.id_categoria} value={c.id_categoria}>{c.nombre}</option>)}
+            </select>
+          </div>
+          {error && <div style={{ border: "1px solid rgba(248,113,113,0.2)", padding: "10px 14px" }}><span className="mono" style={{ fontSize: 10, color: "#F87171" }}>{error}</span></div>}
         </div>
-
-        {/* Footer */}
-        <div className="flex gap-3 px-8 py-5 border-t border-zinc-800 bg-zinc-950">
-          <button onClick={onClose}
-            className="flex-1 py-3 border border-zinc-800 text-zinc-500 hover:text-zinc-200 hover:border-zinc-600 text-[11px] font-semibold tracking-[0.06em] transition-all">
-            CANCELAR
-          </button>
-          <button onClick={() => { onClose(); addToast("Transacción registrada correctamente", "success"); }}
-            className="flex-[2] py-3 bg-white text-black font-bold text-[11px] tracking-[0.07em] hover:bg-zinc-200 transition-colors">
-            COMMIT ENTRY
+        <div style={{ display: "flex", gap: 10, padding: "20px 32px", borderTop: "1px solid #1C1C1F" }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px 0", border: "1px solid #27272A", color: "#71717A", cursor: "pointer", fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", background: "transparent" }}>CANCELAR</button>
+          <button onClick={handleSave} disabled={saving}
+            style={{ flex: 2, padding: "12px 0", background: "white", color: "black", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", border: "none", cursor: "pointer", opacity: saving ? 0.5 : 1 }}>
+            {saving ? "GUARDANDO…" : "COMMIT ENTRY"}
           </button>
         </div>
       </div>
@@ -905,73 +561,81 @@ function Drawer({ isOpen, onClose, addToast }: any) {
   );
 }
 
-// ─── ROOT ─────────────────────────────────────────────────────────────────────
-export default function FinTrackInstitutional() {
-  const [time, setTime] = useState("--:--:--");
+// ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
+export default function DashboardPage() {
+  const router = useRouter();
+  const [time, setTime] = useState("");
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("OVERVIEW");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [toasts, setToasts] = useState<any[]>([]);
-  const [analytics, setAnalytics] = useState({
-    patrimonio_neto: 0, flujo_caja_neto: 0, total_ingresos: 0, total_gastos: 0, tasa_ahorro_pct: 0,
-  });
+  const [toasts, setToasts] = useState([]);
+  const [analytics, setAnalytics] = useState({ patrimonio_neto: 0, flujo_caja_neto: 0, total_ingresos: 0, total_gastos: 0, tasa_ahorro_pct: 0, _cuentas: [] });
+  const [transactions, setTransactions] = useState([]);
+  const [cuentas, setCuentas] = useState([]);
+  const [categorias, setCategorias] = useState([]);
 
+  // Auth check
+  useEffect(() => { if (!getToken()) { router.push("/auth"); } }, [router]);
+
+  // Clock
   useEffect(() => {
-    const id = setInterval(() =>
-      setTime(new Date().toLocaleTimeString("es-ES", { hour12: false })), 1000);
-    return () => clearInterval(id);
+    const tick = () => setTime(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    tick(); const iv = setInterval(tick, 1000); return () => clearInterval(iv);
   }, []);
 
-  useEffect(() => {
-    fetch(API_URL, { headers: { Authorization: `Bearer ${TOKEN}` } })
-      .then(r => r.json())
-      .then(data => { if (data.patrimonio_neto !== undefined) setAnalytics(data); setLoading(false); })
-      .catch(() => {
-        setTimeout(() => {
-          setAnalytics({ patrimonio_neto: 54750.20, flujo_caja_neto: 5420.00, total_ingresos: 8400.00, total_gastos: 2980.00, tasa_ahorro_pct: 64.5 });
-          setLoading(false);
-        }, 900);
-      });
+  // Fetch all data
+  const fetchAll = useCallback(async () => {
+    if (!getToken()) return;
+    setLoading(true);
+    try {
+      const [analyticsData, txData, cuentasData, catData] = await Promise.all([
+        apiFetch("/analytics/summary"),
+        apiFetch("/transactions/"),
+        apiFetch("/cuentas/"),
+        apiFetch("/categorias/"),
+      ]);
+      if (analyticsData) setAnalytics({ ...analyticsData, _cuentas: cuentasData || [] });
+      if (txData) setTransactions(txData);
+      if (cuentasData) setCuentas(cuentasData);
+      if (catData) setCategorias(catData);
+    } catch { /* handled in apiFetch */ }
+    setLoading(false);
   }, []);
 
-  const addToast = useCallback((msg: string, type = "info") => {
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  const addToast = useCallback((msg, type = "info") => {
     const id = Date.now();
     setToasts(p => [...p, { id, msg, type }]);
     setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
   }, []);
 
-  const views: Record<string, React.ReactNode> = {
-    OVERVIEW: <OverviewView analytics={analytics} loading={loading} transactions={TRANSACTIONS} />,
-    TRANSACTIONS: <TransactionsView transactions={TRANSACTIONS} />,
+  const handleSave = () => { fetchAll(); addToast("Transacción registrada correctamente", "success"); };
+
+  const views = {
+    OVERVIEW: <OverviewView analytics={analytics} loading={loading} transactions={transactions} />,
+    TRANSACTIONS: <TransactionsView transactions={transactions} />,
     PORTFOLIO: <PortfolioView />,
-    ANALYTICS: <AnalyticsView />,
     SETTINGS: <SettingsView />,
   };
 
   return (
     <>
       <Styles />
-      <div className="min-h-screen flex flex-col" style={{ background: "#09090B" }}>
-        <TickerBar />
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#09090B" }}>
         <TopBar time={time} tab={tab} setTab={setTab} loading={loading} openDrawer={() => setDrawerOpen(true)} />
-        <main className="flex-1 flex flex-col">
-          {views[tab]}
-        </main>
-        <footer className="border-t border-zinc-800 px-8 py-3.5 flex justify-between bg-zinc-950">
+        <main style={{ flex: 1, display: "flex", flexDirection: "column" }}>{views[tab]}</main>
+        <footer style={{ borderTop: "1px solid #1C1C1F", padding: "14px 32px", display: "flex", justifyContent: "space-between", background: "#0C0C0E" }}>
           <span className="lbl">FINTRACK CORE SYSTEM v2.1 · ALL SYSTEMS NOMINAL</span>
-          <span className="mono text-[10px] text-zinc-700">SECURE CONNECTION · AES-256-GCM · TLS 1.3</span>
+          <span className="mono" style={{ fontSize: 10, color: "#3F3F46" }}>SECURE · AES-256-GCM · TLS 1.3</span>
         </footer>
       </div>
-
-      <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} addToast={addToast} />
-
-      {/* Toasts */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[300]">
+      <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} onSave={handleSave} cuentas={cuentas} categorias={categorias} />
+      <div style={{ position: "fixed", bottom: 24, right: 24, display: "flex", flexDirection: "column", gap: 8, zIndex: 300 }}>
         {toasts.map(t => (
-          <div key={t.id} className="toast flex items-center gap-3 bg-zinc-900 border border-zinc-800 px-5 py-3.5 min-w-[260px]"
-            style={{ borderColor: t.type === "success" ? "rgba(16,185,129,0.3)" : undefined, boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
-            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${t.type === "success" ? "bg-emerald-500" : "bg-white"}`} />
-            <span className="text-[12px] font-medium text-zinc-200">{t.msg}</span>
+          <div key={t.id} className="toast" style={{ display: "flex", alignItems: "center", gap: 12, background: "#18181B", border: "1px solid", borderColor: t.type === "success" ? "rgba(16,185,129,0.25)" : "#27272A", padding: "14px 20px", minWidth: 280, boxShadow: "0 12px 40px rgba(0,0,0,0.7)" }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", flexShrink: 0, background: t.type === "success" ? "#10B981" : "white" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: "#E4E4E7" }}>{t.msg}</span>
           </div>
         ))}
       </div>

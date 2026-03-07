@@ -177,17 +177,15 @@ function Nav() {
         >
             <div className="mx-auto flex max-w-screen-xl items-center justify-between px-8 py-5">
                 <a href="/" className="flex items-center gap-3">
-                    <div className="flex h-5 w-5 items-center justify-center border border-[#E8FF47]">
-                        <div className="h-1.5 w-1.5 bg-[#E8FF47]" />
-                    </div>
+                    <img src="/unnamed.jpg" alt="FinTrack" className="h-5 w-5 object-contain" />
                     <span className="font-mono text-[11px] tracking-[0.35em] text-[#FAFAF9]">FINTRACK</span>
                 </a>
                 <div className="hidden items-center gap-12 md:flex">
                     {[
                         { label: "Dashboard", href: "/dashboard" },
                         { label: "Portfolio", href: "/portfolio" },
-                        { label: "Ledger", href: "#" },
-                        { label: "Analytics", href: "#" },
+                        { label: "Registro", href: "#" },
+                        { label: "Analíticas", href: "#" },
                     ].map((item) => (
                         <a
                             key={item.label}
@@ -203,7 +201,7 @@ function Nav() {
                     href="/"
                     className="group flex items-center gap-2 border border-zinc-700 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-200 transition-all duration-200 hover:border-[#E8FF47] hover:bg-[#E8FF47] hover:text-black"
                 >
-                    HOME
+                    INICIO
                     <ArrowUpRight size={11} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </a>
             </div>
@@ -823,16 +821,14 @@ export default function PortfolioPage() {
             <footer className="border-t border-zinc-800 px-10 py-8 relative z-10">
                 <div className="mx-auto flex max-w-screen-xl flex-col items-center justify-between gap-4 md:flex-row">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-4 w-4 items-center justify-center border border-[#E8FF47]">
-                            <div className="h-1 w-1 bg-[#E8FF47]" />
-                        </div>
+                        <img src="/unnamed.jpg" alt="FinTrack" className="h-4 w-4 object-contain" />
                         <span className="font-mono text-[10px] tracking-[0.35em] text-zinc-600">FINTRACK</span>
                     </div>
                     <span className="font-mono text-[9px] tracking-[0.18em] text-zinc-800">
-                        © 2026 FINTRACK WEALTH OS · DATA FOR INFORMATIONAL PURPOSES ONLY
+                        © 2026 FINTRACK WEALTH OS · DATOS SOLO CON FINES INFORMATIVOS
                     </span>
                     <div className="flex gap-8">
-                        {["PRIVACY", "TERMS", "SECURITY"].map((l) => (
+                        {["PRIVACIDAD", "TÉRMINOS", "SEGURIDAD"].map((l) => (
                             <a key={l} href="#" className="font-mono text-[9px] tracking-[0.22em] text-zinc-700 transition-colors hover:text-zinc-400">
                                 {l}
                             </a>
