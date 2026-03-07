@@ -100,6 +100,37 @@ function GlobalStyles() {
       /* ── Pulse ── */
       @keyframes pls { 0%,100%{opacity:1} 50%{opacity:.25} }
 
+      /* ── Floating particles ── */
+      @keyframes floatUp1 {
+        0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+        10%  { opacity: 1; }
+        90%  { opacity: 1; }
+        100% { transform: translateY(-20vh) translateX(40px); opacity: 0; }
+      }
+      @keyframes floatUp2 {
+        0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+        10%  { opacity: .7; }
+        90%  { opacity: .7; }
+        100% { transform: translateY(-20vh) translateX(-30px); opacity: 0; }
+      }
+      @keyframes floatUp3 {
+        0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+        10%  { opacity: .5; }
+        90%  { opacity: .5; }
+        100% { transform: translateY(-20vh) translateX(20px); opacity: 0; }
+      }
+
+      /* ── Chart line draw ── */
+      @keyframes chartDraw {
+        0%   { stroke-dashoffset: 2000; opacity: 0; }
+        5%   { opacity: .12; }
+        100% { stroke-dashoffset: 0; opacity: .12; }
+      }
+      @keyframes chartGlow {
+        0%,100% { opacity: .06; }
+        50%     { opacity: .15; }
+      }
+
       /* ── Grain ── */
       .grain::after {
         content: '';
@@ -334,6 +365,63 @@ function Hero() {
           background: "linear-gradient(90deg, transparent, rgba(232,255,71,.05), transparent)",
           animation: "scanDown 11s linear infinite",
         }} />
+      </div>
+
+      {/* ── Floating particles ── */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        {[
+          { left: "12%", size: 3, dur: "18s", delay: "0s", anim: "floatUp1" },
+          { left: "28%", size: 2, dur: "22s", delay: "4s", anim: "floatUp2" },
+          { left: "45%", size: 2.5, dur: "20s", delay: "8s", anim: "floatUp3" },
+          { left: "62%", size: 2, dur: "24s", delay: "2s", anim: "floatUp1" },
+          { left: "78%", size: 3, dur: "19s", delay: "6s", anim: "floatUp2" },
+          { left: "90%", size: 1.5, dur: "21s", delay: "10s", anim: "floatUp3" },
+          { left: "5%",  size: 1.5, dur: "25s", delay: "12s", anim: "floatUp1" },
+          { left: "55%", size: 2, dur: "23s", delay: "14s", anim: "floatUp2" },
+        ].map((p, i) => (
+          <div key={i} style={{
+            position: "absolute",
+            left: p.left,
+            bottom: 0,
+            width: p.size,
+            height: p.size,
+            borderRadius: "50%",
+            background: i % 3 === 0 ? "#E8FF47" : "rgba(250,250,249,.4)",
+            animation: `${p.anim} ${p.dur} linear ${p.delay} infinite`,
+          }} />
+        ))}
+      </div>
+
+      {/* ── Animated chart line ── */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        <svg
+          viewBox="0 0 1400 500"
+          fill="none"
+          className="absolute bottom-0 left-0 w-full"
+          style={{ height: "60%" }}
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0 400 C100 380, 200 350, 300 300 S450 200, 550 250 S700 350, 800 280 S950 150, 1050 200 S1200 300, 1300 180 L1400 220"
+            stroke="#E8FF47"
+            strokeWidth="1.5"
+            strokeDasharray="2000"
+            style={{
+              animation: "chartDraw 8s ease-out forwards, chartGlow 6s ease-in-out 8s infinite",
+            }}
+          />
+          <path
+            d="M0 400 C100 380, 200 350, 300 300 S450 200, 550 250 S700 350, 800 280 S950 150, 1050 200 S1200 300, 1300 180 L1400 220 L1400 500 L0 500 Z"
+            fill="url(#chartFill)"
+            style={{ opacity: 0.03 }}
+          />
+          <defs>
+            <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#E8FF47" />
+              <stop offset="100%" stopColor="transparent" />
+            </linearGradient>
+          </defs>
+        </svg>
       </div>
 
       {/* ── Corner crosshairs ── */}
