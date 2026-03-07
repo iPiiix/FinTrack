@@ -742,7 +742,7 @@ export default function FinTrackLanding() {
                 <TerminalRow key={sym.symbol} sym={sym} i={i} quote={liveQuotes[sym.symbol]} />
               ))}
               <div className="border-t border-zinc-800/50 px-4 md:px-6 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
-                <span className="font-mono text-[8px] md:text-[9px] tracking-[0.2em] text-zinc-800">YAHOO FINANCE · HASTA 15 MIN RETRASO</span>
+                <span className="font-mono text-[8px] md:text-[9px] tracking-[0.2em] text-zinc-800">YAHOO FINANCE · DATOS DE MERCADO</span>
                 <div className="flex items-center gap-2">
                   <div className="h-1 w-1 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
                   <span className="font-mono text-[9px] tracking-[0.16em] text-zinc-800">
