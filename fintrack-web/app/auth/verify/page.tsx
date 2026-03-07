@@ -74,7 +74,7 @@ export default function VerifyEmailPage() {
       `}</style>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 48 }}>
-        <img src="/unnamed.jpg" alt="FinTrack" style={{ width: 24, height: 24, objectFit: "contain" }} />
+        <img src="/png.png" alt="FinTrack" style={{ width: 24, height: 24, objectFit: "contain" }} />
         <span style={{ fontFamily: "monospace", fontSize: 12, letterSpacing: "0.35em" }}>FINTRACK</span>
       </div>
 

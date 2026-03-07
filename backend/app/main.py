@@ -5,6 +5,7 @@ from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
 from app.routers import auth, transacciones, analytics, cuentas, categorias
 from app.admin import UsuarioAdmin, CuentaAdmin, TransaccionAdmin, CategoriaAdmin
+from app.config import settings
 import app.models
 
 from app.database import engine, Base
@@ -38,7 +39,7 @@ class AdminAuth(AuthenticationBackend):
         form = await request.form()
         username = form.get("username")
         password = form.get("password")
-        if username == "admin" and password == "fintrack2026":
+        if username == settings.admin_panel_user and password == settings.admin_panel_password:
             request.session.update({"authenticated": True})
             return True
         return False
@@ -53,7 +54,7 @@ class AdminAuth(AuthenticationBackend):
 
 admin = Admin(
     app, engine,
-    authentication_backend=AdminAuth(secret_key="fintrack-admin-secret"),
+    authentication_backend=AdminAuth(secret_key=settings.admin_panel_secret),
     title="FinTrack Admin",
 )
 admin.add_view(UsuarioAdmin)

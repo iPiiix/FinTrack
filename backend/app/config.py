@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     admin_email: str = ""
     frontend_url: str = "http://localhost:3000"
+    admin_panel_user: str = "admin"
+    admin_panel_password: str = ""
+    admin_panel_secret: str = ""
 
     class Config:
         env_file = ".env"

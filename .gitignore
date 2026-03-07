@@ -10,3 +10,6 @@ __pycache__/
 *.db
 
 .vscode/
+
+*.session.sql
+node_modules/

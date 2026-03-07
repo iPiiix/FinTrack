@@ -92,7 +92,7 @@ function Styles() {
 function EmptyState({ title, desc }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 40px", textAlign: "center" }}>
-      <img src="/unnamed.jpg" alt="FinTrack" style={{ width: 48, height: 48, objectFit: "contain", marginBottom: 24, opacity: 0.4 }} />
+      <img src="/png.png" alt="FinTrack" style={{ width: 48, height: 48, objectFit: "contain", marginBottom: 24, opacity: 0.4 }} />
       <div style={{ fontSize: 14, fontWeight: 500, color: "#71717A", marginBottom: 8 }}>{title}</div>
       <div style={{ fontSize: 12, color: "#3F3F46", maxWidth: 320 }}>{desc}</div>
     </div>
@@ -106,7 +106,7 @@ function TopBar({ time, tab, setTab, loading, openDrawer }) {
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 40, display: "flex", alignItems: "center", borderBottom: "1px solid #1C1C1F", background: "rgba(9,9,11,0.97)", backdropFilter: "blur(12px)", height: 56 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 28px", borderRight: "1px solid #1C1C1F", height: "100%", flexShrink: 0 }}>
-        <img src="/unnamed.jpg" alt="FinTrack" style={{ width: 22, height: 22, objectFit: "contain" }} />
+        <img src="/png.png" alt="FinTrack" style={{ width: 22, height: 22, objectFit: "contain" }} />
         <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: "0.13em", color: "white" }}>FINTRACK</span>
       </div>
       <nav style={{ display: "flex", height: "100%" }}>

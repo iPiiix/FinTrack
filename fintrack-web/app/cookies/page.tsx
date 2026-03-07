@@ -20,7 +20,7 @@ export default function CookiesPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-800 bg-[#09090B]/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-screen-xl items-center justify-between px-8 py-5">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/unnamed.jpg" alt="FinTrack" className="h-5 w-5 object-contain" />
+            <img src="/png.png" alt="FinTrack" className="h-5 w-5 object-contain" />
             <span className="font-mono text-[11px] tracking-[0.35em] text-[#FAFAF9]">FINTRACK</span>
           </Link>
           <Link href="/" className="group flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-zinc-600 transition-colors hover:text-zinc-200">
@@ -122,7 +122,7 @@ export default function CookiesPage() {
       <footer className="border-t border-zinc-800 px-10 py-10">
         <div className="mx-auto flex max-w-screen-xl flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-3">
-            <img src="/unnamed.jpg" alt="FinTrack" className="h-4 w-4 object-contain" />
+            <img src="/png.png" alt="FinTrack" className="h-4 w-4 object-contain" />
             <span className="font-mono text-[10px] tracking-[0.35em] text-zinc-600">FINTRACK</span>
           </div>
           <span className="font-mono text-[9px] tracking-[0.18em] text-zinc-800">

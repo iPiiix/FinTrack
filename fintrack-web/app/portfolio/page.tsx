@@ -177,7 +177,7 @@ function Nav() {
         >
             <div className="mx-auto flex max-w-screen-xl items-center justify-between px-8 py-5">
                 <a href="/" className="flex items-center gap-3">
-                    <img src="/unnamed.jpg" alt="FinTrack" className="h-5 w-5 object-contain" />
+                    <img src="/png.png" alt="FinTrack" className="h-5 w-5 object-contain" />
                     <span className="font-mono text-[11px] tracking-[0.35em] text-[#FAFAF9]">FINTRACK</span>
                 </a>
                 <div className="hidden items-center gap-12 md:flex">
@@ -821,7 +821,7 @@ export default function PortfolioPage() {
             <footer className="border-t border-zinc-800 px-10 py-8 relative z-10">
                 <div className="mx-auto flex max-w-screen-xl flex-col items-center justify-between gap-4 md:flex-row">
                     <div className="flex items-center gap-3">
-                        <img src="/unnamed.jpg" alt="FinTrack" className="h-4 w-4 object-contain" />
+                        <img src="/png.png" alt="FinTrack" className="h-4 w-4 object-contain" />
                         <span className="font-mono text-[10px] tracking-[0.35em] text-zinc-600">FINTRACK</span>
                     </div>
                     <span className="font-mono text-[9px] tracking-[0.18em] text-zinc-800">

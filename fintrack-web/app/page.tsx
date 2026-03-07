@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import {
-  ArrowUpRight,
   BarChart2,
   Shield,
   Zap,
@@ -143,6 +142,13 @@ function GlobalStyles() {
       ::-webkit-scrollbar { width: 3px; }
       ::-webkit-scrollbar-track { background: var(--bg); }
       ::-webkit-scrollbar-thumb { background: #27272A; }
+
+      /* ── Terminal grid responsive ── */
+      .terminal-grid { display: grid; grid-template-columns: 1fr 1fr 70px; }
+      @media (min-width: 768px) { .terminal-grid { grid-template-columns: 1fr 1fr 80px 80px 120px; } }
+      .terminal-hide-mobile { display: none; }
+      @media (min-width: 768px) { .terminal-hide-mobile { display: block; } }
+      @media (min-width: 768px) { .terminal-hide-mobile.terminal-hide-flex { display: flex; } }
     `}</style>
   );
 }
@@ -183,15 +189,15 @@ function Nav() {
     >
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-8 py-5">
         <div className="flex items-center gap-3">
-          <img src="/unnamed.jpg" alt="FinTrack" className="h-5 w-5 object-contain" />
+          <img src="/png.png" alt="FinTrack" className="h-5 w-5 object-contain" />
           <span className="font-mono text-[11px] tracking-[0.35em] text-[#FAFAF9]">FINTRACK</span>
         </div>
         <div className="hidden items-center gap-12 md:flex">
           {[
-            { label: "Funciones", href: "#" },
-            { label: "Registro", href: "#" },
+            { label: "Funciones", href: "#capabilities" },
+            { label: "Mercado", href: "#market" },
             { label: "Portfolio", href: "/portfolio" },
-            { label: "Seguridad", href: "#" },
+            { label: "Seguridad", href: "#security" },
           ].map((item) => (
             <a key={item.label} href={item.href}
               className="font-mono text-[10px] tracking-[0.22em] text-zinc-600 transition-colors duration-200 hover:text-zinc-200">
@@ -199,10 +205,10 @@ function Nav() {
             </a>
           ))}
         </div>
-        <Link href="/auth" className="group flex items-center gap-2 border border-zinc-700 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-200 transition-all duration-200 hover:border-[#E8FF47] hover:bg-[#E8FF47] hover:text-black">
-          EMPEZAR
-          <ArrowUpRight size={11} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </Link>
+        <span className="flex items-center gap-2 border border-zinc-800 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-600 cursor-default">
+          PRÓXIMAMENTE
+          <span className="h-1.5 w-1.5 rounded-full bg-[#E8FF47]/50" style={{ animation: "pls 2s ease-in-out infinite" }} />
+        </span>
       </div>
     </nav>
   );
@@ -312,7 +318,7 @@ function Hero() {
 
       {/* ── Blurred background logo watermark ── */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden" aria-hidden>
-        <img src="/unnamed.jpg" alt="" style={{
+        <img src="/png.png" alt="" style={{
           width: 600, height: 600, objectFit: "contain",
           opacity: 0.03, filter: "blur(40px)",
         }} />
@@ -421,16 +427,16 @@ function Hero() {
         {/* CTAs */}
         <div className="flex flex-col items-end gap-3">
           <div className="flex items-center gap-3 reveal-up" style={{ transitionDelay: "90ms" }}>
-            <Link href="/auth" className="group flex items-center gap-2.5 bg-[#E8FF47] px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-black transition-all duration-200 hover:bg-white">
-              ABRIR DASHBOARD
-              <ArrowUpRight size={12} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-            <Link href="#capabilities" className="border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 transition-all duration-200 hover:border-zinc-500 hover:text-zinc-200">
+            <span className="flex items-center gap-2.5 bg-zinc-900 border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 cursor-default">
+              PRÓXIMAMENTE
+              <span className="h-1.5 w-1.5 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
+            </span>
+            <a href="#capabilities" className="border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 transition-all duration-200 hover:border-zinc-500 hover:text-zinc-200">
               VER FUNCIONES
-            </Link>
+            </a>
           </div>
           <span className="reveal-up font-mono text-[9px] tracking-[0.2em] text-zinc-700" style={{ transitionDelay: "180ms" }}>
-            SIN TARJETA DE CRÉDITO · CONFIGURACIÓN SEGURA
+            LANZAMIENTO EN BREVE · MANTENTE ATENTO
           </span>
         </div>
       </div>
@@ -579,9 +585,8 @@ function TerminalRow({ sym, i, quote }: {
   const barPct = sym.bar;
 
   return (
-    <div ref={ref} className="trow grid items-center border-b border-zinc-800/50 px-6 py-4"
+    <div ref={ref} className="trow terminal-grid items-center border-b border-zinc-800/50 px-4 md:px-6 py-4"
       style={{
-        gridTemplateColumns: "1fr 1fr 80px 80px 120px",
         opacity: vis ? 1 : 0,
         transform: vis ? "none" : "translateX(-10px)",
         transition: `opacity .55s ease ${i * 65}ms, transform .55s cubic-bezier(.16,1,.3,1) ${i * 65}ms`,
@@ -602,10 +607,10 @@ function TerminalRow({ sym, i, quote }: {
       <div className="font-mono text-[11px] tabular-nums" style={{ color: pos ? "#E8FF47" : "#FF5757" }}>
         {fmtChg}
       </div>
-      <div className="font-mono text-[10px] text-zinc-600">
+      <div className="terminal-hide-mobile font-mono text-[10px] text-zinc-600">
         {price > 0 ? "Live" : "…"}
       </div>
-      <div className="flex items-center pr-2">
+      <div className="terminal-hide-mobile terminal-hide-flex items-center pr-2">
         <div className="flex-1 rounded-sm" style={{ height: 2, background: "#1c1c1e" }}>
           <div style={{
             width: vis ? `${barPct}%` : "0%", height: "100%",
@@ -641,9 +646,8 @@ function FeatureCard({ icon: Icon, label, title, description, accent, className 
           {description}
         </p>
       </div>
-      <div className="mt-8 flex items-center gap-2">
-        <span className={`font-mono text-[9px] tracking-[0.2em] ${accent ? "text-black/40" : "text-zinc-700"}`}>EXPLORE</span>
-        <ChevronRight size={10} className={`transition-transform duration-200 group-hover:translate-x-1 ${accent ? "text-black/40" : "text-zinc-700"}`} />
+      <div className="mt-8">
+        <div className={`h-px transition-all duration-500 ${accent ? "w-8 bg-black/15 group-hover:w-16 group-hover:bg-black/30" : "w-8 bg-zinc-800 group-hover:w-16 group-hover:bg-[#E8FF47]/30"}`} />
       </div>
     </div>
   );
@@ -675,12 +679,17 @@ export default function FinTrackLanding() {
       <Hero />
 
       {/* ── STATS BAND ── */}
-      <section className="border-y border-zinc-800 px-10 py-20">
+      <section id="security" className="border-y border-zinc-800 px-10 py-20">
         <div className="mx-auto max-w-screen-xl">
           <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
             <StatBlock value="100" label="PROPIEDAD DE DATOS" suffix="%" />
             <StatBlock value="256" label="CIFRADO AES" suffix="-BIT" />
-            <StatBlock value="0" label="DATOS VENDIDOS A TERCEROS" />
+            <div className="border-l border-zinc-800 pl-8">
+              <div className="font-black text-white" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(2.4rem,4.5vw,4rem)", letterSpacing: "-.01em", lineHeight: 1 }}>
+                0
+              </div>
+              <div className="mt-2 font-mono text-[10px] tracking-[0.28em] text-zinc-600">DATOS VENDIDOS A TERCEROS</div>
+            </div>
             <StatBlock value="1" label="FUENTE DE VERDAD" />
           </div>
         </div>
@@ -705,7 +714,7 @@ export default function FinTrackLanding() {
       </div>
 
       {/* ── TERMINAL DATA ── */}
-      <section className="px-10 py-32">
+      <section id="market" className="px-10 py-32">
         <div className="mx-auto max-w-screen-xl">
           <div className="grid grid-cols-1 gap-20 lg:grid-cols-[260px_1fr]">
             <div>
@@ -722,17 +731,18 @@ export default function FinTrackLanding() {
               </div>
             </div>
             <div className="border border-zinc-800 bg-zinc-950">
-              <div className="grid border-b border-zinc-800 bg-zinc-900/30 px-6 py-3"
-                style={{ gridTemplateColumns: "1fr 1fr 80px 80px 120px" }}>
-                {["ACTIVO", "ÚLTIMO PRECIO", "VAR", "FEED", "ASIGNACIÓN"].map(h => (
-                  <span key={h} className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">{h}</span>
-                ))}
+              <div className="terminal-grid border-b border-zinc-800 bg-zinc-900/30 px-4 md:px-6 py-3">
+                <span className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">ACTIVO</span>
+                <span className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">PRECIO</span>
+                <span className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">VAR</span>
+                <span className="terminal-hide-mobile font-mono text-[8px] tracking-[0.35em] text-zinc-700">FEED</span>
+                <span className="terminal-hide-mobile font-mono text-[8px] tracking-[0.35em] text-zinc-700">ASIGNACIÓN</span>
               </div>
               {TERMINAL_SYMBOLS.map((sym, i) => (
                 <TerminalRow key={sym.symbol} sym={sym} i={i} quote={liveQuotes[sym.symbol]} />
               ))}
-              <div className="border-t border-zinc-800/50 px-6 py-3 flex items-center justify-between">
-                <span className="font-mono text-[9px] tracking-[0.2em] text-zinc-800">YAHOO FINANCE · DATOS CON HASTA 15 MIN DE RETRASO</span>
+              <div className="border-t border-zinc-800/50 px-4 md:px-6 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                <span className="font-mono text-[8px] md:text-[9px] tracking-[0.2em] text-zinc-800">YAHOO FINANCE · HASTA 15 MIN RETRASO</span>
                 <div className="flex items-center gap-2">
                   <div className="h-1 w-1 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
                   <span className="font-mono text-[9px] tracking-[0.16em] text-zinc-800">
@@ -746,7 +756,7 @@ export default function FinTrackLanding() {
       </section>
 
       {/* ── BENTO FEATURES ── */}
-      <section className="px-10 py-24">
+      <section id="capabilities" className="px-10 py-24">
         <div className="mx-auto max-w-screen-xl">
           <div className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
@@ -775,7 +785,7 @@ export default function FinTrackLanding() {
               description="Tus datos están cifrados, son privados y nunca se venden. Tratamos tu historial financiero con seguridad de nivel institucional." />
             <FeatureCard icon={Shield} label="ANALÍTICAS" title="Análisis profundo de gastos"
               description="Desglose automático de tus principales gastos y fuentes de ingreso. Entiende exactamente a dónde va tu dinero cada mes."
-              className="md:col-span-2" />
+              className="md:col-span-3" />
           </div>
         </div>
       </section>
@@ -784,7 +794,7 @@ export default function FinTrackLanding() {
       <section className="relative border-t border-zinc-800 px-10 py-40 overflow-hidden">
         {/* Large centered background logo */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
-          <img src="/unnamed.jpg" alt="" style={{
+          <img src="/png.png" alt="" style={{
             width: 1400, height: 1400, objectFit: "contain",
             opacity: 0.025, filter: "blur(6px)",
           }} />
@@ -805,11 +815,11 @@ export default function FinTrackLanding() {
                 </h2>
               </div>
               <div className="flex flex-col gap-4">
-                <Link href="/auth" className="group flex items-center gap-3 border border-[#E8FF47] px-9 py-5 font-mono text-[10px] tracking-[0.22em] text-[#E8FF47] transition-all duration-200 hover:bg-[#E8FF47] hover:text-black">
-                  CREAR TU CUENTA
-                  <ArrowUpRight size={12} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </Link>
-                <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-700">GRATIS PARA USO PERSONAL</p>
+                <span className="flex items-center justify-center gap-3 border border-zinc-700 px-9 py-5 font-mono text-[10px] tracking-[0.22em] text-zinc-500 cursor-default">
+                  PRÓXIMAMENTE
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
+                </span>
+                <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-700">TE AVISAREMOS CUANDO ESTEMOS LISTOS</p>
               </div>
             </div>
           </div>
@@ -820,7 +830,7 @@ export default function FinTrackLanding() {
       <footer className="border-t border-zinc-800 px-10 py-10">
         <div className="mx-auto flex max-w-screen-xl flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-3">
-            <img src="/unnamed.jpg" alt="FinTrack" className="h-4 w-4 object-contain" />
+            <img src="/png.png" alt="FinTrack" className="h-4 w-4 object-contain" />
             <span className="font-mono text-[10px] tracking-[0.35em] text-zinc-600">FINTRACK</span>
           </div>
           <span className="font-mono text-[9px] tracking-[0.18em] text-zinc-800">
