@@ -120,15 +120,20 @@ function GlobalStyles() {
         100% { transform: translateY(-20vh) translateX(20px); opacity: 0; }
       }
 
-      /* ── Chart line draw ── */
-      @keyframes chartDraw {
-        0%   { stroke-dashoffset: 2000; opacity: 0; }
-        5%   { opacity: .12; }
-        100% { stroke-dashoffset: 0; opacity: .12; }
+      /* ── Aurora blobs ── */
+      @keyframes auroraBlob1 {
+        0%,100% { transform: translate(0, 0) scale(1); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+        33%     { transform: translate(60px, -40px) scale(1.08); border-radius: 50% 40% 60% 50% / 60% 40% 50% 60%; }
+        66%     { transform: translate(-30px, 30px) scale(.95); border-radius: 60% 50% 40% 60% / 50% 60% 40% 50%; }
       }
-      @keyframes chartGlow {
-        0%,100% { opacity: .06; }
-        50%     { opacity: .15; }
+      @keyframes auroraBlob2 {
+        0%,100% { transform: translate(0, 0) scale(1); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        33%     { transform: translate(-50px, 50px) scale(1.1); border-radius: 40% 60% 50% 40% / 50% 60% 40% 60%; }
+        66%     { transform: translate(40px, -20px) scale(.92); border-radius: 50% 50% 60% 40% / 40% 50% 50% 60%; }
+      }
+      @keyframes auroraBlob3 {
+        0%,100% { transform: translate(0, 0); border-radius: 50% 60% 40% 70% / 50% 40% 60% 50%; }
+        50%     { transform: translate(-40px, 60px); border-radius: 40% 50% 60% 40% / 60% 50% 40% 50%; }
       }
 
       /* ── Grain ── */
@@ -392,36 +397,38 @@ function Hero() {
         ))}
       </div>
 
-      {/* ── Animated chart line ── */}
+      {/* ── Aurora blobs ── */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <svg
-          viewBox="0 0 1400 500"
-          fill="none"
-          className="absolute bottom-0 left-0 w-full"
-          style={{ height: "60%" }}
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0 400 C100 380, 200 350, 300 300 S450 200, 550 250 S700 350, 800 280 S950 150, 1050 200 S1200 300, 1300 180 L1400 220"
-            stroke="#E8FF47"
-            strokeWidth="1.5"
-            strokeDasharray="2000"
-            style={{
-              animation: "chartDraw 8s ease-out forwards, chartGlow 6s ease-in-out 8s infinite",
-            }}
-          />
-          <path
-            d="M0 400 C100 380, 200 350, 300 300 S450 200, 550 250 S700 350, 800 280 S950 150, 1050 200 S1200 300, 1300 180 L1400 220 L1400 500 L0 500 Z"
-            fill="url(#chartFill)"
-            style={{ opacity: 0.03 }}
-          />
-          <defs>
-            <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#E8FF47" />
-              <stop offset="100%" stopColor="transparent" />
-            </linearGradient>
-          </defs>
-        </svg>
+        {/* Blob 1 — large accent, drifts right */}
+        <div style={{
+          position: "absolute",
+          top: "20%", left: "55%",
+          width: 700, height: 700,
+          borderRadius: "40% 60% 70% 30% / 40% 50% 60% 50%",
+          background: "radial-gradient(circle, rgba(232,255,71,.07) 0%, transparent 70%)",
+          filter: "blur(80px)",
+          animation: "auroraBlob1 20s ease-in-out infinite",
+        }} />
+        {/* Blob 2 — cool tone, drifts left */}
+        <div style={{
+          position: "absolute",
+          top: "50%", left: "25%",
+          width: 500, height: 500,
+          borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%",
+          background: "radial-gradient(circle, rgba(139,92,246,.05) 0%, transparent 70%)",
+          filter: "blur(80px)",
+          animation: "auroraBlob2 25s ease-in-out infinite",
+        }} />
+        {/* Blob 3 — small accent highlight */}
+        <div style={{
+          position: "absolute",
+          top: "35%", left: "65%",
+          width: 300, height: 300,
+          borderRadius: "50% 60% 40% 70% / 50% 40% 60% 50%",
+          background: "radial-gradient(circle, rgba(232,255,71,.04) 0%, transparent 70%)",
+          filter: "blur(60px)",
+          animation: "auroraBlob3 18s ease-in-out infinite",
+        }} />
       </div>
 
       {/* ── Corner crosshairs ── */}
