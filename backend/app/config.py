@@ -13,6 +13,14 @@ class Settings(BaseSettings):
     admin_panel_password: str = ""
     admin_panel_secret: str = ""
 
+    @property
+    def effective_database_url(self) -> str:
+        """Render uses postgres:// but SQLAlchemy 2.x requires postgresql://"""
+        url = self.database_url
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        return url
+
     class Config:
         env_file = ".env"
 
