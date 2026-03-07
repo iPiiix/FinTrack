@@ -196,7 +196,7 @@ function Nav() {
           {[
             { label: "Funciones", href: "#capabilities" },
             { label: "Mercado", href: "#market" },
-            { label: "Portfolio", href: "/portfolio" },
+            { label: "Portfolio", href: "#market" },
             { label: "Seguridad", href: "#security" },
           ].map((item) => (
             <a key={item.label} href={item.href}
