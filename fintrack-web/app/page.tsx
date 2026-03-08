@@ -11,6 +11,7 @@ import {
   Lock,
   Activity,
   ChevronRight,
+  Smartphone
 } from "lucide-react";
 
 /* ============================================================
@@ -230,9 +231,9 @@ function Nav() {
         </div>
         <div className="hidden items-center gap-12 md:flex">
           {[
+            { label: "Manifiesto", href: "#manifesto" },
             { label: "Funciones", href: "#capabilities" },
             { label: "Mercado", href: "#market" },
-            { label: "Portfolio", href: "#market" },
             { label: "Seguridad", href: "#security" },
           ].map((item) => (
             <a key={item.label} href={item.href}
@@ -346,7 +347,7 @@ function Hero() {
   return (
     <section
       onMouseMove={onMouseMove}
-      className="relative flex min-h-screen flex-col justify-end overflow-hidden px-10 pb-20 pt-28"
+      className="relative flex min-h-screen flex-col justify-end overflow-hidden px-5 pb-20 pt-28 md:px-10"
     >
 
       {/* ── Ambient gradient background ── */}
@@ -381,7 +382,7 @@ function Hero() {
           { left: "62%", size: 2, dur: "24s", delay: "2s", anim: "floatUp1" },
           { left: "78%", size: 3, dur: "19s", delay: "6s", anim: "floatUp2" },
           { left: "90%", size: 1.5, dur: "21s", delay: "10s", anim: "floatUp3" },
-          { left: "5%",  size: 1.5, dur: "25s", delay: "12s", anim: "floatUp1" },
+          { left: "5%", size: 1.5, dur: "25s", delay: "12s", anim: "floatUp1" },
           { left: "55%", size: 2, dur: "23s", delay: "14s", anim: "floatUp2" },
         ].map((p, i) => (
           <div key={i} style={{
@@ -457,10 +458,10 @@ function Hero() {
 
       {/* ── Ghost outline behind title ── */}
       <div
-        className="pointer-events-none absolute inset-0 flex items-end overflow-hidden pb-10 pl-8 select-none"
+        className="pointer-events-none absolute inset-0 flex items-end overflow-hidden pb-10 pl-5 select-none md:pl-8"
         style={{
           fontFamily: "'Bebas Neue', sans-serif",
-          fontSize: "clamp(130px, 22vw, 320px)",
+          fontSize: "clamp(80px, 22vw, 320px)",
           letterSpacing: "-0.04em",
           lineHeight: .86,
           color: "transparent",
@@ -486,7 +487,7 @@ function Hero() {
           className="overflow-hidden leading-none"
           style={{
             fontFamily: "'Bebas Neue', sans-serif",
-            fontSize: "clamp(100px, 19vw, 270px)",
+            fontSize: "clamp(70px, 19vw, 270px)",
             letterSpacing: "-0.035em",
             lineHeight: .86,
             color: "#FAFAF9",
@@ -499,7 +500,7 @@ function Hero() {
         <div className="mt-5 overflow-hidden">
           <div style={{
             fontFamily: "'Bebas Neue', sans-serif",
-            fontSize: "clamp(26px, 4vw, 58px)",
+            fontSize: "clamp(22px, 4vw, 58px)",
             letterSpacing: "0.06em",
             lineHeight: 1,
             color: "#E8FF47",
@@ -538,7 +539,7 @@ function Hero() {
 
       {/* ── Bottom accent line ── */}
       <div
-        className="pointer-events-none absolute bottom-0 left-10 right-10 h-px"
+        className="pointer-events-none absolute bottom-0 left-5 right-5 h-px md:left-10 md:right-10"
         style={{ background: "linear-gradient(90deg, #E8FF47, transparent)", opacity: .15 }}
       />
 
@@ -761,6 +762,262 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 /* ============================================================
+   VIDEO MANIFESTO
+============================================================ */
+function ScrollManifesto() {
+  const containerRef = useRef<HTMLElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      
+      const { top, height } = containerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      
+      const scrollableDistance = height - windowHeight;
+      if (scrollableDistance <= 0) return;
+      
+      // Calculate progress between 0 and 1
+      let progress = -top / scrollableDistance;
+      progress = Math.max(0, Math.min(1, progress));
+      
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    // Trigger once on mount to set initial state
+    handleScroll();
+    
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Progress logic for animations
+  // Phase 1 (0 to 0.4): WASTE fades out and shrinks
+  const wasteOpacity = Math.max(0, 1 - (scrollProgress / 0.4));
+  const wasteScale = 1 - (scrollProgress * 0.15); // shrinks from 1 to 0.85
+  
+  // Phase 2 (0.3 to 0.8): WEALTH fades in and scales up
+  const wealthOpacity = scrollProgress < 0.3 ? 0 : Math.min(1, (scrollProgress - 0.3) / 0.5);
+  const wealthScale = scrollProgress < 0.3 ? 0.85 : 0.85 + ((scrollProgress - 0.3) / 0.5) * 0.15; // grows to 1.0
+  
+  // Phase 3 (0.7 to 1.0): Subtitle fades in
+  const subtitleOpacity = scrollProgress < 0.7 ? 0 : Math.min(1, (scrollProgress - 0.7) / 0.3);
+
+  return (
+    <section 
+      id="manifesto" 
+      ref={containerRef}
+      className="relative bg-[#09090B]"
+      style={{ height: "300vh" }}
+    >
+      {/* Sticky container that stays in view while scrolling the 300vh section */}
+      <div className="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden">
+        
+        {/* Subtle radial gradient background */}
+        <div className="pointer-events-none absolute inset-0" style={{
+          background: "radial-gradient(circle at center, rgba(39,39,42,0.4) 0%, rgba(9,9,11,1) 60%)",
+        }} />
+
+        {/* Pre-label */}
+        <div className="absolute top-32 flex items-center justify-center gap-4 z-10 transition-opacity duration-75" 
+             style={{ opacity: Math.max(0, 1 - scrollProgress * 5) }}>
+          <div className="h-px w-10 bg-zinc-700" />
+          <span className="font-mono text-[9px] tracking-[0.42em] text-zinc-600">MANIFIESTO</span>
+          <div className="h-px w-10 bg-zinc-700" />
+        </div>
+
+        {/* Interactive Typography Centerpiece */}
+        <div className="relative z-10 flex h-[400px] w-full items-center justify-center"
+             style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 0.85, letterSpacing: "-0.01em" }}>
+             
+          {/* "WASTE" State */}
+          <div className="absolute flex items-center justify-center w-full transition-transform duration-75 ease-out"
+               style={{ 
+                 opacity: wasteOpacity, 
+                 transform: `scale(${wasteScale}) translateY(${scrollProgress * -30}px)` 
+               }}>
+            <span style={{
+              fontSize: "clamp(60px, 22vw, 320px)",
+              color: "transparent",
+              WebkitTextStroke: "2px rgba(255,255,255,0.15)",
+              textShadow: "0 10px 30px rgba(0,0,0,0.5)"
+            }}>WASTE</span>
+          </div>
+          
+          {/* "WEALTH" State */}
+          <div className="absolute flex items-center justify-center w-full transition-transform duration-75 ease-out"
+               style={{ 
+                 opacity: wealthOpacity, 
+                 transform: `scale(${wealthScale})`,
+                 filter: `blur(${Math.max(0, (1 - wealthOpacity) * 8)}px)`
+               }}>
+            <span style={{
+              fontSize: "clamp(60px, 22vw, 320px)",
+              color: "#E8FF47",
+              textShadow: `0 0 ${wealthOpacity * 60}px rgba(232, 255, 71, 0.4)`
+            }}>WEALTH</span>
+          </div>
+
+        </div>
+
+        {/* Final Conclusion / Subtitle */}
+        <div className="absolute bottom-24 z-10 px-8 text-center transition-opacity duration-75 ease-out w-full"
+             style={{ opacity: subtitleOpacity, transform: `translateY(${(1 - subtitleOpacity) * 30}px)` }}>
+          <p className="mx-auto max-w-lg" style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: "clamp(15px, 1.5vw, 19px)",
+            fontWeight: 300,
+            lineHeight: 1.6,
+            color: "#A1A1AA",
+            letterSpacing: "0.01em",
+          }}>
+            Every transaction is a decision. <br className="hidden md:block" />
+            <span className="text-white mt-1 inline-block">Every decision builds your future.</span>
+          </p>
+          
+          {/* Accent line */}
+          <div className="mx-auto mt-8" style={{
+            width: 60 * subtitleOpacity,
+            height: 1,
+            background: "#E8FF47",
+            opacity: 0.5,
+          }} />
+        </div>
+        
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   HOW IT WORKS
+============================================================ */
+function HowItWorks() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setVisible(true); obs.disconnect(); }
+    }, { threshold: 0.2 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const steps = [
+    { num: "01", icon: Activity, title: "REGISTRA", desc: "Añade tus cuentas, ingresos y gastos en segundos. Un cajón de entrada rápida diseñado para cero fricción." },
+    { num: "02", icon: BarChart2, title: "ANALIZA", desc: "Visualiza tu flujo de caja, patrimonio neto y asignación de activos con gráficos en tiempo real." },
+    { num: "03", icon: TrendingUp, title: "DOMINA", desc: "Toma decisiones financieras informadas con datos reales. Tu dinero, tu sistema, tu futuro." },
+  ];
+
+  return (
+    <section ref={ref} className="border-t border-zinc-800 px-5 py-32 md:px-10">
+      <div className="mx-auto max-w-screen-xl">
+        <SectionLabel>CÓMO FUNCIONA</SectionLabel>
+        <h2 className="mb-20" style={{
+          fontFamily: "'Bebas Neue',sans-serif",
+          fontSize: "clamp(40px,5vw,72px)",
+          letterSpacing: ".02em",
+          lineHeight: .92,
+          color: "#FAFAF9",
+        }}>
+          TRES PASOS.<br />
+          <span style={{ color: "#E8FF47" }}>SIN COMPLEJIDAD.</span>
+        </h2>
+
+        <div className="grid grid-cols-1 gap-px md:grid-cols-3" style={{ background: "#27272A" }}>
+          {steps.map((step, i) => (
+            <div key={step.num}
+              className="bg-[#09090B] p-10 md:p-12"
+              style={{
+                opacity: visible ? 1 : 0,
+                transform: visible ? "none" : "translateY(24px)",
+                transition: `opacity 0.8s ease ${i * 150}ms, transform 0.8s cubic-bezier(.16,1,.3,1) ${i * 150}ms`,
+              }}
+            >
+              <div className="mb-8 flex items-center gap-4">
+                <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(44px,4vw,56px)", letterSpacing: "-0.02em", lineHeight: 1, color: "#27272A" }}>
+                  {step.num}
+                </span>
+                <div className="h-px flex-1 bg-zinc-800" />
+                <step.icon size={14} className="text-zinc-700" strokeWidth={1.5} />
+              </div>
+              <h3 className="mb-4" style={{
+                fontFamily: "'Bebas Neue',sans-serif",
+                fontSize: "clamp(22px,2vw,30px)",
+                letterSpacing: "0.04em",
+                color: i === 2 ? "#E8FF47" : "#FAFAF9",
+              }}>
+                {step.title}
+              </h3>
+              <p className="text-sm font-light leading-relaxed text-zinc-600" style={{ fontFamily: "'DM Sans',sans-serif" }}>
+                {step.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   EARLY ACCESS FORM
+============================================================ */
+function EarlyAccessForm() {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes("@")) return;
+    const existing = JSON.parse(localStorage.getItem("fintrack_waitlist") || "[]");
+    existing.push({ email, date: new Date().toISOString() });
+    localStorage.setItem("fintrack_waitlist", JSON.stringify(existing));
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="flex flex-col items-center gap-3 border border-[#E8FF47]/20 bg-[#E8FF47]/[0.03] px-9 py-6">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-[#E8FF47]" />
+          <span className="font-mono text-[11px] tracking-[0.22em] text-[#E8FF47]">REGISTRADO</span>
+        </div>
+        <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-500">TE NOTIFICAREMOS EN EL LANZAMIENTO</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div className="flex">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            className="flex-1 border border-zinc-700 border-r-0 bg-zinc-950 px-5 py-4 font-mono text-[11px] tracking-[0.1em] text-zinc-300 outline-none transition-colors placeholder:text-zinc-700 focus:border-zinc-500 md:min-w-[260px]"
+          />
+          <button
+            type="submit"
+            className="flex items-center gap-2 bg-[#E8FF47] px-7 py-4 font-mono text-[10px] font-bold tracking-[0.22em] text-black transition-all duration-200 hover:bg-[#d4eb3a] active:scale-[0.98]"
+          >
+            EARLY ACCESS
+            <ChevronRight size={12} />
+          </button>
+        </div>
+        <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-700">
+          ACCESO ANTICIPADO · SIN SPAM · SOLO NOVEDADES
+        </p>
+      </form>
+    </div>
+  );
+}
+
+/* ============================================================
    PAGE
 ============================================================ */
 export default function FinTrackLanding() {
@@ -774,7 +1031,7 @@ export default function FinTrackLanding() {
       <Hero />
 
       {/* ── STATS BAND ── */}
-      <section id="security" className="border-y border-zinc-800 px-10 py-20">
+      <section id="security" className="border-y border-zinc-800 px-5 py-20 md:px-10">
         <div className="mx-auto max-w-screen-xl">
           <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
             <StatBlock value="100" label="PROPIEDAD DE DATOS" suffix="%" />
@@ -808,13 +1065,16 @@ export default function FinTrackLanding() {
         </div>
       </div>
 
+      {/* ── SCROLL MANIFESTO ── */}
+      <ScrollManifesto />
+
       {/* ── TERMINAL DATA ── */}
-      <section id="market" className="px-10 py-32">
+      <section id="market" className="px-5 py-32 md:px-10">
         <div className="mx-auto max-w-screen-xl">
           <div className="grid grid-cols-1 gap-20 lg:grid-cols-[260px_1fr]">
             <div>
               <SectionLabel>INTEGRACIÓN DE MERCADO</SectionLabel>
-              <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(44px,5vw,68px)", letterSpacing: ".02em", lineHeight: .95, color: "#FAFAF9" }}>
+              <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(40px,5vw,68px)", letterSpacing: ".02em", lineHeight: .95, color: "#FAFAF9" }}>
                 TU PATRIMONIO<br />FRENTE AL<br />MERCADO.
               </h2>
               <p className="mt-6 text-sm font-light leading-relaxed text-zinc-600">
@@ -825,24 +1085,27 @@ export default function FinTrackLanding() {
                 <span className="font-mono text-[9px] tracking-[0.3em] text-zinc-700">VISTA DEMO PORTFOLIO</span>
               </div>
             </div>
-            <div className="border border-zinc-800 bg-zinc-950">
-              <div className="terminal-grid border-b border-zinc-800 bg-zinc-900/30 px-4 md:px-6 py-3">
-                <span className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">ACTIVO</span>
-                <span className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">PRECIO</span>
-                <span className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">VAR</span>
-                <span className="terminal-hide-mobile font-mono text-[8px] tracking-[0.35em] text-zinc-700">FEED</span>
-                <span className="terminal-hide-mobile font-mono text-[8px] tracking-[0.35em] text-zinc-700">ASIGNACIÓN</span>
-              </div>
-              {TERMINAL_SYMBOLS.map((sym, i) => (
-                <TerminalRow key={sym.symbol} sym={sym} i={i} quote={liveQuotes[sym.symbol]} />
-              ))}
-              <div className="border-t border-zinc-800/50 px-4 md:px-6 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
-                <span className="font-mono text-[8px] md:text-[9px] tracking-[0.2em] text-zinc-800">YAHOO FINANCE · DATOS DE MERCADO</span>
-                <div className="flex items-center gap-2">
-                  <div className="h-1 w-1 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
-                  <span className="font-mono text-[9px] tracking-[0.16em] text-zinc-800">
-                    {updated ? `UPDATED ${updated.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}` : "CONNECTING…"}
-                  </span>
+            {/* Terminal Container - Scrollable on Mobile */}
+            <div className="border border-zinc-800 bg-zinc-950 overflow-x-auto">
+              <div className="min-w-[500px] md:min-w-0">
+                <div className="terminal-grid border-b border-zinc-800 bg-zinc-900/30 px-4 md:px-6 py-3">
+                  <span className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">ACTIVO</span>
+                  <span className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">PRECIO</span>
+                  <span className="font-mono text-[8px] tracking-[0.35em] text-zinc-700">VAR</span>
+                  <span className="terminal-hide-mobile font-mono text-[8px] tracking-[0.35em] text-zinc-700">FEED</span>
+                  <span className="terminal-hide-mobile font-mono text-[8px] tracking-[0.35em] text-zinc-700">ASIGNACIÓN</span>
+                </div>
+                {TERMINAL_SYMBOLS.map((sym, i) => (
+                  <TerminalRow key={sym.symbol} sym={sym} i={i} quote={liveQuotes[sym.symbol]} />
+                ))}
+                <div className="border-t border-zinc-800/50 px-4 md:px-6 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                  <span className="font-mono text-[8px] md:text-[9px] tracking-[0.2em] text-zinc-800">YAHOO FINANCE · DATOS DE MERCADO</span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1 w-1 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
+                    <span className="font-mono text-[9px] tracking-[0.16em] text-zinc-800">
+                      {updated ? `UPDATED ${updated.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}` : "CONNECTING…"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -851,12 +1114,12 @@ export default function FinTrackLanding() {
       </section>
 
       {/* ── BENTO FEATURES ── */}
-      <section id="capabilities" className="px-10 py-24">
+      <section id="capabilities" className="px-5 py-24 md:px-10">
         <div className="mx-auto max-w-screen-xl">
           <div className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
               <SectionLabel>FUNCIONALIDADES</SectionLabel>
-              <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(44px,5.5vw,80px)", color: "#FAFAF9", letterSpacing: ".02em", lineHeight: .92 }}>
+              <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(40px,5.5vw,80px)", color: "#FAFAF9", letterSpacing: ".02em", lineHeight: .92 }}>
                 TU VERDAD FINANCIERA.<br />POR FIN UNIFICADA.
               </h2>
             </div>
@@ -885,8 +1148,11 @@ export default function FinTrackLanding() {
         </div>
       </section>
 
+      {/* ── HOW IT WORKS ── */}
+      <HowItWorks />
+
       {/* ── CTA ── */}
-      <section className="relative border-t border-zinc-800 px-10 py-40 overflow-hidden">
+      <section className="relative border-t border-zinc-800 px-5 py-40 overflow-hidden md:px-10">
         {/* Large centered background logo */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
           <img src="/png.png" alt="" style={{
@@ -909,12 +1175,24 @@ export default function FinTrackLanding() {
                   <span style={{ color: "#E8FF47" }}>DE TU CAPITAL.</span>
                 </h2>
               </div>
-              <div className="flex flex-col gap-4">
-                <span className="flex items-center justify-center gap-3 border border-zinc-700 px-9 py-5 font-mono text-[10px] tracking-[0.22em] text-zinc-500 cursor-default">
-                  PRÓXIMAMENTE
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
-                </span>
-                <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-700">TE AVISAREMOS CUANDO ESTEMOS LISTOS</p>
+              <div className="flex flex-col items-start gap-8 md:items-end">
+                <EarlyAccessForm />
+                
+                {/* 
+                  TODO: PWA Implementation Steps for the future:
+                  1. Install `next-pwa` (npm i next-pwa)
+                  2. Wrap your next.config.js with withPWA()
+                  3. Generate a `manifest.json` in the /public folder (with icons, theme_color #09090B, name "FinTrack", etc.)
+                  4. The browser will then automatically prompt users to "Install App" on iOS Safari / Android Chrome.
+                */}
+                <div className="flex items-center gap-3 rounded-full border border-zinc-800 bg-[#09090B] px-5 py-2.5 transition-colors hover:border-zinc-700">
+                  <div className="flex items-center justify-center rounded-full bg-zinc-900 p-1.5">
+                    <Smartphone size={14} className="text-zinc-400" />
+                  </div>
+                  <span className="font-mono text-[10px] tracking-[0.15em] text-zinc-400">
+                    PRONTO EN iOS & ANDROID <span className="text-zinc-600">(PWA)</span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -922,7 +1200,7 @@ export default function FinTrackLanding() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-zinc-800 px-10 py-10">
+      <footer className="border-t border-zinc-800 px-5 py-10 md:px-10">
         <div className="mx-auto flex max-w-screen-xl flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-3">
             <img src="/png.png" alt="FinTrack" className="h-4 w-4 object-contain" />
