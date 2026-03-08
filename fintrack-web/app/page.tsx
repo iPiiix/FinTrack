@@ -1185,13 +1185,12 @@ export default function FinTrackLanding() {
                   3. Generate a `manifest.json` in the /public folder (with icons, theme_color #09090B, name "FinTrack", etc.)
                   4. The browser will then automatically prompt users to "Install App" on iOS Safari / Android Chrome.
                 */}
-                <div className="flex items-center gap-3 rounded-full border border-zinc-800 bg-[#09090B] px-5 py-2.5 transition-colors hover:border-zinc-700">
-                  <div className="flex items-center justify-center rounded-full bg-zinc-900 p-1.5">
-                    <Smartphone size={14} className="text-zinc-400" />
-                  </div>
-                  <span className="font-mono text-[10px] tracking-[0.15em] text-zinc-400">
-                    PRONTO EN iOS & ANDROID <span className="text-zinc-600">(PWA)</span>
+                <div className="group flex cursor-default items-center gap-3 border border-zinc-800 bg-[#09090B] px-6 py-3 transition-all duration-300 hover:border-zinc-700 hover:bg-zinc-900/30">
+                  <Smartphone size={14} className="text-zinc-500 transition-colors duration-300 group-hover:text-[#E8FF47]" />
+                  <span className="font-mono text-[10px] tracking-[0.22em] text-zinc-500 transition-colors duration-300 group-hover:text-zinc-300">
+                    PRONTO EN iOS & ANDROID <span className="text-zinc-700 transition-colors duration-300 group-hover:text-zinc-500">(PWA)</span>
                   </span>
+                  <div className="ml-1 h-1.5 w-1.5 rounded-full bg-[#E8FF47]/40 transition-colors duration-300 group-hover:bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
                 </div>
               </div>
             </div>
