@@ -17,5 +17,6 @@ class Usuario(Base):
     creado_en = Column(TIMESTAMP, server_default=func.now())
     actualizado_en = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
-    cuentas = relationship("Cuenta", back_populates="usuario")
-    categorias = relationship("Categoria", back_populates="usuario")
+    cuentas = relationship("Cuenta", back_populates="usuario", cascade="all, delete-orphan")
+    categorias = relationship("Categoria", back_populates="usuario", cascade="all, delete-orphan")
+    activos = relationship("Activo", back_populates="usuario", cascade="all, delete-orphan")

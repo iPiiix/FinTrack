@@ -3,6 +3,7 @@ from app.models.usuario import Usuario
 from app.models.cuenta import Cuenta
 from app.models.transaccion import Transaccion
 from app.models.categoria import Categoria
+from app.models.activo import Activo
 
 
 class UsuarioAdmin(ModelView, model=Usuario):
@@ -34,10 +35,7 @@ class CuentaAdmin(ModelView, model=Cuenta):
 
 
 class TransaccionAdmin(ModelView, model=Transaccion):
-    column_list = [
-        Transaccion.id_transaccion, Transaccion.nombre, Transaccion.cantidad,
-        Transaccion.tipo, Transaccion.estado, Transaccion.fecha,
-    ]
+    column_list = [Transaccion.id_transaccion, Transaccion.nombre, Transaccion.cantidad, Transaccion.tipo]
     column_searchable_list = [Transaccion.nombre]
     column_default_sort = ("fecha", True)
     can_create = False
