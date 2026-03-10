@@ -25,7 +25,8 @@ export function Drawer({ isOpen, onClose, onSave, cuentas, categorias }: any) {
   if (!isOpen) return null;
 
   const handleSave = async () => {
-    if (!cantidad || !nombre || !idCuenta) { setError("Completa importe, descripción y cuenta"); return; }
+    const val = parseFloat(cantidad);
+    if (!cantidad || isNaN(val) || val === 0 || !nombre || !idCuenta) { setError("Importe válido (>0), descripción y cuenta obligatorios."); return; }
     setSaving(true);
     setError("");
     try {
@@ -34,22 +35,38 @@ export function Drawer({ isOpen, onClose, onSave, cuentas, categorias }: any) {
         body: JSON.stringify({ cantidad: parseFloat(cantidad), tipo: type, nombre, id_cuenta: parseInt(idCuenta), id_categoria: idCategoria ? parseInt(idCategoria) : null, estado: "completada" }),
       });
       if (!res.ok) { const e = await res.json().catch(() => null); throw new Error(e?.detail || "Error"); }
+      // Reset state
+      setType("ingreso");
+      setCantidad("");
+      setNombre("");
+      setIdCuenta("");
+      setIdCategoria("");
       onSave();
       onClose();
     } catch (e: any) { setError(e.message); }
     setSaving(false);
   };
 
+  const handleClose = () => {
+    setError("");
+    setType("ingreso");
+    setCantidad("");
+    setNombre("");
+    setIdCuenta("");
+    setIdCategoria("");
+    onClose();
+  };
+
   return (
     <>
-      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", zIndex: 50 }} onClick={onClose} />
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", zIndex: 50 }} onClick={handleClose} />
       <div className="drawer" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: 460, background: "#0C0C0E", borderLeft: "1px solid #1C1C1F", zIndex: 50, display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "28px 32px", borderBottom: "1px solid #1C1C1F" }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 500, color: "white", marginBottom: 4 }}>Nueva Transacción</div>
             <div style={{ fontSize: 11, color: "#52525B" }}>Registro en el libro mayor</div>
           </div>
-          <button onClick={onClose} style={{ width: 30, height: 30, border: "1px solid #27272A", color: "#71717A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, background: "transparent" }}>×</button>
+          <button onClick={handleClose} style={{ width: 30, height: 30, border: "1px solid #27272A", color: "#71717A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, background: "transparent" }}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 24 }}>
           <div>
@@ -65,7 +82,7 @@ export function Drawer({ isOpen, onClose, onSave, cuentas, categorias }: any) {
           </div>
           <div>
             <label className="lbl" style={{ display: "block", marginBottom: 8 }}>IMPORTE (EUR)</label>
-            <input type="number" value={cantidad} onChange={e => setCantidad(e.target.value)} placeholder="0.00" className="inp" />
+            <input type="number" value={cantidad} onChange={e => setCantidad(e.target.value)} onFocus={e => e.target.select()} placeholder="0.00" className="inp" />
           </div>
           <div>
             <label className="lbl" style={{ display: "block", marginBottom: 8 }}>DESCRIPCIÓN</label>
@@ -88,7 +105,7 @@ export function Drawer({ isOpen, onClose, onSave, cuentas, categorias }: any) {
           {error && <div style={{ border: "1px solid rgba(248,113,113,0.2)", padding: "10px 14px" }}><span className="mono" style={{ fontSize: 10, color: "#F87171" }}>{error}</span></div>}
         </div>
         <div style={{ display: "flex", gap: 10, padding: "20px 32px", borderTop: "1px solid #1C1C1F" }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "12px 0", border: "1px solid #27272A", color: "#71717A", cursor: "pointer", fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", background: "transparent" }}>CANCELAR</button>
+          <button onClick={handleClose} style={{ flex: 1, padding: "12px 0", border: "1px solid #27272A", color: "#71717A", cursor: "pointer", fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", background: "transparent" }}>CANCELAR</button>
           <button onClick={handleSave} disabled={saving}
             style={{ flex: 2, padding: "12px 0", background: "white", color: "black", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", border: "none", cursor: "pointer", opacity: saving ? 0.5 : 1 }}>
             {saving ? "GUARDANDO…" : "COMMIT ENTRY"}

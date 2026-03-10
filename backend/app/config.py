@@ -4,7 +4,7 @@ class Settings(BaseSettings):
     database_url: str
     secret_key: str
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
+    access_token_expire_minutes: int = 43200 # Set to 30 days to effectively disable session closed
     smtp_email: str = ""
     smtp_password: str = ""
     admin_email: str = ""
@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     admin_panel_user: str = "admin"
     admin_panel_password: str = ""
     admin_panel_secret: str = ""
+    gemini_api_key: str = ""
 
     @property
     def effective_database_url(self) -> str:

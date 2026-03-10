@@ -242,10 +242,9 @@ function Nav() {
             </a>
           ))}
         </div>
-        <span className="flex items-center gap-2 border border-zinc-800 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-600 cursor-default">
-          PRÓXIMAMENTE
-          <span className="h-1.5 w-1.5 rounded-full bg-[#E8FF47]/50" style={{ animation: "pls 2s ease-in-out infinite" }} />
-        </span>
+        <Link href="/auth/login" className="flex items-center gap-2 border border-zinc-800 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-400 transition-colors duration-200 hover:text-white hover:border-zinc-600">
+          INICIAR SESIÓN
+        </Link>
       </div>
     </nav>
   );
@@ -523,16 +522,15 @@ function Hero() {
         {/* CTAs */}
         <div className="flex flex-col items-end gap-3">
           <div className="flex items-center gap-3 reveal-up" style={{ transitionDelay: "90ms" }}>
-            <span className="flex items-center gap-2.5 bg-zinc-900 border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 cursor-default">
-              PRÓXIMAMENTE
-              <span className="h-1.5 w-1.5 rounded-full bg-[#E8FF47]" style={{ animation: "pls 2s ease-in-out infinite" }} />
-            </span>
+            <Link href="/auth/login" className="flex items-center gap-2.5 bg-[#E8FF47] text-black px-7 py-4 font-mono text-[10px] tracking-[0.22em] font-bold transition-all duration-200 hover:bg-[#d4ed36]">
+              ACCEDER APP
+            </Link>
             <a href="#capabilities" className="border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 transition-all duration-200 hover:border-zinc-500 hover:text-zinc-200">
               VER FUNCIONES
             </a>
           </div>
           <span className="reveal-up font-mono text-[9px] tracking-[0.2em] text-zinc-700" style={{ transitionDelay: "180ms" }}>
-            LANZAMIENTO EN BREVE · MANTENTE ATENTO
+            DOMINA TU PATRIMONIO HOY
           </span>
         </div>
       </div>

@@ -11,6 +11,7 @@ import { OverviewView } from "./components/OverviewView";
 import { TransactionsView } from "./components/TransactionsView";
 import { PortfolioView } from "./components/PortfolioView";
 import { SettingsView } from "./components/SettingsView";
+import { AIInsightsView } from "./components/AIInsightsView";
 import { CreateAccountDrawer } from "./components/CreateAccountDrawer";
 import { CreateAssetDrawer } from "./components/CreateAssetDrawer";
 
@@ -94,10 +95,21 @@ export default function DashboardPage() {
     } catch { addToast("Error al eliminar activo", "error"); }
   };
 
+  const deleteTransaction = async (id: number) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este registro?")) return;
+    try {
+      const res = await fetch(`${API}/transacciones/${id}`, { method: "DELETE", headers: authHeaders() });
+      if (!res.ok) throw new Error("API error");
+      addToast("Registro eliminado", "success");
+      fetchAll();
+    } catch { addToast("Error al eliminar registro", "error"); }
+  };
+
   const views: Record<string, React.ReactNode> = {
-    OVERVIEW: <OverviewView analytics={analytics} loading={loading} transactions={transactions} categorias={categorias} openAccountDrawer={() => setAccountDrawerOpen(true)} />,
-    TRANSACTIONS: <TransactionsView transactions={transactions} categorias={categorias} />,
+    OVERVIEW: <OverviewView analytics={analytics} loading={loading} transactions={transactions} categorias={categorias} openAccountDrawer={() => setAccountDrawerOpen(true)} deleteTransaction={deleteTransaction} />,
+    TRANSACTIONS: <TransactionsView transactions={transactions} categorias={categorias} cuentas={cuentas} deleteTransaction={deleteTransaction} />,
     PORTFOLIO: <PortfolioView activos={activos} deleteAsset={deleteAsset} openAssetDrawer={() => setAssetDrawerOpen(true)} />,
+    "AI ADVISOR": <AIInsightsView />,
     SETTINGS: <SettingsView />,
   };
 

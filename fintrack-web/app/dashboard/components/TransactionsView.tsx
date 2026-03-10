@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { fmt } from "../../../lib/utils";
 import { EmptyState } from "./ui/EmptyState";
 
-export function TransactionsView({ transactions, categorias }: any) {
+export function TransactionsView({ transactions, categorias, cuentas, deleteTransaction }: any) {
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const FILTERS = ["ALL", "ingreso", "gasto", "transferencia"];
@@ -22,13 +22,13 @@ export function TransactionsView({ transactions, categorias }: any) {
 
   if (transactions.length === 0) return <EmptyState title="Sin transacciones" desc="Añade tu primera entrada con el botón + NEW ENTRY arriba" />;
 
-  const COL = "100px 3fr 1.5fr 1.1fr 130px 100px";
+  const COL = "100px 3fr 1.5fr 1.1fr 130px 100px 40px";
   return (
     <div className="vu" style={{ padding: "44px 48px" }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 32 }}>
         <div>
-          <h2 style={{ fontSize: 26, fontWeight: 300, color: "#F4F4F5", letterSpacing: "-0.02em", marginBottom: 8 }}>General Ledger</h2>
-          <span className="lbl">REGISTRO HISTÓRICO · {filtered.length} ENTRADAS</span>
+          <h2 style={{ fontSize: 26, fontWeight: 300, color: "#F4F4F5", letterSpacing: "-0.02em", marginBottom: 8 }}>Historial de Transacciones</h2>
+          <span className="lbl">{filtered.length} ENTRADAS ENCONTRADAS</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <span className="mono" style={{ fontSize: 11, color: "#10B981" }}>IN +€{fmt(totals.income, 0)}</span>
@@ -54,8 +54,8 @@ export function TransactionsView({ transactions, categorias }: any) {
       </div>
       <div style={{ border: "1px solid #1C1C1F", overflow: "hidden" }}>
         <div style={{ display: "grid", padding: "12px 24px", borderBottom: "1px solid #1C1C1F", background: "rgba(255,255,255,0.015)", gridTemplateColumns: COL }}>
-          {["FECHA", "DESCRIPCIÓN", "CATEGORÍA", "CUENTA", "IMPORTE (EUR)", "ESTADO"].map((h, i) => (
-            <span key={h} className="lbl" style={{ textAlign: i >= 4 ? "right" : "left" }}>{h}</span>
+          {["FECHA", "DESCRIPCIÓN", "CATEGORÍA", "CUENTA", "IMPORTE (EUR)", "ESTADO", ""].map((h, i) => (
+            <span key={i} className="lbl" style={{ textAlign: i >= 4 && i < 6 ? "right" : "left" }}>{h}</span>
           ))}
         </div>
         <div style={{ maxHeight: "calc(100vh - 310px)", overflowY: "auto" }}>
@@ -63,15 +63,19 @@ export function TransactionsView({ transactions, categorias }: any) {
             filtered.map((tx: any) => {
               const pos = tx.tipo === "ingreso";
               const cat = categorias?.find((c: any) => c.id_categoria === tx.id_categoria);
+              const cuenta = cuentas?.find((c: any) => c.id_cuenta === tx.id_cuenta);
               return (
                 <div key={tx.id_transaccion} className="row" style={{ display: "grid", padding: "16px 24px", borderBottom: "1px solid rgba(28,28,31,0.6)", alignItems: "center", gridTemplateColumns: COL }}>
                   <span className="mono" style={{ fontSize: 10, color: "#52525B" }}>{tx.fecha ? new Date(tx.fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "2-digit" }).toUpperCase() : "—"}</span>
                   <span style={{ fontSize: 12, fontWeight: 500, color: "#E4E4E7" }}>{tx.nombre}</span>
                   <span style={{ fontSize: 11, color: cat ? "#A1A1AA" : "#3F3F46" }}>{cat ? cat.nombre : "—"}</span>
-                  <span style={{ fontSize: 10, color: "#52525B" }}>Cuenta #{tx.id_cuenta}</span>
+                  <span style={{ fontSize: 10, color: "#52525B" }}>{cuenta ? cuenta.nombre : `Cuenta #${tx.id_cuenta}`}</span>
                   <span className="mono" style={{ fontSize: 12, fontWeight: 500, textAlign: "right", color: pos ? "#10B981" : "#D4D4D8" }}>{pos ? "+" : "−"}€{fmt(Math.abs(tx.cantidad))}</span>
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.07em", padding: "4px 8px", border: "1px solid", borderColor: tx.estado === "completada" ? "#1C1C1F" : "rgba(251,191,36,0.3)", color: tx.estado === "completada" ? "#3F3F46" : "#FBBF24", background: tx.estado === "pendiente" ? "rgba(251,191,36,0.04)" : "transparent", textTransform: "uppercase" }}>{tx.estado}</span>
+                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.07em", padding: "4px 8px", border: "1px solid", borderColor: tx.estado === "completada" ? "#1C1C1F" : "rgba(251,191,36,0.3)", color: tx.estado === "completada" ? "#3F3F46" : "#FBBF24", background: tx.estado === "pendiente" ? "rgba(251,191,36,0.04)" : "transparent", textTransform: "uppercase" }}>{tx.estado === "pendiente" ? "PENDIENTE" : tx.estado}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+                    <button onClick={() => deleteTransaction && deleteTransaction(tx.id_transaccion)} style={{ background: "transparent", border: "none", color: "#52525B", cursor: "pointer", fontSize: 16 }} title="Eliminar registro">×</button>
                   </div>
                 </div>
               );

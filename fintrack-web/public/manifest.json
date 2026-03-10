@@ -1,0 +1,21 @@
+{
+  "name": "FinTrack - Wealth OS",
+  "short_name": "FinTrack",
+  "description": "Control financiero avanzado. Privado, seguro y eficiente.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090B",
+  "theme_color": "#09090B",
+  "icons": [
+    {
+      "src": "/png.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/png.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

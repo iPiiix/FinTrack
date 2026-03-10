@@ -34,6 +34,7 @@ export const metadata: Metadata = {
     description:
       "Plataforma de gestión financiera personal con cifrado AES-256. 100% privada.",
   },
+  manifest: "/manifest.json",
 };
 
 import { AuthProvider } from "../context/AuthContext";

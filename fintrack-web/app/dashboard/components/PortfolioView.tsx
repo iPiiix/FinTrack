@@ -11,11 +11,12 @@ export function PortfolioView({ activos, deleteAsset, openAssetDrawer }: any) {
   // Group user assets by ticker (in case they bought AAPL 3 different times)
   const groupedActivos = React.useMemo(() => {
     if (!activos) return {};
-    const group: Record<string, { totalQty: number; totalInvested: number, originalIds: number[] }> = {};
+    const group: Record<string, { totalQty: number; totalInvested: number, avgPrice: number, originalIds: number[] }> = {};
     activos.forEach((a: any) => {
-      if (!group[a.ticker]) group[a.ticker] = { totalQty: 0, totalInvested: 0, originalIds: [] };
-      group[a.ticker].totalQty += a.cantidad;
-      group[a.ticker].totalInvested += (a.cantidad * a.precio_compra);
+      if (!group[a.ticker]) group[a.ticker] = { totalQty: 0, totalInvested: 0, avgPrice: 0, originalIds: [] };
+      const absQty = Math.abs(a.cantidad);
+      group[a.ticker].totalQty += absQty;
+      group[a.ticker].totalInvested += (absQty * Math.abs(a.precio_compra));
       group[a.ticker].originalIds.push(a.id_activo);
     });
     return group;
@@ -47,15 +48,15 @@ export function PortfolioView({ activos, deleteAsset, openAssetDrawer }: any) {
   const totalInvestedGlobal = Object.values(groupedActivos).reduce((sum, g) => sum + g.totalInvested, 0);
   let totalValueGlobal = 0;
   
-  if (quotes.length > 0) {
-    tickers.forEach(t => {
-      const q = quotes.find(q => q.symbol === t);
-      const group = groupedActivos[t];
-      let price = q ? q.price : 0;
-      if (q && q.currency === "USD") price = price * eurRate;
-      totalValueGlobal += (group.totalQty * price);
-    });
-  }
+  tickers.forEach(t => {
+    const q = quotes.find(q => q.symbol === t);
+    const group = groupedActivos[t];
+    // Fallback if quote is unavailable so it doesn't artificially crash the global ROI
+    const avgBuyPrice = group.totalInvested / (group.totalQty || 1);
+    let price = q ? q.price : avgBuyPrice; 
+    if (q && q.currency === "USD") price = price * eurRate;
+    totalValueGlobal += (group.totalQty * price);
+  });
 
   const globalPnL = totalValueGlobal - totalInvestedGlobal;
   const globalPnLPct = totalInvestedGlobal > 0 ? (globalPnL / totalInvestedGlobal) * 100 : 0;
@@ -99,7 +100,8 @@ export function PortfolioView({ activos, deleteAsset, openAssetDrawer }: any) {
               const q = quotes.find(x => x.symbol === t);
               const group = groupedActivos[t];
               
-              const currentPrice = q ? q.price : 0;
+              const avgBuyPrice = group.totalInvested / (group.totalQty || 1);
+              const currentPrice = q ? q.price : avgBuyPrice;
               let priceInEur = currentPrice;
               if (q && q.currency === "USD") priceInEur = currentPrice * eurRate;
               
@@ -126,8 +128,12 @@ export function PortfolioView({ activos, deleteAsset, openAssetDrawer }: any) {
                   </div>
                   <span className="mono" style={{ fontSize: 13, color: "#A1A1AA", textAlign: "right" }}>€{fmt(group.totalInvested, 2)}</span>
                   <div style={{ textAlign: "right" }}>
-                    <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: pos ? "#10B981" : "#F87171" }}>{pos ? "+" : "-"}&euro;{fmt(Math.abs(pnl), 2)}</span>
-                    <div className="mono" style={{ fontSize: 10, color: pos ? "rgba(16,185,129,0.7)" : "rgba(248,113,113,0.7)", marginTop: 2 }}>{pos ? "+" : "-"}{fmt(Math.abs(pnlPct), 2)}%</div>
+                    <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: pos ? "#10B981" : "#F87171" }}>
+                      {pos ? "+" : "-"}{q?.currency === "EUR" ? "€" : "$"}{fmt(Math.abs(pnl), 2)}
+                    </span>
+                    <div className="mono" style={{ fontSize: 10, color: pos ? "rgba(16,185,129,0.7)" : "rgba(248,113,113,0.7)", marginTop: 2 }}>
+                      {pos ? "+" : "-"}{fmt(Math.abs(pnlPct), 2)}%
+                    </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <button onClick={() => deleteAsset(group.originalIds[0])}

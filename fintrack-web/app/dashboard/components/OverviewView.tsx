@@ -4,7 +4,7 @@ import { EmptyState } from "./ui/EmptyState";
 
 const DONUT_COLORS = ["#E8FF47", "#10B981", "#3B82F6", "#8B5CF6", "#EC4899", "#F59E0B", "#64748B", "#A1A1AA"];
 
-export function OverviewView({ analytics, loading, transactions, categorias, openAccountDrawer }: any) {
+export function OverviewView({ analytics, loading, transactions, categorias, openAccountDrawer, deleteTransaction }: any) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInst = useRef<any>(null);
   const donutRef = useRef<HTMLCanvasElement>(null);
@@ -64,11 +64,11 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
 
   const savingsRate = analytics?.tasa_ahorro_pct || 0;
   const kpis = [
-    { label: "NET WORTH", unit: "EUR", value: loading ? "——" : `€ ${fmt(analytics?.patrimonio_neto || 0, 0)}`, bright: !loading, extra: <div style={{ marginTop: 14, height: 1, background: "linear-gradient(to right, rgba(255,255,255,0.2), transparent)" }} /> },
-    { label: "CASH FLOW · 30D", unit: "EUR", value: loading ? "——" : `${(analytics?.flujo_caja_neto || 0) >= 0 ? "+" : "−"}€ ${fmt(analytics?.flujo_caja_neto || 0, 0)}`, bright: !loading, sub: (analytics?.flujo_caja_neto || 0) >= 0 ? "↑ POSITIVO" : "↓ NEGATIVO", subPos: (analytics?.flujo_caja_neto || 0) >= 0 },
+    { label: "PATRIMONIO TOTAL", unit: "EUR", value: loading ? "——" : `€ ${fmt(analytics?.patrimonio_neto || 0, 0)}`, bright: !loading, extra: <div style={{ marginTop: 14, height: 1, background: "linear-gradient(to right, rgba(255,255,255,0.2), transparent)" }} /> },
+    { label: "BALANCE MENSUAL", unit: "EUR", value: loading ? "——" : `${(analytics?.flujo_caja_neto || 0) >= 0 ? "+" : "−"}€ ${fmt(analytics?.flujo_caja_neto || 0, 0)}`, bright: !loading, sub: (analytics?.flujo_caja_neto || 0) >= 0 ? "POSITIVO" : "NEGATIVO", subPos: (analytics?.flujo_caja_neto || 0) >= 0 },
     { label: "INGRESOS TOTALES", unit: "EUR", value: loading ? "——" : `€ ${fmt(analytics?.total_ingresos || 0, 0)}`, bright: !loading },
-    { label: "SAVINGS RATE", unit: "%", value: loading ? "——" : `${fmt(savingsRate, 1)}%`, bright: !loading, sub: savingsRate >= 50 ? "↑ TARGET MET" : "↓ BELOW TARGET", subPos: savingsRate >= 50,
-      extra: <div style={{ marginTop: 14, height: 2, background: "#1C1C1F", overflow: "hidden", borderRadius: 1 }}><div style={{ height: "100%", background: "rgba(255,255,255,0.35)", width: `${Math.min(savingsRate, 100)}%`, transition: "width 1.2s cubic-bezier(0.16,1,0.3,1)", borderRadius: 1 }} /></div> },
+    { label: "TASA DE AHORRO", unit: "%", value: loading ? "——" : `${savingsRate >= 0 ? "+" : "−"}${fmt(Math.abs(savingsRate), 1)}%`, bright: !loading, sub: savingsRate >= 20 ? "EXCELENTE" : savingsRate >= 0 ? "PUEDE MEJORAR" : "CRÍTICO (DEUDA)", subPos: savingsRate >= 20,
+      extra: <div style={{ marginTop: 14, height: 2, background: "#1C1C1F", overflow: "hidden", borderRadius: 1 }}><div style={{ height: "100%", background: savingsRate >= 0 ? "rgba(255,255,255,0.35)" : "rgba(239, 68, 68, 0.4)", width: `${Math.min(Math.max(savingsRate, 0), 100)}%`, transition: "width 1.2s cubic-bezier(0.16,1,0.3,1)", borderRadius: 1 }} /></div> },
   ];
 
   return (
@@ -135,7 +135,7 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
                       <div style={{ width: 6, height: 6, borderRadius: "50%", background: ["#FAFAFA","#71717A","#3F3F46","#27272A"][i % 4], flexShrink: 0 }} />
                       <span className="lbl">{c.nombre}</span>
                     </div>
-                    <span className="mono" style={{ fontSize: 10, color: "#71717A" }}>€{fmt(c.balance, 0)}</span>
+                    <span className="mono" style={{ fontSize: 10, color: c.balance < 0 ? "rgba(248,113,113,0.8)" : "#71717A" }}>{c.balance < 0 ? "-" : ""}€{fmt(c.balance, 0)}</span>
                   </div>
                 ))}
               </div>
@@ -143,9 +143,9 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 28px", borderBottom: "1px solid #1C1C1F" }}>
-              <span className="lbl">ÚLTIMAS TRANSACCIONES</span>
+              <span className="lbl">MOVIMIENTOS RECIENTES</span>
             </div>
-            {transactions.length === 0 ? <EmptyState title="Sin transacciones" desc="Añade tu primera entrada con el botón + NEW ENTRY" /> :
+            {transactions.length === 0 ? <EmptyState title="Sin transacciones" desc="Añade tu primera entrada con el botón + NUEVO REGISTRO" /> :
               transactions.slice(0, 6).map((tx: any) => {
                 const pos = tx.tipo === "ingreso";
                 return (
@@ -154,9 +154,12 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
                       <div style={{ fontSize: 12, fontWeight: 500, color: "#E4E4E7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginBottom: 4 }}>{tx.nombre}</div>
                       <div className="lbl">{tx.fecha ? new Date(tx.fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "2-digit" }).toUpperCase() : ""}</div>
                     </div>
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <div className="mono" style={{ fontSize: 12, color: pos ? "#10B981" : "#A1A1AA" }}>{pos ? "+" : "−"}€{fmt(Math.abs(tx.cantidad))}</div>
-                      {tx.estado === "pendiente" && <span style={{ fontSize: 9, fontWeight: 600, color: "#FBBF24", letterSpacing: "0.06em" }}>PENDING</span>}
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div className="mono" style={{ fontSize: 12, color: pos ? "#10B981" : "#A1A1AA" }}>{pos ? "+" : "−"}€{fmt(Math.abs(tx.cantidad))}</div>
+                        {tx.estado === "pendiente" && <span style={{ fontSize: 9, fontWeight: 600, color: "#FBBF24", letterSpacing: "0.06em", display: "block", marginTop: 4 }}>PENDIENTE</span>}
+                      </div>
+                      <button onClick={() => deleteTransaction && deleteTransaction(tx.id_transaccion)} style={{ background: "transparent", border: "none", color: "#52525B", cursor: "pointer", fontSize: 16 }} title="Eliminar registro">×</button>
                     </div>
                   </div>
                 );
@@ -196,8 +199,8 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
           </div>
         </div>
         <div style={{ width: 320, padding: "32px 36px" }}>
-           <span className="lbl" style={{ display: "block", marginBottom: 14, color: "#71717A" }}>INFORMACIÓN</span>
-           <p style={{ fontSize: 11, color: "#71717A", lineHeight: 1.6 }}>Las categorías te permiten entender en qué áreas se concentra tu mayor salida de capital. Mantén tus transacciones precisas para un análisis de Cash Flow más exacto.</p>
+           <span className="lbl" style={{ display: "block", marginBottom: 14, color: "#71717A" }}>INFORMACIÓN Y CONSEJOS</span>
+           <p style={{ fontSize: 11, color: "#71717A", lineHeight: 1.6 }}>Las categorías te permiten entender de forma sencilla en qué áreas se concentra tu mayor salida de dinero. Mantén un registro limpio para ayudar a proyectar tus ahorros a futuro.</p>
         </div>
       </div>
     </div>

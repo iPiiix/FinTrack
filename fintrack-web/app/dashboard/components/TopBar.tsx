@@ -2,7 +2,7 @@
 
 import React from "react";
 
-export const NAV = ["OVERVIEW", "TRANSACTIONS", "PORTFOLIO", "SETTINGS"];
+export const NAV = ["OVERVIEW", "TRANSACTIONS", "PORTFOLIO", "AI ADVISOR", "SETTINGS"];
 
 export function TopBar({ time, tab, setTab, loading, openDrawer }: any) {
   return (
@@ -21,13 +21,7 @@ export function TopBar({ time, tab, setTab, loading, openDrawer }: any) {
         <button onClick={openDrawer}
           style={{ display: "flex", alignItems: "center", gap: 6, background: "white", color: "black", fontWeight: 700, letterSpacing: "0.07em", fontSize: 10, padding: "8px 16px", border: "none", cursor: "pointer", transition: "background 0.15s ease", borderRadius: 1 }}
           onMouseEnter={e => e.currentTarget.style.background = "#E4E4E7"}
-          onMouseLeave={e => e.currentTarget.style.background = "white"}>+ NEW ENTRY</button>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div className={loading ? "" : "live-dot"} style={{ width: 6, height: 6, borderRadius: "50%", background: loading ? "#FBBF24" : "#10B981", flexShrink: 0 }} />
-          <span className="lbl">{loading ? "SYNCING…" : "LIVE"}</span>
-        </div>
-        <div style={{ width: 1, height: 20, background: "#1C1C1F" }} />
-        <span className="mono" style={{ fontSize: 11, color: "#52525B" }}>{time} CET</span>
+          onMouseLeave={e => e.currentTarget.style.background = "white"}>+ NUEVO REGISTRO</button>
       </div>
     </header>
   );
