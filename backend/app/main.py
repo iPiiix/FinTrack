@@ -54,12 +54,10 @@ def seed_default_categories():
         db.close()
 
 
-# Dynamic CORS: allow localhost for dev + FRONTEND_URL for production (Vercel)
+# Dynamic CORS: allow localhost for dev + FRONTEND_URL/Vercel for production
 _origins = [
     "http://localhost:3000", 
     "http://localhost:3001",
-    "https://fin-track-tan-alpha.vercel.app",
-    "https://fin-track-ipiiixs-projects.vercel.app", # Vercel team/project variants
 ]
 if settings.frontend_url and settings.frontend_url not in _origins:
     _origins.append(settings.frontend_url)
@@ -67,6 +65,7 @@ if settings.frontend_url and settings.frontend_url not in _origins:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
+    allow_origin_regex=r"https://fin-track-.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -74,50 +73,13 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-app.include_router(cuentas.router, prefix="/cuentas", tags=["Cuentas"])
-app.include_router(categorias.router, prefix="/categorias", tags=["Categorias"])
-app.include_router(transacciones.router, prefix="/transactions", tags=["Transactions"])
-app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
-app.include_router(portfolio.router, prefix="/portfolio", tags=["Portfolio"])
-app.include_router(usuarios.router, prefix="/usuarios", tags=["Usuarios"])
-app.include_router(ai.router, prefix="/analytics/ai", tags=["AI Insights"])
-app.include_router(subscriptions.router, prefix="/subscriptions", tags=["Subscriptions"])
-
-# ─── SQLAdmin Panel ────────────────────────────────────────────────────────────
-class AdminAuth(AuthenticationBackend):
-    async def login(self, request: Request) -> bool:
-        form = await request.form()
-        username = form.get("username")
-        password = form.get("password")
-        if username == settings.admin_panel_user and password == settings.admin_panel_password:
-            request.session.update({"authenticated": True})
-            return True
-        return False
-
-    async def logout(self, request: Request) -> bool:
-        request.session.clear()
-        return True
-
-    async def authenticate(self, request: Request) -> bool:
-        return request.session.get("authenticated", False)
-
-
-admin = Admin(
-    app, engine,
-    authentication_backend=AdminAuth(secret_key=settings.admin_panel_secret),
-    title="FinTrack Admin",
-)
-admin.add_view(UsuarioAdmin)
-admin.add_view(CuentaAdmin)
-admin.add_view(TransaccionAdmin)
-admin.add_view(CategoriaAdmin)
-
-
+# ... (rest of routers)
+# (Updating root for version check)
 @app.get("/")
 def root():
     return {
         "app": "FinTrack",
         "tagline": "Know your numbers. Own your future.",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "status": "operational"
     }
