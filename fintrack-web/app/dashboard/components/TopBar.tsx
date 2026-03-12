@@ -10,6 +10,7 @@ export function TopBar({ time, tab, setTab, loading, openDrawer }: any) {
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 28px", borderRight: "1px solid #1C1C1F", height: "100%", flexShrink: 0 }}>
         <img src="/png.png" alt="FinTrack" style={{ width: 22, height: 22, objectFit: "contain" }} />
         <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: "0.13em", color: "white" }}>FINTRACK</span>
+        <span style={{ fontSize: 9, fontWeight: 800, color: "#E8FF47", background: "rgba(232, 255, 71, 0.1)", padding: "2px 6px", borderRadius: 2, marginLeft: 4, letterSpacing: "0.05em" }}>BETA</span>
       </div>
       <nav style={{ display: "flex", height: "100%" }}>
         {NAV.map((item, i) => (

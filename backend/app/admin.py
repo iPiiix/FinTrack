@@ -8,8 +8,9 @@ from app.models.activo import Activo
 
 class UsuarioAdmin(ModelView, model=Usuario):
     column_list = [
-        Usuario.id_usuario, Usuario.nombre, Usuario.apellidos,
-        Usuario.email, Usuario.email_verificado, Usuario.creado_en,
+        Usuario.id_usuario, Usuario.nombre, Usuario.email,
+        Usuario.subscription_tier, Usuario.subscription_status,
+        Usuario.email_verificado, Usuario.creado_en,
     ]
     column_searchable_list = [Usuario.email, Usuario.nombre]
     column_sortable_list = [Usuario.creado_en, Usuario.nombre]
