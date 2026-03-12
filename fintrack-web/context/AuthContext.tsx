@@ -29,7 +29,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  // In production (Vercel), we should never fallback to localhost
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  
+  if (!API_URL && typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
+      console.warn("NEXT_PUBLIC_API_URL is missing in production!");
+  }
 
   const checkAuth = async () => {
     const token = getToken();
