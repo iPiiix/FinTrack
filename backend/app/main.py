@@ -55,7 +55,11 @@ def seed_default_categories():
 
 
 # Dynamic CORS: allow localhost for dev + FRONTEND_URL for production (Vercel)
-_origins = ["http://localhost:3000", "http://localhost:3001"]
+_origins = [
+    "http://localhost:3000", 
+    "http://localhost:3001",
+    "https://fin-track-tan-alpha.vercel.app" # Hardcoded for safety during Beta setup
+]
 if settings.frontend_url and settings.frontend_url not in _origins:
     _origins.append(settings.frontend_url)
 
