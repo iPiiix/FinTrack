@@ -58,7 +58,8 @@ def seed_default_categories():
 _origins = [
     "http://localhost:3000", 
     "http://localhost:3001",
-    "https://fin-track-tan-alpha.vercel.app" # Hardcoded for safety during Beta setup
+    "https://fin-track-tan-alpha.vercel.app",
+    "https://fin-track-ipiiixs-projects.vercel.app", # Vercel team/project variants
 ]
 if settings.frontend_url and settings.frontend_url not in _origins:
     _origins.append(settings.frontend_url)
@@ -69,6 +70,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
