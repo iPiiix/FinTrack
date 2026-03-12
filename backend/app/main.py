@@ -116,6 +116,6 @@ def root():
     return {
         "app": "FinTrack",
         "tagline": "Know your numbers. Own your future.",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "status": "operational"
     }
