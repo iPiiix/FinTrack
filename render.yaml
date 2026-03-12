@@ -37,5 +37,7 @@ services:
         sync: false  # Optional: set manually
       - key: ADMIN_EMAIL
         sync: false  # Optional: set manually
+      - key: GEMINI_API_KEY
+        sync: false  # Set this manually
       - key: PYTHON_VERSION
         value: "3.11"
