@@ -1,9 +1,11 @@
-from pydantic import Field, AliasChoices
+import os
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    database_url: str = Field(..., validation_alias=AliasChoices("DATABASE_URL", "database_url"))
-    secret_key: str = Field(..., validation_alias=AliasChoices("SECRET_KEY", "secret_key"))
+    # Field names matching the common environment variables
+    database_url: str = Field(..., alias="DATABASE_URL")
+    secret_key: str = Field(..., alias="SECRET_KEY")
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 43200 # Set to 30 days to effectively disable session closed
     smtp_email: str = ""
@@ -37,8 +39,25 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding='utf-8',
-        case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
+        populate_by_name=True
     )
 
-settings = Settings()
+# Debug: Print environment presence (not values) for Render logs
+if os.getenv("RENDER"):
+    print(f"--- RENDER ENVIRONMENT DETECTED ---")
+    print(f"DATABASE_URL present: {bool(os.getenv('DATABASE_URL'))}")
+    print(f"SECRET_KEY present: {bool(os.getenv('SECRET_KEY'))}")
+
+try:
+    settings = Settings()
+except Exception as e:
+    print(f"--- SETTINGS LOAD ERROR ---")
+    print(f"Details: {e}")
+    # In production, we might want to provide a dummy settings object 
+    # just to let the process start and show these prints in the logs
+    if os.getenv("RENDER"):
+        # Create a dummy object with required fields to prevent crash if possible
+        # but let's see the error first.
+        raise e
+    raise e
