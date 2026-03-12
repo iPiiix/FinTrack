@@ -54,10 +54,12 @@ def seed_default_categories():
         db.close()
 
 
-# Definitive CORS for Beta: allow all origins to ensure connectivity
+# Definitive CORS for Beta
+# NOTE: allow_origins=["*"] is not compatible with allow_credentials=True in some browsers.
+# We will use a regex to allow any vercel domain + localhost.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -109,6 +111,6 @@ def root():
     return {
         "app": "FinTrack",
         "tagline": "Know your numbers. Own your future.",
-        "version": "1.0.3",
+        "version": "1.0.4",
         "status": "operational"
     }
