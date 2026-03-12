@@ -21,6 +21,10 @@ export function AIInsightsView() {
           window.location.href = "/auth";
           return;
         }
+        if (res.status === 402) {
+          if (active) setData({ error: 402 });
+          return;
+        }
         if (!res.ok) throw new Error("Failed to fetch AI insights");
         const json = await res.json();
         if (active) setData(json);
@@ -35,6 +39,43 @@ export function AIInsightsView() {
   }, []);
 
   if (loading) return <div className="vu" style={{ padding: "44px 48px" }}><span className="lbl">SINTETIZANDO DATOS...</span></div>;
+  if (data?.error === 402) {
+    return (
+      <div className="vu relative flex min-h-[70vh] items-center justify-center overflow-hidden" style={{ margin: "24px", padding: "48px", border: "1px solid #1C1C1F", background: "#0A0A0C" }}>
+        {/* Background blurred mockup */}
+        <div className="absolute inset-0 z-0 flex flex-col gap-6 p-8 opacity-[0.04] blur-sm pointer-events-none" aria-hidden>
+          <div className="h-20 w-full rounded-sm bg-zinc-700" />
+          <div className="grid grid-cols-2 gap-6">
+            <div className="h-40 w-full rounded-sm bg-zinc-700" />
+            <div className="h-40 w-full rounded-sm bg-zinc-700" />
+          </div>
+          <div className="h-24 w-full rounded-sm bg-zinc-700" />
+        </div>
+        
+        {/* Lock Content */}
+        <div className="relative z-10 flex max-w-lg flex-col items-center justify-center text-center">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-sm border border-zinc-800 bg-zinc-900/50">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <h2 className="mb-4" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(32px,4vw,48px)", letterSpacing: "0.02em", color: "#FAFAF9", lineHeight: 1 }}>
+            INTELIGENCIA <span style={{ color: "#E8FF47" }}>ARTIFICIAL</span>
+          </h2>
+          <span className="lbl mb-6" style={{ display: "inline-block", background: "rgba(232, 255, 71, 0.1)", color: "#E8FF47", padding: "4px 8px" }}>
+            FUNCIÓN PRO BLOQUEADA
+          </span>
+          <p className="mb-8 font-light leading-relaxed text-zinc-400" style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 14 }}>
+            Conecta tus finanzas a nuestro motor heurístico analítico. Modelos de IA analizan matemáticamente tus gastos para arrojar consejos tácticos y proyectar tu patrimonio neto en tiempo real.
+          </p>
+          <button 
+            onClick={() => window.location.href = "/pricing"}
+            className="flex items-center gap-2 bg-[#E8FF47] px-8 py-3.5 font-mono text-[10px] font-bold tracking-[0.22em] text-black transition-all duration-200 hover:bg-[#d4ed36]"
+          >
+            DESBLOQUEAR AI ADVISOR
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (!data) return <div className="vu" style={{ padding: "44px 48px" }}><span className="lbl">ERROR DE CONEXIÓN IA</span></div>;
 
   return (

@@ -243,7 +243,7 @@ function Nav() {
           ))}
         </div>
         <Link href="/auth/login" className="flex items-center gap-2 border border-zinc-800 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-400 transition-colors duration-200 hover:text-white hover:border-zinc-600">
-          INICIAR SESIÓN
+          ENTRAR / REGISTRO GRATIS
         </Link>
       </div>
     </nav>
@@ -517,16 +517,20 @@ function Hero() {
           <p className="font-light leading-relaxed text-zinc-500" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>
             Control financiero de nivel institucional para el inversor moderno. Unifica tu flujo de caja, analiza tu asignación de activos y domina tu contabilidad con total privacidad.
           </p>
+          <div className="mt-4 flex items-center gap-3 font-mono text-[10px] tracking-[0.15em] text-[#10B981]">
+            <div className="h-1.5 w-1.5 rounded-full bg-[#10B981]" style={{ animation: "pls 2s ease-in-out infinite" }} />
+            GRATIS PARA SIEMPRE + 14 DÍAS DE PRUEBA PRO
+          </div>
         </div>
 
         {/* CTAs */}
         <div className="flex flex-col items-end gap-3">
           <div className="flex items-center gap-3 reveal-up" style={{ transitionDelay: "90ms" }}>
-            <Link href="/auth/login" className="flex items-center gap-2.5 bg-[#E8FF47] text-black px-7 py-4 font-mono text-[10px] tracking-[0.22em] font-bold transition-all duration-200 hover:bg-[#d4ed36]">
-              ACCEDER APP
+            <Link href="/auth/register" className="flex items-center gap-2.5 bg-[#E8FF47] text-black px-7 py-4 font-mono text-[10px] tracking-[0.22em] font-bold transition-all duration-200 hover:bg-[#d4ed36]">
+              CREAR CUENTA GRATIS
             </Link>
             <a href="#capabilities" className="border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 transition-all duration-200 hover:border-zinc-500 hover:text-zinc-200">
-              VER FUNCIONES
+              VER FUNCIONES PRO
             </a>
           </div>
           <span className="reveal-up font-mono text-[9px] tracking-[0.2em] text-zinc-700" style={{ transitionDelay: "180ms" }}>
@@ -1121,27 +1125,32 @@ export default function FinTrackLanding() {
                 TU VERDAD FINANCIERA.<br />POR FIN UNIFICADA.
               </h2>
             </div>
-            <p className="max-w-xs text-sm font-light leading-relaxed text-zinc-600 md:text-right">
-              Todas las herramientas que necesitas para controlar tu flujo de caja, analizar tu portfolio y proteger tus datos.
-            </p>
+            <div className="text-right flex flex-col items-end">
+              <p className="max-w-xs text-sm font-light leading-relaxed text-zinc-600 mb-2">
+                Todas las herramientas que necesitas para controlar tu flujo de caja de por vida. Integraciones con Inteligencia Artificial disponibles en licencias comerciales.
+              </p>
+              <span className="font-mono text-[9px] tracking-[0.2em] font-medium text-[#E8FF47] bg-[#E8FF47]/10 px-3 py-1.5 border border-[#E8FF47]/20">
+                LÍNEA BASE GRATUITA ILIMITADA
+              </span>
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-px bg-zinc-800 md:grid-cols-3">
-            <FeatureCard icon={Activity} label="LIBRO MAYOR" title="La fuente de verdad definitiva"
-              description="Registra cada ingreso y gasto con precisión absoluta. Categoriza transacciones, gestiona múltiples cuentas y mantén un historial financiero impecable."
+            <FeatureCard icon={Activity} label="LIBRO MAYOR — GRATIS INCLUIDO" title="La fuente de verdad definitiva"
+              description="Registra cada ingreso y gasto con precisión absoluta. Categoriza transacciones, gestiona múltiples cuentas y mantén un historial financiero impecable de por vida."
               accent className="md:col-span-2 md:row-span-2" />
-            <FeatureCard icon={BarChart2} label="FLUJO DE CAJA" title="Controla tu tasa de gasto"
-              description="Visualiza el capital entrante frente a los gastos salientes. Sigue tu tasa de ahorro mensual para alcanzar cada objetivo." />
-            <FeatureCard icon={Globe} label="PORTFOLIO" title="Seguimiento de asignación de activos"
-              description="Gestiona acciones, crypto, inmuebles y liquidez en un solo dashboard. Mira exactamente dónde está desplegado tu patrimonio." />
-            <FeatureCard icon={TrendingUp} label="PATRIMONIO NETO" title="Visualiza tu trayectoria"
+            <FeatureCard icon={BarChart2} label="FLUJO DE CAJA — GRATIS INCLUIDO" title="Controla tu tasa de gasto"
+              description="Visualiza el capital entrante frente a los gastos salientes. Sigue tu tasa de ahorro mensual para alcanzar cada objetivo de capital." />
+            <FeatureCard icon={Globe} label="PORTFOLIO — FUNCIÓN PRO" title="Seguimiento avanzado de activos"
+              description="Gestiona acciones, crypto, inmuebles y liquidez en un dashboard avanzado bloqueado tras 14 días. Entiende exactamente dónde está desplegado tu patrimonio." />
+            <FeatureCard icon={TrendingUp} label="PATRIMONIO NETO — GRATIS INCLUIDO" title="Visualiza tu trayectoria"
               description="Observa cómo crece tu patrimonio con el tiempo. Los gráficos históricos comparan periodos actuales con anteriores de forma fluida." />
-            <FeatureCard icon={Zap} label="ENTRADA DE DATOS" title="Actualizaciones sin fricción"
-              description="Un cajón de entrada rápida te permite registrar transacciones en segundos. Sin menús complejos, directo al registro." />
-            <FeatureCard icon={Lock} label="SEGURIDAD" title="Cifrado AES-256"
-              description="Tus datos están cifrados, son privados y nunca se venden. Tratamos tu historial financiero con seguridad de nivel institucional." />
-            <FeatureCard icon={Shield} label="ANALÍTICAS" title="Análisis profundo de gastos"
-              description="Desglose automático de tus principales gastos y fuentes de ingreso. Entiende exactamente a dónde va tu dinero cada mes."
-              className="md:col-span-3" />
+            <FeatureCard icon={Zap} label="ENTRADA DE DATOS — GRATIS INCLUIDO" title="Actualizaciones sin fricción"
+              description="Un cajón de entrada rápida te permite registrar transacciones en segundos. Sin menús complejos, directo al registro. Diseñado para ser un hábito real." />
+            <FeatureCard icon={Lock} label="SEGURIDAD — GRATIS INCLUIDO" title="Cifrado AES-256"
+              description="Tus datos están cifrados, son privados y nunca se venden ni monitorean. Tratamos tu historial financiero con seguridad criptográfica de nivel institucional." />
+            <FeatureCard icon={Shield} label="IA ADVISOR — FUNCIÓN PRO" title="Reportes mediante Inteligencia Artificial"
+              description="Conexión hipersegura a LLMs que analizan matemáticamente tus gastos para arrojar consejos tácticos y estratégicos ultra-personalizados sobre cómo optimizar cada céntimo que gastas."
+              className="md:col-span-3 bg-zinc-950/40" />
           </div>
         </div>
       </section>

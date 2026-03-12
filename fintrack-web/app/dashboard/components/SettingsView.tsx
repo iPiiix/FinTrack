@@ -80,6 +80,31 @@ export function SettingsView() {
     setLoading(false);
   };
 
+  const handleManageSubscription = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/subscriptions/create-portal-session`, {
+        method: "POST",
+        headers: authHeaders
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 400 || (data.detail && data.detail.includes("cliente"))) {
+          // Usuario posiblemente en Free Trial local sin ID de Stripe aún. Redirigir a los planes.
+          router.push("/pricing");
+          return;
+        }
+        throw new Error(data.detail || "Error al acceder al portal de suscripción");
+      }
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      showStatus(err.message || "Error al acceder al portal", "error");
+    }
+    setLoading(false);
+  };
+
   const handleLogout = () => {
     logout();
   };
@@ -142,7 +167,10 @@ export function SettingsView() {
             <label className="lbl" style={{ display: "block", marginBottom: 10 }}>Correo Electrónico (Solo Lectura)</label>
             <input className="inp" value={safeUser.email || ""} disabled style={{ opacity: 0.5, cursor: "not-allowed", background: "rgba(255,255,255,0.01)" }} />
           </div>
-          <button onClick={handleUpdateName} disabled={loading} style={{ background: "#FAFAFA", color: "#09090B", border: "none", padding: "12px 24px", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", cursor: loading ? "wait" : "pointer", transition: "opacity 0.2s, background 0.2s", borderRadius: 2 }} onMouseEnter={e => e.currentTarget.style.opacity = "0.9"} onMouseLeave={e => e.currentTarget.style.opacity = "1"}>GUARDAR CAMBIOS</button>
+          <div style={{ display: "flex", gap: 16 }}>
+            <button onClick={handleUpdateName} disabled={loading} style={{ background: "#FAFAFA", color: "#09090B", border: "none", padding: "12px 24px", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", cursor: loading ? "wait" : "pointer", transition: "opacity 0.2s, background 0.2s", borderRadius: 2 }} onMouseEnter={e => e.currentTarget.style.opacity = "0.9"} onMouseLeave={e => e.currentTarget.style.opacity = "1"}>GUARDAR CAMBIOS</button>
+            <button onClick={handleManageSubscription} disabled={loading} style={{ background: "#E8FF47", color: "#09090B", border: "none", padding: "12px 24px", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", cursor: loading ? "wait" : "pointer", transition: "opacity 0.2s, background 0.2s", borderRadius: 2 }} onMouseEnter={e => e.currentTarget.style.opacity = "0.9"} onMouseLeave={e => e.currentTarget.style.opacity = "1"}>GESTIONAR SUSCRIPCIÓN</button>
+          </div>
         </div>
       </Sec>
 

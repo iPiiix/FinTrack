@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,6 +39,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!turnstileToken && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+      setError("Por favor, completa la verificación de seguridad.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -48,6 +55,7 @@ export default function RegisterPage() {
         email: formData.email,
         contrasena: formData.password,
         fecha_nacimiento: formData.fecha_nacimiento,
+        turnstile_token: turnstileToken,
       };
 
       const res = await fetch(`${API_URL}/auth/register`, {
@@ -188,6 +196,16 @@ export default function RegisterPage() {
               disabled={isLoading}
             />
           </div>
+
+          {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+            <div className="flex justify-center my-2">
+              <Turnstile 
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} 
+                onSuccess={(token) => setTurnstileToken(token)}
+                options={{ theme: 'dark' }}
+              />
+            </div>
+          )}
 
           <button
             type="submit"

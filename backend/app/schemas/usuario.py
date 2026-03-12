@@ -10,10 +10,16 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     contrasena: str
+    turnstile_token: Optional[str] = None # Optional for backward compatibility, but enforced in route if keys are set
+
 
 class UsuarioResponse(UsuarioBase):
     id_usuario: int
     creado_en: datetime
+    subscription_tier: str
+    subscription_status: str
+    trial_ends_at: Optional[datetime]
+
 
     class Config:
         from_attributes = True

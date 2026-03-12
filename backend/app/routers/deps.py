@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.usuario import Usuario
 from app.core.security import verificar_token 
+from datetime import datetime, timedelta, timezone
 
 # Esto le dice a Swagger dónde está el endpoint de login para el candado
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -31,3 +32,19 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         raise credentials_exception
         
     return user
+
+def get_active_subscription(current_user: Usuario = Depends(get_current_user)):
+    now = datetime.utcnow()
+    
+    if current_user.subscription_status == 'active':
+        return current_user
+        
+    if current_user.trial_ends_at:
+        # 1-hour grace period
+        if now < (current_user.trial_ends_at + timedelta(hours=1)):
+            return current_user
+            
+    raise HTTPException(
+        status_code=status.HTTP_402_PAYMENT_REQUIRED,
+        detail="Suscripción inactiva o periodo de prueba expirado"
+    )

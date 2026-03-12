@@ -14,6 +14,7 @@ import { SettingsView } from "./components/SettingsView";
 import { AIInsightsView } from "./components/AIInsightsView";
 import { CreateAccountDrawer } from "./components/CreateAccountDrawer";
 import { CreateAssetDrawer } from "./components/CreateAssetDrawer";
+import { TutorialModal } from "./components/TutorialModal";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -38,7 +39,8 @@ export default function DashboardPage() {
 
   async function apiFetch(path: string) {
     const res = await fetch(`${API}${path}`, { headers: authHeaders() });
-    if (res.status === 401) { localStorage.removeItem("fintrack_token"); window.location.href = "/auth"; return null; }
+    if (res.status === 401) { localStorage.removeItem("fintrack_token"); window.location.href = "/auth/login"; return null; }
+    if (res.status === 402) return { error: 402 };
     if (!res.ok) throw new Error(`API error ${res.status}`);
     return res.json();
   }
@@ -58,14 +60,14 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const [analyticsData, txData, cuentasData, catData, activosData] = await Promise.all([
-        apiFetch("/analytics/summary"),
-        apiFetch("/transactions/"),
-        apiFetch("/cuentas/"),
-        apiFetch("/categorias/"),
-        apiFetch("/portfolio/")
+        apiFetch("/analytics/summary").catch(() => null),
+        apiFetch("/transactions/").catch(() => []),
+        apiFetch("/cuentas/").catch(() => []),
+        apiFetch("/categorias/").catch(() => []),
+        apiFetch("/portfolio/").catch(() => ({ error: 402 }))
       ]);
       if (analyticsData) setAnalytics({ ...analyticsData, _cuentas: cuentasData || [] });
-      if (transactions) setTransactions(txData);
+      if (txData) setTransactions(txData);
       if (cuentasData) setCuentas(cuentasData);
       if (catData) setCategorias(catData);
       if (activosData) setActivos(activosData);
@@ -135,6 +137,7 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+      <TutorialModal />
     </>
   );
 }

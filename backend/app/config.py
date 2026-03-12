@@ -13,6 +13,17 @@ class Settings(BaseSettings):
     admin_panel_password: str = ""
     admin_panel_secret: str = ""
     gemini_api_key: str = ""
+    
+    # Stripe Defaults
+    stripe_secret_key: str = ""
+    stripe_publishable_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_pro_price_id: str = ""
+    stripe_enterprise_price_id: str = ""
+    
+    # Turnstile Defaults
+    turnstile_secret_key: str = ""
+    turnstile_site_key: str = ""
 
     @property
     def effective_database_url(self) -> str:

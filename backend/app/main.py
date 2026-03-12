@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqladmin import Admin
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
-from app.routers import auth, transacciones, analytics, cuentas, categorias, portfolio, usuarios, ai
+from app.routers import auth, transacciones, analytics, cuentas, categorias, portfolio, usuarios, ai, subscriptions
 from app.admin import UsuarioAdmin, CuentaAdmin, TransaccionAdmin, CategoriaAdmin
 from app.config import settings
 import app.models
@@ -75,6 +75,7 @@ app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 app.include_router(portfolio.router, prefix="/portfolio", tags=["Portfolio"])
 app.include_router(usuarios.router, prefix="/usuarios", tags=["Usuarios"])
 app.include_router(ai.router, prefix="/analytics/ai", tags=["AI Insights"])
+app.include_router(subscriptions.router, prefix="/subscriptions", tags=["Subscriptions"])
 
 # ─── SQLAdmin Panel ────────────────────────────────────────────────────────────
 class AdminAuth(AuthenticationBackend):

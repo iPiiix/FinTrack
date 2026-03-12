@@ -9,6 +9,9 @@ interface User {
   nombre: string;
   email: string;
   email_verificado: boolean;
+  subscription_tier?: string;
+  subscription_status?: string;
+  stripe_customer_id?: string | null;
 }
 
 interface AuthContextType {

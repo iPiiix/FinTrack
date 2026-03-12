@@ -6,12 +6,14 @@ import { useAuth } from "../../../context/AuthContext";
 import { setToken } from "../../../lib/auth";
 import { ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   
   const { login } = useAuth();
   const router = useRouter();
@@ -20,6 +22,11 @@ export default function LoginPage() {
     e.preventDefault();
     if (!email || !password) {
       setError("Por favor, introduce tu email y contraseña.");
+      return;
+    }
+
+    if (!turnstileToken && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+      setError("Por favor, completa la verificación de seguridad.");
       return;
     }
 
@@ -32,6 +39,9 @@ export default function LoginPage() {
       const formData = new URLSearchParams();
       formData.append("username", email);
       formData.append("password", password);
+      if (turnstileToken) {
+        formData.append("turnstile_token", turnstileToken);
+      }
 
       const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
@@ -110,6 +120,16 @@ export default function LoginPage() {
               disabled={isLoading}
             />
           </div>
+
+          {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+            <div className="flex justify-center my-2">
+              <Turnstile 
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} 
+                onSuccess={(token) => setTurnstileToken(token)}
+                options={{ theme: 'dark' }}
+              />
+            </div>
+          )}
 
           <button
             type="submit"

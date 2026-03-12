@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
-from app.routers.deps import get_current_user
+from app.routers.deps import get_current_user, get_active_subscription
 from app.models.usuario import Usuario
 from app.models.activo import Activo
 from app.schemas.activo import ActivoCreate, ActivoResponse
@@ -23,7 +23,7 @@ def read_activos(
 def create_activo(
     activo: ActivoCreate,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(get_active_subscription)
 ):
     """
     Register a new investment (compra de activo).
@@ -44,7 +44,7 @@ def create_activo(
 def delete_activo(
     id_activo: int,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(get_active_subscription)
 ):
     """
     Delete an investment record.

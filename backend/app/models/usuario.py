@@ -14,6 +14,15 @@ class Usuario(Base):
     contrasena = Column(Text, nullable=False)
     email_verificado = Column(Boolean, default=False, server_default="false")
     token_verificacion = Column(Text, nullable=True)
+    
+    # Subscription & Stripe Data
+    stripe_customer_id = Column(String(255), unique=True, nullable=True)
+    stripe_subscription_id = Column(String(255), unique=True, nullable=True)
+    subscription_tier = Column(String(50), default="free", server_default="free")
+    subscription_status = Column(String(50), default="inactive", server_default="inactive")
+    trial_ends_at = Column(TIMESTAMP, nullable=True)
+    ip_address = Column(String(50), nullable=True)
+    
     creado_en = Column(TIMESTAMP, server_default=func.now())
     actualizado_en = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 

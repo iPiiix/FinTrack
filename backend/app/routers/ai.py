@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.routers.deps import get_current_user
+from app.routers.deps import get_active_subscription
 from app.models.usuario import Usuario
 from app.models.transaccion import Transaccion
 from app.models.cuenta import Cuenta
@@ -20,7 +20,7 @@ router = APIRouter()
 @router.get("/insights")
 def get_ai_insights(
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(get_active_subscription)
 ):
     # Fetch user transactions
     thirty_days_ago = datetime.now() - timedelta(days=30)
