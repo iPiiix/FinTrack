@@ -7,6 +7,7 @@ from app.routers import auth, transacciones, analytics, cuentas, categorias, por
 from app.admin import UsuarioAdmin, CuentaAdmin, TransaccionAdmin, CategoriaAdmin
 from app.config import settings
 import app.models
+from sqlalchemy import text
 
 from app.database import engine, Base
 
@@ -15,16 +16,25 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="FinTrack API",
     description="Personal Finance Intelligence Platform",
-    version="1.0.5"
+    version="1.0.6"
 )
 
 from app.database import SessionLocal
 from app.models.categoria import Categoria
 
 @app.on_event("startup")
-def seed_default_categories():
+def startup_tasks():
     db = SessionLocal()
     try:
+        # 1. Ensure Schema (Add missing columns that create_all misses)
+        try:
+            db.execute(text("ALTER TABLE usuarios ADD COLUMN ip_address VARCHAR"))
+            db.commit()
+            print("Successfully added ip_address column")
+        except Exception:
+            db.rollback() # Column likely already exists
+            
+        # 2. Seed default categories
         default_categories = [
             {"nombre": "Nómina / Salario", "descripcion": "Ingresos regulares del trabajo"},
             {"nombre": "Vivienda", "descripcion": "Alquiler, hipoteca, comunidad"},
@@ -37,11 +47,9 @@ def seed_default_categories():
             {"nombre": "Gastos Varios", "descripcion": "Otros gastos menores"}
         ]
         
-        # Insert only those that do not exist by name
         existing = {c.nombre for c in db.query(Categoria).all()}
         new_cats = [Categoria(**c) for c in default_categories if c["nombre"] not in existing and "Nómina" not in c["nombre"]]
         
-        # Ensure we also add Nómina if missing
         if not any("Nómina" in e or "Nomina" in e for e in existing):
              new_cats.append(Categoria(nombre="Nómina / Salario", descripcion="Ingresos regulares del trabajo"))
 
@@ -49,17 +57,22 @@ def seed_default_categories():
             db.add_all(new_cats)
             db.commit()
     except Exception as e:
-        print(f"Error seeding categories: {e}")
+        print(f"Error in startup tasks: {e}")
     finally:
         db.close()
 
 
-# Definitive CORS for Beta: allow all origins
-# We set allow_credentials=False which is required when allow_origins=["*"]
+# Definitive CORS for Beta
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://fin-track-tan-alpha.vercel.app",
+        "https://fin-track-ipiiixs-projects.vercel.app"
+    ],
+    allow_origin_regex=r"https://fin-track-.*\.vercel\.app",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -110,6 +123,6 @@ def root():
     return {
         "app": "FinTrack",
         "tagline": "Know your numbers. Own your future.",
-        "version": "1.0.5",
+        "version": "1.0.6",
         "status": "operational"
     }
