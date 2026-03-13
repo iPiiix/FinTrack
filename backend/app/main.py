@@ -107,15 +107,22 @@ def root():
     return {
         "app": "FinTrack",
         "tagline": "Know your numbers. Own your future.",
-        "version": "1.0.7",
+        "version": "1.0.8",
         "status": "operational"
     }
 
 # General Error Handler to prevent 500s from hiding CORS headers
 @app.exception_handler(Exception)
 async def universal_exception_handler(request: Request, exc: Exception):
+    error_data = {
+        "active_debug_error": str(exc),
+        "traceback": traceback.format_exc(),
+        "path": request.url.path,
+        "method": request.method
+    }
+    import json
     return Response(
-        content=f'{{"active_debug_error": "{str(exc)}", "traceback": "{traceback.format_exc()}"}}',
+        content=json.dumps(error_data),
         media_type="application/json",
         status_code=500,
         headers={

@@ -18,7 +18,10 @@ try:
     print("Response Headers:")
     for k, v in response.headers.items():
         print(f"  {k}: {v}")
-    print("\nResponse Body:")
-    print(response.text)
+    print("\nResponse Body (Full JSON):")
+    try:
+        print(json.dumps(response.json(), indent=2))
+    except:
+        print(response.text)
 except Exception as e:
     print(f"Request failed: {e}")
