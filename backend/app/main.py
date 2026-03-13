@@ -15,7 +15,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="FinTrack API",
     description="Personal Finance Intelligence Platform",
-    version="1.0.0"
+    version="1.0.5"
 )
 
 from app.database import SessionLocal
@@ -54,13 +54,12 @@ def seed_default_categories():
         db.close()
 
 
-# Definitive CORS for Beta
-# NOTE: allow_origins=["*"] is not compatible with allow_credentials=True in some browsers.
-# We will use a regex to allow any vercel domain + localhost.
+# Definitive CORS for Beta: allow all origins
+# We set allow_credentials=False which is required when allow_origins=["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:.*",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -111,6 +110,6 @@ def root():
     return {
         "app": "FinTrack",
         "tagline": "Know your numbers. Own your future.",
-        "version": "1.0.4",
+        "version": "1.0.5",
         "status": "operational"
     }
