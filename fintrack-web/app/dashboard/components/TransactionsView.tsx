@@ -51,7 +51,7 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
     formData.append("file", file);
     formData.append("id_cuenta", cuentas[0].id_cuenta.toString());
 
-    const API = process.env.NEXT_PUBLIC_API_URL;
+    const API = "/api";
 
     try {
       const res = await fetch(`${API}/transactions/csv`, {

@@ -23,7 +23,7 @@ function PricingContent() {
     
     setIsLoading(planId);
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const API = "/api";
       const token = localStorage.getItem("fintrack_token");
       
       const res = await fetch(`${API}/subscriptions/create-checkout-session`, {

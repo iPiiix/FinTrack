@@ -33,7 +33,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      const API_URL = "/api";
       
       const formData = new URLSearchParams();
       formData.append("username", email);

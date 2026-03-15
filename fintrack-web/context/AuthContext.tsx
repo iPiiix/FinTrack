@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_URL = "/api";
 
   const checkAuth = async () => {
     try {

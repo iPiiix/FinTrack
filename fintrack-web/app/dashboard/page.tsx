@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const [categorias, setCategorias] = useState([]);
   const [activos, setActivos] = useState([]);
 
-  const API = process.env.NEXT_PUBLIC_API_URL;
+  const API = "/api";
 
   const apiFetch = useCallback(async (path: string) => {
     const res = await fetch(`${API}${path}`, { 

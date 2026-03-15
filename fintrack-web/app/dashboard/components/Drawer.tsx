@@ -14,7 +14,7 @@ export function Drawer({ isOpen, onClose, onSave, cuentas, categorias }: any) {
 
   if (!isOpen) return null;
 
-  const API = process.env.NEXT_PUBLIC_API_URL;
+  const API = "/api";
 
   const handleSave = async () => {
     const val = parseFloat(cantidad);
