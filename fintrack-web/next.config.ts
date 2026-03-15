@@ -7,8 +7,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        // Proxy all backend routes, excluding 'quote' which is handled locally
-        source: '/api/:path((?!quote).*)',
+        source: '/api/:path*',
         destination: 'https://fintrack-api-wawb.onrender.com/:path*',
       },
     ];

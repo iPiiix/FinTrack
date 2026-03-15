@@ -51,7 +51,13 @@ async def register(
     if existe:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
         
-    client_ip = request.client.host if request.client else "unknown"
+    # Get real IP from proxy if available
+    x_forwarded_for = request.headers.get("x-forwarded-for")
+    if x_forwarded_for:
+        # Usually format is "client, proxy1, proxy2"
+        client_ip = x_forwarded_for.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
     
     if client_ip != "unknown" and client_ip not in ["127.0.0.1", "::1"]:
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
