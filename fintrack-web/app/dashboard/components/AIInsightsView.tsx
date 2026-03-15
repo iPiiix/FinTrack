@@ -11,14 +11,13 @@ export function AIInsightsView() {
     let active = true;
     const fetchAI = async () => {
       try {
-        const token = localStorage.getItem("fintrack_token");
-        const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const API = process.env.NEXT_PUBLIC_API_URL || "/api";
         const res = await fetch(`${API}/analytics/ai/insights`, {
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: "include"
         });
         if (res.status === 401) {
-          localStorage.removeItem("fintrack_token");
-          window.location.href = "/auth";
+          // Handled by AuthContext, but we can clear local state
+          if (active) setData(null);
           return;
         }
         if (res.status === 402) {

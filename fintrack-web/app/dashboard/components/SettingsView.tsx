@@ -18,8 +18,7 @@ export function SettingsView() {
   const [statusMsg, setStatusMsg] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-  const authHeaders = { Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("fintrack_token") : ""}`, "Content-Type": "application/json" };
+  const API = process.env.NEXT_PUBLIC_API_URL || "/api";
 
   const showStatus = (text: string, type: "success" | "error") => {
     setStatusMsg({ text, type });
@@ -31,15 +30,12 @@ export function SettingsView() {
     try {
       const res = await fetch(`${API}/usuarios/me/name`, {
         method: "PUT",
-        headers: authHeaders,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ nombre, apellidos }),
       });
       if (!res.ok) throw new Error("Error updating name");
       
-      const updatedUser = await res.json();
-      if (typeof window !== "undefined") {
-        localStorage.setItem("fintrack_user", JSON.stringify(updatedUser));
-      }
       showStatus("Nombre actualizado correctamente", "success");
     } catch (err) {
       showStatus("Error al actualizar perfil", "error");
@@ -53,7 +49,8 @@ export function SettingsView() {
     try {
       const res = await fetch(`${API}/usuarios/me/password`, {
         method: "PUT",
-        headers: authHeaders,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
       });
       if (!res.ok) throw new Error("Contraseña incorrecta");
@@ -70,7 +67,10 @@ export function SettingsView() {
     if (!confirm("ESTA ACCIÓN ES IRREVERSIBLE. Se borrarán todas tus cuentas, transacciones y activos. ¿Estás absolutamente seguro de que deseas eliminar tu cuenta?")) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API}/usuarios/me`, { method: "DELETE", headers: authHeaders });
+      const res = await fetch(`${API}/usuarios/me`, { 
+        method: "DELETE",
+        credentials: "include" 
+      });
       if (!res.ok) throw new Error("Error deleting account");
       alert("Cuenta eliminada permanentemente. Redirigiendo...");
       logout();
@@ -85,7 +85,7 @@ export function SettingsView() {
     try {
       const res = await fetch(`${API}/subscriptions/create-portal-session`, {
         method: "POST",
-        headers: authHeaders
+        credentials: "include"
       });
       const data = await res.json();
       if (!res.ok) {
