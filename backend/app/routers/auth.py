@@ -47,6 +47,7 @@ async def register(
     request: Request,
     db: Session = Depends(get_db),
 ):
+    print(f"--- [DEBUG] Register start for email: {usuario.email} ---")
     existe = db.query(Usuario).filter(Usuario.email == usuario.email).first()
     if existe:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
@@ -63,7 +64,10 @@ async def register(
             raise HTTPException(status_code=403, detail="Límite de creación de cuentas alcanzado.")
 
     if settings.turnstile_secret_key and not await verify_turnstile(usuario.turnstile_token):
+        print("--- [DEBUG] Register: Turnstile verification failed ---")
         raise HTTPException(status_code=400, detail="Verificación Turnstile fallida")
+
+    print(f"--- [DEBUG] Register: Creating user object for {usuario.email} ---")
 
     token_verificacion = secrets.token_urlsafe(32)
     nuevo_usuario = Usuario(
@@ -80,8 +84,14 @@ async def register(
         ip_address=client_ip,
     )
     db.add(nuevo_usuario)
-    db.commit()
-    db.refresh(nuevo_usuario)
+    try:
+        db.commit()
+        print(f"--- [DEBUG] Register: User {usuario.email} committed successfully ---")
+        db.refresh(nuevo_usuario)
+    except Exception as e:
+        db.rollback()
+        print(f"--- [DEBUG] Register: COMMIT ERROR: {e} ---")
+        raise HTTPException(status_code=500, detail="Error al guardar el usuario en la base de datos")
 
     if settings.smtp_email:
         from app.core.email import enviar_verificacion, notificar_admin
@@ -101,17 +111,20 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     return {"message": "Email verificado"}
 
 @router.post("/login")
-async def login(
-    response: Response,
-    db: Session = Depends(get_db), 
-    form_data: OAuth2PasswordRequestForm = Depends(),
     turnstile_token: str = Form(None)
 ):
+    print(f"--- [DEBUG] Login start for email: {form_data.username} ---")
     if settings.turnstile_secret_key and not await verify_turnstile(turnstile_token):
+        print("--- [DEBUG] Login: Turnstile verification failed ---")
         raise HTTPException(status_code=400, detail="Verificación Turnstile fallida")
 
     usuario = db.query(Usuario).filter(Usuario.email == form_data.username).first()
-    if not usuario or not verificar_password(form_data.password, usuario.contrasena):
+    if not usuario:
+        print(f"--- [DEBUG] Login: User {form_data.username} not found ---")
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+
+    if not verificar_password(form_data.password, usuario.contrasena):
+        print(f"--- [DEBUG] Login: Password verification failed for {form_data.username} ---")
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
     # Tokens
@@ -125,7 +138,13 @@ async def login(
         expires_at=datetime.utcnow() + timedelta(days=30)
     )
     db.add(db_refresh)
-    db.commit()
+    try:
+        db.commit()
+        print(f"--- [DEBUG] Login: Refresh token saved for {form_data.username} ---")
+    except Exception as e:
+        db.rollback()
+        print(f"--- [DEBUG] Login: DB ERROR saving refresh token: {e} ---")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
     # Set cookies
     response.set_cookie(
@@ -144,6 +163,7 @@ async def login(
         samesite="none", # Required for cross-domain
         max_age=30 * 24 * 60 * 60 # 30 days
     )
+    print(f"--- [DEBUG] Login: Cookies set for {form_data.username} ---")
 
     return {
         "usuario": {
