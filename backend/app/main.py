@@ -20,19 +20,21 @@ app = FastAPI(
 )
 
 # Standard CORSMiddleware for Production
+# Note: allow_origins must be explicit when allow_credentials=True
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:3001",
         "https://fin-track-tan-alpha.vercel.app",
-        "https://fin-track-ipiiixs-projects.vercel.app"
+        "https://fin-track-ipiiixs-projects.vercel.app",
+        # Allow Vercel preview deployments if needed, but they must be listed explicitly 
+        # or handled dynamically if the list grows too large.
     ],
-    allow_origin_regex=r"https://fin-track-.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
+    expose_headers=["Set-Cookie"], # Explicitly expose Set-Cookie if needed by certain proxies
 )
 
 # Mandatory SessionMiddleware for sqladmin authentication

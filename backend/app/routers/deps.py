@@ -1,21 +1,32 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.usuario import Usuario
 from app.core.security import verificar_token 
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
-# Esto le dice a Swagger dónde está el endpoint de login para el candado
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+# This keeps Swagger working
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login", auto_error=False)
 
-def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+def get_current_user(
+    request: Request,
+    db: Session = Depends(get_db), 
+    token_header: Optional[str] = Depends(oauth2_scheme)
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Sesión expirada o inválida",
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    # Dual-auth transition: Check cookie first, then header
+    token = request.cookies.get("access_token") or token_header
+    
+    if not token:
+        raise credentials_exception
+        
     # 1. Verificamos que el token sea criptográficamente válido
     payload = verificar_token(token)
     if payload is None:
@@ -47,4 +58,4 @@ def get_active_subscription(current_user: Usuario = Depends(get_current_user)):
     raise HTTPException(
         status_code=status.HTTP_402_PAYMENT_REQUIRED,
         detail="Suscripción inactiva o periodo de prueba expirado"
-    )
+    )

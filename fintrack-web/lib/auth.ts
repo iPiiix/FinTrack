@@ -1,27 +1,17 @@
-// Utility functions to handle JWT tokens on the frontend
-
-const TOKEN_KEY = "fintrack_token";
-
-export function setToken(token: string) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(TOKEN_KEY, token);
-  }
-}
+// Utility functions for auth (now primarily cookie-based)
 
 export function getToken(): string | null {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem(TOKEN_KEY);
-  }
+  // We can't access HttpOnly cookies from JS.
+  // This function is kept for legacy support in some components, 
+  // but will mostly return null now.
   return null;
 }
 
 export function removeToken() {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(TOKEN_KEY);
-  }
+  // Logout is handled via the /auth/logout endpoint which clears cookies.
 }
 
-// Check if user is logged in (simple client-side check)
 export function isAuthenticated(): boolean {
-  return !!getToken();
+  // This is now purely dummy, real check happens in middleware and AuthContext
+  return true; 
 }

@@ -73,93 +73,100 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
 
   return (
     <div className="vu">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", borderBottom: "1px solid #1C1C1F" }}>
+      {/* KPI Grid - Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-b border-[#1C1C1F]">
         {kpis.map((k, i) => (
-          <div key={k.label} style={{ padding: "36px 36px 32px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 164, borderRight: i < 3 ? "1px solid #1C1C1F" : undefined }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div key={k.label} className={`p-6 md:p-9 flex flex-col justify-between min-h-[140px] md:min-h-[164px] border-b sm:border-b-0 ${i % 2 === 0 ? "sm:border-r" : ""} ${i < 3 ? "lg:border-r" : ""} border-[#1C1C1F]`}>
+            <div className="flex justify-between items-start">
               <span className="lbl">{k.label}</span>
-              <span className="lbl" style={{ opacity: 0.4 }}>{k.unit}</span>
+              <span className="lbl opacity-40">{k.unit}</span>
             </div>
             <div>
-              <div className="kpi-num" style={{ color: k.bright ? "white" : "#E4E4E7" }}>{k.value}</div>
-              {k.sub && <div className="mono" style={{ marginTop: 10, fontSize: 11, color: k.subPos ? "rgba(16,185,129,0.8)" : "rgba(248,113,113,0.8)" }}>{k.sub}</div>}
+              <div className="kpi-num text-2xl md:text-[32px]" style={{ color: k.bright ? "white" : "#E4E4E7" }}>{k.value}</div>
+              {k.sub && <div className="mono mt-2.5 text-[11px]" style={{ color: k.subPos ? "rgba(16,185,129,0.8)" : "rgba(248,113,113,0.8)" }}>{k.sub}</div>}
               {k.extra}
             </div>
           </div>
         ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px" }}>
-        <div style={{ borderRight: "1px solid #1C1C1F" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "32px 36px 0" }}>
+
+      {/* Main Charts area - Stacks on mobile */}
+      <div className="flex flex-col lg:grid lg:grid-cols-[1fr_320px]">
+        <div className="border-b lg:border-b-0 lg:border-r border-[#1C1C1F]">
+          <div className="flex items-start justify-between p-6 md:p-9 pb-0">
             <div>
-              <span className="lbl" style={{ display: "block", marginBottom: 14 }}>FLUJO DE CAJA</span>
-              <div style={{ display: "flex", gap: 24 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 22, height: 1, borderTop: "1px solid rgba(255,255,255,0.5)" }} /><span style={{ fontSize: 10, color: "#52525B" }}>Acumulado</span></div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 10, height: 10, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }} /><span style={{ fontSize: 10, color: "#52525B" }}>Mensual</span></div>
+              <span className="lbl block mb-3.5">FLUJO DE CAJA</span>
+              <div className="flex gap-6">
+                <div className="flex items-center gap-2"><div className="w-5 h-px border-t border-white/50" /><span className="text-[10px] text-[#52525B]">Acumulado</span></div>
+                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-white/15 border border-white/20" /><span className="text-[10px] text-[#52525B]">Mensual</span></div>
               </div>
             </div>
           </div>
-          <div style={{ height: 276, padding: "20px 12px 20px 4px" }}>
+          <div className="h-[240px] md:h-[276px] p-5 md:p-9 pt-5">
             {transactions.length === 0 ? <EmptyState title="Sin datos" desc="Añade tu primera transacción para ver el gráfico" /> : <canvas ref={chartRef} />}
           </div>
-          <div style={{ borderTop: "1px solid #1C1C1F", padding: "24px 36px 28px" }}>
-            <span className="lbl" style={{ display: "block", marginBottom: 14 }}>FLUJO MENSUAL</span>
+          <div className="border-t border-[#1C1C1F] p-6 md:p-9 overflow-x-auto no-scrollbar">
+            <span className="lbl block mb-3.5">FLUJO MENSUAL</span>
             {flows.length > 0 && flows.some((f: number) => f !== 0) ? (
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${labels.length}, 1fr)`, gap: 5 }}>
+              <div className="flex md:grid md:grid-cols-6 lg:grid-cols-12 gap-1.5 min-w-max md:min-w-0">
                 {flows.map((f: number, i: number) => {
                   const pos = f >= 0;
                   const intensity = Math.min(Math.abs(f) / (Math.max(...flows.map(Math.abs)) || 1), 1);
                   return (
-                    <div key={i} style={{ padding: "10px 6px", textAlign: "center", border: "1px solid", background: pos ? `rgba(255,255,255,${0.02 + intensity * 0.07})` : `rgba(239,68,68,${0.03 + intensity * 0.09})`, borderColor: pos ? `rgba(255,255,255,${0.06 + intensity * 0.1})` : `rgba(239,68,68,${0.12 + intensity * 0.12})` }}>
-                      <div className="lbl" style={{ marginBottom: 6 }}>{labels[i]}</div>
-                      <div className="mono" style={{ fontSize: 10, fontWeight: 500, color: pos ? "#D4D4D8" : "#F87171" }}>{pos ? "+" : "−"}{fmt(Math.abs(f), 0)}</div>
+                    <div key={i} className="p-2.5 md:p-1.5 text-center border transition-colors min-w-[70px] md:min-w-0" style={{ background: pos ? `rgba(255,255,255,${0.02 + intensity * 0.07})` : `rgba(239,68,68,${0.03 + intensity * 0.09})`, borderColor: pos ? `rgba(255,255,255,${0.06 + intensity * 0.1})` : `rgba(239,68,68,${0.12 + intensity * 0.12})` }}>
+                      <div className="lbl mb-1.5 truncate">{labels[i]}</div>
+                      <div className="mono text-[10px] font-medium" style={{ color: pos ? "#D4D4D8" : "#F87171" }}>{pos ? "+" : "−"}{fmt(Math.abs(f), 0)}</div>
                     </div>
                   );
                 })}
               </div>
-            ) : <div className="lbl" style={{ color: "#3F3F46" }}>Sin transacciones aún</div>}
+            ) : <div className="lbl text-[#3F3F46]">Sin transacciones aún</div>}
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ borderBottom: "1px solid #1C1C1F", padding: 28 }}>
-            <span className="lbl" style={{ display: "block", marginBottom: 18 }}>CUENTAS</span>
-            <button 
-              onClick={openAccountDrawer}
-              style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.05)", color: "white", fontWeight: 700, letterSpacing: "0.07em", fontSize: 9, padding: "6px 10px", border: "1px solid #27272A", cursor: "pointer", borderRadius: 1, float: "right", marginTop: "-30px" }}
-            >+ ACCOUNT</button>
+
+        {/* Sidebar - Cuentas + Recientes */}
+        <div className="flex flex-col bg-[#0C0C0E]/30">
+          <div className="border-b border-[#1C1C1F] p-7">
+            <div className="flex items-center justify-between mb-4.5">
+              <span className="lbl">CUENTAS</span>
+              <button 
+                onClick={openAccountDrawer}
+                className="flex items-center gap-1.5 bg-white/5 border border-zinc-800 text-white font-bold tracking-[0.07em] text-[9px] px-2.5 py-1.5 rounded-sm hover:bg-white/10"
+              >+ ACCOUNT</button>
+            </div>
             {analytics?._cuentas && analytics._cuentas.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="flex flex-col gap-3.5">
                 {analytics._cuentas.map((c: any, i: number) => (
-                  <div key={c.id_cuenta} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: ["#FAFAFA","#71717A","#3F3F46","#27272A"][i % 4], flexShrink: 0 }} />
-                      <span className="lbl">{c.nombre}</span>
+                  <div key={c.id_cuenta} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: ["#FAFAFA","#71717A","#3F3F46","#27272A"][i % 4] }} />
+                      <span className="lbl truncate max-w-[120px]">{c.nombre}</span>
                     </div>
-                    <span className="mono" style={{ fontSize: 10, color: c.balance < 0 ? "rgba(248,113,113,0.8)" : "#71717A" }}>{c.balance < 0 ? "-" : ""}€{fmt(c.balance, 0)}</span>
+                    <span className="mono text-[10px]" style={{ color: c.balance < 0 ? "#F87171" : "#71717A" }}>{c.balance < 0 ? "-" : ""}€{fmt(c.balance, 0)}</span>
                   </div>
                 ))}
               </div>
-            ) : <div className="lbl" style={{ color: "#3F3F46" }}>Crea tu primera cuenta</div>}
+            ) : <div className="lbl text-[#3F3F46]">Crea tu primera cuenta</div>}
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 28px", borderBottom: "1px solid #1C1C1F" }}>
+          <div className="flex-1">
+            <div className="flex items-center justify-between p-4.5 md:p-7 pt-5 pb-4 border-b border-[#1C1C1F]">
               <span className="lbl">MOVIMIENTOS RECIENTES</span>
             </div>
-            {transactions.length === 0 ? <EmptyState title="Sin transacciones" desc="Añade tu primera entrada con el botón + NUEVO REGISTRO" /> :
+            {transactions.length === 0 ? <EmptyState title="Sin transacciones" desc="Añade tu primera entrada" /> :
               transactions.slice(0, 6).map((tx: any) => {
                 const pos = tx.tipo === "ingreso";
                 return (
-                  <div key={tx.id_transaccion} className="row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", borderBottom: "1px solid rgba(28,28,31,0.8)" }}>
-                    <div style={{ flex: 1, minWidth: 0, paddingRight: 14 }}>
-                      <div style={{ fontSize: 12, fontWeight: 500, color: "#E4E4E7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginBottom: 4 }}>{tx.nombre}</div>
+                  <div key={tx.id_transaccion} className="flex items-center justify-between p-4.5 md:p-7 border-b border-[#1C1C1F]/50 hover:bg-white/[0.02] transition-colors">
+                    <div className="flex-1 min-w-0 pr-3.5">
+                      <div className="text-[12px] font-medium text-[#E4E4E7] truncate mb-1">{tx.nombre}</div>
                       <div className="lbl">{tx.fecha ? new Date(tx.fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "2-digit" }).toUpperCase() : ""}</div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                      <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        <div className="mono" style={{ fontSize: 12, color: pos ? "#10B981" : "#A1A1AA" }}>{pos ? "+" : "−"}€{fmt(Math.abs(tx.cantidad))}</div>
-                        {tx.estado === "pendiente" && <span style={{ fontSize: 9, fontWeight: 600, color: "#FBBF24", letterSpacing: "0.06em", display: "block", marginTop: 4 }}>PENDIENTE</span>}
+                    <div className="flex items-center gap-4 shrink-0">
+                      <div className="text-right">
+                        <div className="mono text-[12px]" style={{ color: pos ? "#10B981" : "#A1A1AA" }}>{pos ? "+" : "−"}€{fmt(Math.abs(tx.cantidad))}</div>
+                        {tx.estado === "pendiente" && <span className="text-[9px] font-semibold text-[#FBBF24] tracking-wider block mt-1">PENDIENTE</span>}
                       </div>
-                      <button onClick={() => deleteTransaction && deleteTransaction(tx.id_transaccion)} style={{ background: "transparent", border: "none", color: "#52525B", cursor: "pointer", fontSize: 16 }} title="Eliminar registro">×</button>
+                      <button onClick={() => deleteTransaction && deleteTransaction(tx.id_transaccion)} className="text-[#52525B] hover:text-red-400 text-lg p-1 opacity-50 hover:opacity-100 transition-opacity">×</button>
                     </div>
                   </div>
                 );
@@ -169,27 +176,28 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
         </div>
       </div>
       
-      <div style={{ display: "flex", borderTop: "1px solid #1C1C1F" }}>
-        <div style={{ flex: 1, borderRight: "1px solid #1C1C1F", padding: "32px 36px 36px" }}>
-          <span className="lbl" style={{ display: "block", marginBottom: 24 }}>DISTRIBUCIÓN DE GASTOS</span>
-          <div style={{ display: "flex", gap: 60, alignItems: "center" }}>
-            <div style={{ width: 220, height: 220, flexShrink: 0 }}>
+      {/* Distribution Section - Responsive */}
+      <div className="flex flex-col xl:flex-row border-t border-[#1C1C1F]">
+        <div className="flex-1 border-b xl:border-b-0 xl:border-r border-[#1C1C1F] p-6 md:p-9">
+          <span className="lbl block mb-6">DISTRIBUCIÓN DE GASTOS</span>
+          <div className="flex flex-col md:flex-row gap-8 md:gap-14 items-center">
+            <div className="w-[180px] h-[180px] md:w-[220px] md:h-[220px] shrink-0">
               {catData.length === 0 ? <EmptyState title="Sin gastos" desc="Registra gastos para ver la distribución" /> : <canvas ref={donutRef} />}
             </div>
             {catData.length > 0 && (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="flex-1 w-full flex flex-col gap-3.5">
                 {catDetails.map((cat: any, i: number) => {
                   const totalExp = catData.reduce((a:number,b:number)=>a+b, 0);
                   const pct = totalExp > 0 ? (cat.total / totalExp) * 100 : 0;
                   return (
-                    <div key={cat.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 14, borderBottom: "1px solid #1C1C1F" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
+                    <div key={cat.id} className="flex items-center justify-between pb-3.5 border-b border-[#1C1C1F]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full" style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
                         <span className="lbl">{cat.name}</span>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-                        <span className="mono" style={{ fontSize: 10, color: "#71717A", width: 40, textAlign: "right" }}>{fmt(pct, 1)}%</span>
-                        <span className="mono" style={{ fontSize: 11, color: "#D4D4D8", width: 70, textAlign: "right" }}>€{fmt(cat.total, 0)}</span>
+                      <div className="flex items-center gap-6">
+                        <span className="mono text-[10px] text-[#71717A] w-10 text-right">{fmt(pct, 1)}%</span>
+                        <span className="mono text-[11px] text-[#D4D4D8] w-16 md:w-[70px] text-right">€{fmt(cat.total, 0)}</span>
                       </div>
                     </div>
                   );
@@ -198,34 +206,21 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
             )}
           </div>
         </div>
-        <div style={{ width: 320, padding: "32px 36px" }}>
-           <span className="lbl" style={{ display: "block", marginBottom: 14, color: "#71717A" }}>INFORMACIÓN Y CONSEJOS</span>
-           <p style={{ fontSize: 11, color: "#71717A", lineHeight: 1.6, marginBottom: 32 }}>Las categorías te permiten entender de forma sencilla en qué áreas se concentra tu mayor salida de dinero. Mantén un registro limpio para ayudar a proyectar tus ahorros a futuro.</p>
+        <div className="w-full xl:w-[320px] p-6 md:p-9">
+           <span className="lbl block mb-3.5 text-[#71717A]">INFORMACIÓN Y CONSEJOS</span>
+           <p className="text-[11px] text-[#71717A] leading-relaxed mb-8">Las categorías te permiten entender de forma sencilla en qué áreas se concentra tu mayor salida de dinero. Mantén un registro limpio para ayudar a proyectar tus ahorros a futuro.</p>
            
-           {/* Pro Teaser: AI Advisor */}
            <div className="relative overflow-hidden rounded-md border border-zinc-800/60 bg-gradient-to-br from-zinc-900/50 to-black p-5 transition-colors hover:border-[#E8FF47]/30">
-             {/* Subtle gradient background effect */}
              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-[#E8FF47]/5 opacity-50 blur-xl"></div>
-             
              <div className="mb-4 flex items-center justify-between">
                <span className="flex items-center gap-1.5 rounded-sm bg-[#E8FF47]/10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#E8FF47] shadow-[0_0_10px_rgba(232,255,71,0.1)]">
                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                  AI ADVISOR
                </span>
              </div>
-             
-             <h4 className="mb-2" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, color: "#FAFAF9", letterSpacing: "0.03em", lineHeight: 1 }}>
-               INTELIGENCIA ARTIFICIAL
-             </h4>
-             
-             <p className="mb-6" style={{ fontSize: 11, color: "#A1A1AA", lineHeight: 1.6 }}>
-               Desbloquea simulaciones tácticas y recomendaciones automáticas de ahorro basadas en tu patrimonio real.
-             </p>
-             
-             <button 
-               onClick={() => window.location.href = "/pricing"} 
-               className="group relative flex w-full items-center justify-between overflow-hidden rounded-sm bg-zinc-800/50 px-4 py-2.5 border border-zinc-700/50 transition-all hover:bg-[#E8FF47]/10 hover:border-[#E8FF47]/40 text-[#FAFAF9] hover:text-[#E8FF47]"
-             >
+             <h4 className="mb-2 font-['Bebas_Neue'] text-2xl text-[#FAFAF9] tracking-wider leading-none">INTELIGENCIA ARTIFICIAL</h4>
+             <p className="mb-6 text-[11px] text-[#A1A1AA] leading-relaxed">Desbloquea simulaciones tácticas y recomendaciones automáticas de ahorro basadas en tu patrimonio real.</p>
+             <button onClick={() => window.location.href = "/pricing"} className="group relative flex w-full items-center justify-between overflow-hidden rounded-sm bg-zinc-800/50 px-4 py-2.5 border border-zinc-700/50 transition-all hover:bg-[#E8FF47]/10 hover:border-[#E8FF47]/40 text-[#FAFAF9] hover:text-[#E8FF47]">
                <span className="relative z-10 text-[10px] font-bold tracking-[0.15em]">EXPLORAR PLAN PRO</span>
                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-1"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
              </button>

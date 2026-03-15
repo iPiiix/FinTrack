@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
-import { setToken } from "../../../lib/auth";
 import { ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Turnstile } from '@marsidev/react-turnstile';
@@ -34,7 +33,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
       
       const formData = new URLSearchParams();
       formData.append("username", email);
@@ -47,6 +46,7 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData,
+        credentials: "include" // Important for cookies
       });
 
       const data = await res.json();
@@ -55,8 +55,8 @@ export default function LoginPage() {
         throw new Error(data.detail || "Credenciales incorrectas");
       }
 
-      setToken(data.access_token);
-      login(data.usuario, data.access_token);
+      // No need to setToken manually anymore
+      login(data.usuario);
       
     } catch (err: any) {
       setError(err.message || "Error al iniciar sesión");
@@ -69,13 +69,11 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#09090B] px-5 py-10 selection:bg-[#E8FF47]/20 selection:text-[#E8FF47]">
       <div className="w-full max-w-[400px]">
         
-        {/* Logo */}
         <Link href="/" className="mb-12 flex items-center gap-3 transition-opacity hover:opacity-80">
           <img src="/png.png" alt="FinTrack" className="h-5 w-5 object-contain" />
           <span className="font-mono text-[11px] tracking-[0.35em] text-zinc-400">FINTRACK</span>
         </Link>
 
-        {/* Header */}
         <div className="mb-10">
           <h1 className="mb-2" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(40px,5vw,56px)", letterSpacing: ".02em", lineHeight: .92, color: "#FAFAF9" }}>
             ACCEDER AL <span style={{ color: "#E8FF47" }}>SISTEMA</span>
@@ -85,7 +83,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="mb-6 flex items-start gap-3 border border-red-500/20 bg-red-500/5 px-4 py-3">
             <AlertCircle className="mt-0.5 shrink-0 text-red-500" size={16} />
@@ -93,7 +90,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
             <label className="font-mono text-[10px] tracking-[0.1em] text-zinc-500">EMAIL</label>
@@ -147,7 +143,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Footer */}
         <div className="mt-10 flex flex-col items-center gap-4">
           <div className="h-px w-full bg-zinc-900" />
           <p className="font-mono text-[10px] tracking-[0.15em] text-zinc-600">

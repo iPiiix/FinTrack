@@ -58,8 +58,11 @@ def wipe_user_data(
     # 1. Delete Activos
     db.query(Activo).filter(Activo.id_usuario == current_user.id_usuario).delete()
     
-    # 2. Delete Transacciones tied to the user
-    db.query(Transaccion).filter(Transaccion.id_usuario == current_user.id_usuario).delete()
+    # 2. Delete Transacciones tied to the user via Cuentas
+    # Since Transaccion doesn't have id_usuario, we filter by joining with Cuenta
+    transacciones_ids = [t.id_transaccion for t in db.query(Transaccion).join(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).all()]
+    if transacciones_ids:
+        db.query(Transaccion).filter(Transaccion.id_transaccion.in_(transacciones_ids)).delete(synchronize_session=False)
     
     # 3. Delete Cuentas
     db.query(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).delete()
@@ -76,7 +79,12 @@ def delete_user_account(
 ):
     # This wipes entirely the user account and triggers cascade delete in DB (or manual here)
     db.query(Activo).filter(Activo.id_usuario == current_user.id_usuario).delete()
-    db.query(Transaccion).filter(Transaccion.id_usuario == current_user.id_usuario).delete()
+    
+    # Correct filtering for transactions
+    transacciones_ids = [t.id_transaccion for t in db.query(Transaccion).join(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).all()]
+    if transacciones_ids:
+        db.query(Transaccion).filter(Transaccion.id_transaccion.in_(transacciones_ids)).delete(synchronize_session=False)
+        
     db.query(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).delete()
     
     db.delete(current_user)

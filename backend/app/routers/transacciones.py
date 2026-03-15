@@ -3,6 +3,7 @@ import csv
 import io
 from datetime import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy import update
 from decimal import Decimal
 from typing import List
 from app.database import get_db
@@ -37,6 +38,7 @@ def registrar_transaccion(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
+    # Ensure account ownership
     cuenta = db.query(Cuenta).filter(
         Cuenta.id_cuenta == transaccion.id_cuenta,
         Cuenta.id_usuario == current_user.id_usuario
@@ -49,11 +51,8 @@ def registrar_transaccion(
         )
 
     impacto = Decimal(str(abs(transaccion.cantidad)))
-
     if transaccion.tipo == TipoTransaccion.gasto:
-        cuenta.balance -= impacto
-    else:
-        cuenta.balance += impacto
+        impacto = -impacto
 
     nueva_transaccion = Transaccion(
         cantidad=transaccion.cantidad,
@@ -65,17 +64,23 @@ def registrar_transaccion(
         id_cuenta=transaccion.id_cuenta
     )
 
-    db.add(nueva_transaccion)
-
     try:
+        # Atomic Transaction
+        with db.begin_nested():
+            # 1. Update account balance using atomic SQL update
+            db.execute(
+                update(Cuenta)
+                .where(Cuenta.id_cuenta == transaccion.id_cuenta)
+                .values(balance=Cuenta.balance + impacto)
+            )
+            # 2. Add transaction record
+            db.add(nueva_transaccion)
+        
         db.commit()
         db.refresh(nueva_transaccion)
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Error crítico en la operación financiera")
-
-    return nueva_transaccion
-
 
     return nueva_transaccion
 
@@ -108,12 +113,11 @@ async def importar_csv(
     decoded = contents.decode('utf-8-sig')
     reader = csv.DictReader(io.StringIO(decoded))
     
-    # Expected columns: Fecha (YYYY-MM-DD), Concepto, Monto
     transacciones_db = []
+    total_impacto = Decimal("0")
     
     for row in reader:
         try:
-            # Flexible reading mapping
             fecha_str = row.get('Fecha', row.get('Date', ''))
             concepto = row.get('Concepto', row.get('Description', row.get('Nombre', 'Sin concepto')))
             monto_str = row.get('Monto', row.get('Amount', row.get('Cantidad', '0')))
@@ -136,25 +140,28 @@ async def importar_csv(
             )
             transacciones_db.append(nueva_transaccion)
             
-            # Update account balance
-            impacto = Decimal(str(abs(monto)))
-            if tipo == TipoTransaccion.gasto:
-                cuenta.balance -= impacto
-            else:
-                cuenta.balance += impacto
+            impact = Decimal(str(monto))
+            total_impacto += impact
                 
-        except Exception as e:
-            continue # Skip invalid rows
+        except Exception:
+            continue
 
     if not transacciones_db:
-         raise HTTPException(status_code=400, detail="No se encontraron transacciones válidas en el CSV. Usa columnas: Fecha (YYYY-MM-DD), Concepto, Monto.")
+         raise HTTPException(status_code=400, detail="No se encontraron transacciones válidas.")
 
     try:
-        db.bulk_save_objects(transacciones_db)
+        with db.begin_nested():
+            # Bulk save and atomic balance update
+            db.bulk_save_objects(transacciones_db)
+            db.execute(
+                update(Cuenta)
+                .where(Cuenta.id_cuenta == id_cuenta)
+                .values(balance=Cuenta.balance + total_impacto)
+            )
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Error al guardar las transacciones masivas.")
+        raise HTTPException(status_code=500, detail="Error al procesar el CSV masivo.")
 
     return {"message": f"Se han importado {len(transacciones_db)} transacciones exitosamente."}
 
@@ -178,21 +185,20 @@ def eliminar_transaccion(
     if not transaccion:
         raise HTTPException(status_code=404, detail="Transacción no encontrada")
 
-    cuenta = db.query(Cuenta).filter(Cuenta.id_cuenta == transaccion.id_cuenta).first()
-    
-    if not cuenta:
-        raise HTTPException(status_code=404, detail="Cuenta no encontrada")
-
-    impacto = Decimal(str(abs(transaccion.cantidad)))
-
-    if transaccion.tipo == TipoTransaccion.gasto:
-        cuenta.balance += impacto
-    else:
-        cuenta.balance -= impacto
-
-    db.delete(transaccion)
+    impacto_reversion = Decimal(str(abs(transaccion.cantidad)))
+    if transaccion.tipo == TipoTransaccion.ingreso:
+        impacto_reversion = -impacto_reversion
 
     try:
+        with db.begin_nested():
+            # 1. Atomic balance reversion
+            db.execute(
+                update(Cuenta)
+                .where(Cuenta.id_cuenta == transaccion.id_cuenta)
+                .values(balance=Cuenta.balance + impacto_reversion)
+            )
+            # 2. Delete transaction
+            db.delete(transaccion)
         db.commit()
     except Exception as e:
         db.rollback()

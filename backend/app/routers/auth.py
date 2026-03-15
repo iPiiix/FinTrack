@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Response, Request, Form
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import secrets
@@ -6,18 +6,21 @@ import httpx
 from datetime import datetime, timedelta
 from app.database import get_db
 from app.models.usuario import Usuario
+from app.models.token import RefreshToken
 from app.schemas.usuario import UsuarioCreate, UsuarioResponse
-from app.core.security import hashear_password, verificar_password, crear_token
+from app.core.security import hashear_password, verificar_password, crear_token, crear_refresh_token, hashear_password as hash_token
 from app.config import settings
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Form, Request
+from app.routers.deps import get_current_user
+import hashlib
 
 router = APIRouter()
-
 
 class EmailCheck(BaseModel):
     email: str
 
+def get_token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
 
 @router.post("/check-email")
 def check_email(payload: EmailCheck, db: Session = Depends(get_db)):
@@ -26,18 +29,13 @@ def check_email(payload: EmailCheck, db: Session = Depends(get_db)):
 
 async def verify_turnstile(token: str) -> bool:
     if not settings.turnstile_secret_key:
-        return True # Skip if Turnstile is not configured
-        
+        return True 
     if not token:
         return False
-        
     async with httpx.AsyncClient() as client:
         response = await client.post(
             "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-            data={
-                "secret": settings.turnstile_secret_key,
-                "response": token
-            }
+            data={"secret": settings.turnstile_secret_key, "response": token}
         )
         result = response.json()
         return result.get("success", False)
@@ -51,36 +49,23 @@ async def register(
 ):
     existe = db.query(Usuario).filter(Usuario.email == usuario.email).first()
     if existe:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El email ya está registrado"
-        )
+        raise HTTPException(status_code=400, detail="El email ya está registrado")
         
     client_ip = request.client.host if request.client else "unknown"
     
-    # Anti multi-accounting trial abuse logic
-    # Check if there is already an account created from this IP in the last 30 days
     if client_ip != "unknown" and client_ip not in ["127.0.0.1", "::1"]:
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         recent_ip_accounts = db.query(Usuario).filter(
             Usuario.ip_address == client_ip,
             Usuario.creado_en >= thirty_days_ago
         ).count()
-        
-        if recent_ip_accounts >= 1: # Max 1 account per 30 days from same IP
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Se ha alcanzado el límite de creación de cuentas desde esta IP (Prevención de Multicuentas)."
-            )
+        if recent_ip_accounts >= 1:
+            raise HTTPException(status_code=403, detail="Límite de creación de cuentas alcanzado.")
 
     if settings.turnstile_secret_key and not await verify_turnstile(usuario.turnstile_token):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Verificación de seguridad fallida (Turnstile)"
-        )
+        raise HTTPException(status_code=400, detail="Verificación Turnstile fallida")
 
     token_verificacion = secrets.token_urlsafe(32)
-
     nuevo_usuario = Usuario(
         nombre=usuario.nombre,
         apellidos=usuario.apellidos,
@@ -94,69 +79,136 @@ async def register(
         subscription_status="trialing",
         ip_address=client_ip,
     )
-
     db.add(nuevo_usuario)
     db.commit()
     db.refresh(nuevo_usuario)
 
-    # Send emails in background so response is instant
     if settings.smtp_email:
         from app.core.email import enviar_verificacion, notificar_admin
-        background_tasks.add_task(
-            enviar_verificacion, usuario.email, usuario.nombre, token_verificacion
-        )
-        background_tasks.add_task(
-            notificar_admin, usuario.nombre, usuario.apellidos, usuario.email
-        )
+        background_tasks.add_task(enviar_verificacion, usuario.email, usuario.nombre, token_verificacion)
+        background_tasks.add_task(notificar_admin, usuario.nombre, usuario.apellidos, usuario.email)
 
     return nuevo_usuario
-
 
 @router.get("/verify-email")
 def verify_email(token: str, db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(Usuario.token_verificacion == token).first()
     if not usuario:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token inválido o expirado"
-        )
-
+        raise HTTPException(status_code=400, detail="Token inválido")
     usuario.email_verificado = True
     usuario.token_verificacion = None
     db.commit()
-    return {"message": "Email verificado correctamente"}
-
+    return {"message": "Email verificado"}
 
 @router.post("/login")
 async def login(
+    response: Response,
     db: Session = Depends(get_db), 
     form_data: OAuth2PasswordRequestForm = Depends(),
     turnstile_token: str = Form(None)
 ):
     if settings.turnstile_secret_key and not await verify_turnstile(turnstile_token):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Verificación de seguridad fallida (Turnstile)"
-        )
+        raise HTTPException(status_code=400, detail="Verificación Turnstile fallida")
 
     usuario = db.query(Usuario).filter(Usuario.email == form_data.username).first()
-
     if not usuario or not verificar_password(form_data.password, usuario.contrasena):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales incorrectas",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
-    token = crear_token({"sub": str(usuario.id_usuario)})
+    # Tokens
+    access_token = crear_token({"sub": str(usuario.id_usuario)})
+    refresh_token_plain = crear_refresh_token()
+    
+    # Save refresh token
+    db_refresh = RefreshToken(
+        id_usuario=usuario.id_usuario,
+        token_hash=get_token_hash(refresh_token_plain),
+        expires_at=datetime.utcnow() + timedelta(days=30)
+    )
+    db.add(db_refresh)
+    db.commit()
+
+    # Set cookies
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=15 * 60 # 15 mins
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token_plain,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=30 * 24 * 60 * 60 # 30 days
+    )
 
     return {
-        "access_token": token,
-        "token_type": "bearer",
         "usuario": {
             "id": usuario.id_usuario,
             "nombre": usuario.nombre,
             "email": usuario.email,
-            "email_verificado": usuario.email_verificado,
+            "email_verificado": usuario.email_verificado
         }
     }
+
+@router.post("/refresh")
+def refresh(request: Request, response: Response, db: Session = Depends(get_db)):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="No refresh token")
+        
+    token_hash = get_token_hash(refresh_token)
+    db_token = db.query(RefreshToken).filter(
+        RefreshToken.token_hash == token_hash,
+        RefreshToken.revoked == False,
+        RefreshToken.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not db_token:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        
+    # Rotate: revoke old, create new
+    db_token.revoked = True
+    
+    usuario = db.query(Usuario).filter(Usuario.id_usuario == db_token.id_usuario).first()
+    new_access_token = crear_token({"sub": str(usuario.id_usuario)})
+    new_refresh_token_plain = crear_refresh_token()
+    
+    new_db_token = RefreshToken(
+        id_usuario=usuario.id_usuario,
+        token_hash=get_token_hash(new_refresh_token_plain),
+        expires_at=datetime.utcnow() + timedelta(days=30)
+    )
+    db.add(new_db_token)
+    db.commit()
+    
+    response.set_cookie(key="access_token", value=new_access_token, httponly=True, secure=True, samesite="lax", max_age=15*60)
+    response.set_cookie(key="refresh_token", value=new_refresh_token_plain, httponly=True, secure=True, samesite="lax", max_age=30*24*3600)
+    
+    return {"status": "refreshed"}
+
+@router.get("/me")
+def get_me(current_user: Usuario = Depends(get_current_user)):
+    return {
+        "id": current_user.id_usuario,
+        "nombre": current_user.nombre,
+        "email": current_user.email,
+        "email_verificado": current_user.email_verificado,
+        "subscription_tier": current_user.subscription_tier,
+        "subscription_status": current_user.subscription_status
+    }
+
+@router.post("/logout")
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    refresh_token = request.cookies.get("refresh_token")
+    if refresh_token:
+        token_hash = get_token_hash(refresh_token)
+        db.query(RefreshToken).filter(RefreshToken.token_hash == token_hash).update({"revoked": True})
+        db.commit()
+        
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    return {"status": "logged out"}

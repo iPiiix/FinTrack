@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.config import settings
+import secrets
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
@@ -11,17 +12,24 @@ def verificar_password(password_plano: str, password_hash: str) -> bool:
 def hashear_password(password: str) -> str:
     return pwd_context.hash(password)
 
-def crear_token(data: dict) -> str:
+def crear_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     datos = data.copy()
-    expira = datetime.utcnow() + timedelta(
-        minutes=settings.access_token_expire_minutes
-    )
+    if expires_delta:
+        expira = datetime.utcnow() + expires_delta
+    else:
+        # Default access token: 15 minutes (scaled down from previous 30 days)
+        expira = datetime.utcnow() + timedelta(minutes=15)
+        
     datos.update({"exp": expira})
     return jwt.encode(
         datos,
         settings.secret_key,
         algorithm=settings.algorithm
     )
+
+def crear_refresh_token() -> str:
+    """Generates a secure random string for use as a refresh token."""
+    return secrets.token_urlsafe(64)
 
 def verificar_token(token: str) -> dict | None:
     try:
@@ -33,3 +41,5 @@ def verificar_token(token: str) -> dict | None:
         return payload
     except JWTError:
         return None
+
+from typing import Optional

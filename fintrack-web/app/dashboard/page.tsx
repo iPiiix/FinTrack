@@ -15,9 +15,12 @@ import { AIInsightsView } from "./components/AIInsightsView";
 import { CreateAccountDrawer } from "./components/CreateAccountDrawer";
 import { CreateAssetDrawer } from "./components/CreateAssetDrawer";
 import { TutorialModal } from "./components/TutorialModal";
+import { useAuth } from "../../context/AuthContext";
+import ErrorBoundary from "../../components/ErrorBoundary";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [time, setTime] = useState("");
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("OVERVIEW");
@@ -32,21 +35,24 @@ export default function DashboardPage() {
   const [categorias, setCategorias] = useState([]);
   const [activos, setActivos] = useState([]);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const API = process.env.NEXT_PUBLIC_API_URL;
 
-  function getToken() { return typeof window !== "undefined" ? localStorage.getItem("fintrack_token") : null; }
-  function authHeaders() { return { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" }; }
-
-  async function apiFetch(path: string) {
-    const res = await fetch(`${API}${path}`, { headers: authHeaders() });
-    if (res.status === 401) { localStorage.removeItem("fintrack_token"); window.location.href = "/auth/login"; return null; }
+  const apiFetch = useCallback(async (path: string) => {
+    const res = await fetch(`${API}${path}`, { 
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+    });
+    if (res.status === 401) { 
+        // AuthContext handles refresh/logout
+        return null; 
+    }
     if (res.status === 402) return { error: 402 };
-    if (!res.ok) throw new Error(`API error ${res.status}`);
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `API error ${res.status}`);
+    }
     return res.json();
-  }
-
-  // Auth check
-  useEffect(() => { if (!getToken()) { router.push("/auth"); } }, [router]);
+  }, [API]);
 
   // Clock
   useEffect(() => {
@@ -56,24 +62,36 @@ export default function DashboardPage() {
 
   // Fetch all data
   const fetchAll = useCallback(async () => {
-    if (!getToken()) return;
+    if (authLoading || !user) return;
     setLoading(true);
     try {
       const [analyticsData, txData, cuentasData, catData, activosData] = await Promise.all([
-        apiFetch("/analytics/summary").catch(() => null),
-        apiFetch("/transactions/").catch(() => []),
-        apiFetch("/cuentas/").catch(() => []),
-        apiFetch("/categorias/").catch(() => []),
-        apiFetch("/portfolio/").catch(() => ({ error: 402 }))
+        apiFetch("/analytics/summary"),
+        apiFetch("/transactions/"),
+        apiFetch("/cuentas/"),
+        apiFetch("/categorias/"),
+        apiFetch("/portfolio/")
       ]);
+      
       if (analyticsData) setAnalytics({ ...analyticsData, _cuentas: cuentasData || [] });
       if (txData) setTransactions(txData);
       if (cuentasData) setCuentas(cuentasData);
       if (catData) setCategorias(catData);
       if (activosData) setActivos(activosData);
-    } catch { /* handled in apiFetch */ }
-    setLoading(false);
-  }, []);
+    } catch (err: any) {
+      console.error("Data fetch failed", err);
+      // We don't catch to [] anymore, let ErrorBoundary or local state handle it
+      // But we can add a toast for visibility
+      const addToast = (msg: string, type = "info") => {
+        const id = Date.now();
+        setToasts(p => [...p, { id, msg, type }]);
+        setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
+      };
+      addToast(err.message || "Error al cargar datos", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [authLoading, user, apiFetch]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -90,7 +108,10 @@ export default function DashboardPage() {
   const deleteAsset = async (id: number) => {
     if (!confirm("¿Deseas vender/eliminar este activo?")) return;
     try {
-      const res = await fetch(`${API}/portfolio/${id}`, { method: "DELETE", headers: authHeaders() });
+      const res = await fetch(`${API}/portfolio/${id}`, { 
+        method: "DELETE", 
+        credentials: "include" 
+      });
       if (!res.ok) throw new Error("API error");
       addToast("Activo vendido", "success");
       fetchAll();
@@ -100,7 +121,10 @@ export default function DashboardPage() {
   const deleteTransaction = async (id: number) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este registro?")) return;
     try {
-      const res = await fetch(`${API}/transacciones/${id}`, { method: "DELETE", headers: authHeaders() });
+      const res = await fetch(`${API}/transactions/${id}`, { 
+        method: "DELETE", 
+        credentials: "include" 
+      });
       if (!res.ok) throw new Error("API error");
       addToast("Registro eliminado", "success");
       fetchAll();
@@ -108,12 +132,35 @@ export default function DashboardPage() {
   };
 
   const views: Record<string, React.ReactNode> = {
-    OVERVIEW: <OverviewView analytics={analytics} loading={loading} transactions={transactions} categorias={categorias} openAccountDrawer={() => setAccountDrawerOpen(true)} deleteTransaction={deleteTransaction} />,
-    TRANSACTIONS: <TransactionsView transactions={transactions} categorias={categorias} cuentas={cuentas} deleteTransaction={deleteTransaction} />,
-    PORTFOLIO: <PortfolioView activos={activos} deleteAsset={deleteAsset} openAssetDrawer={() => setAssetDrawerOpen(true)} />,
-    "AI ADVISOR": <AIInsightsView />,
-    SETTINGS: <SettingsView />,
+    OVERVIEW: (
+      <ErrorBoundary fallback={<div className="p-10 text-center text-gray-400">Error al cargar Resumen General</div>}>
+        <OverviewView analytics={analytics} loading={loading} transactions={transactions} categorias={categorias} openAccountDrawer={() => setAccountDrawerOpen(true)} deleteTransaction={deleteTransaction} />
+      </ErrorBoundary>
+    ),
+    TRANSACTIONS: (
+      <ErrorBoundary fallback={<div className="p-10 text-center text-gray-400">Error al cargar Transacciones</div>}>
+        <TransactionsView transactions={transactions} categorias={categorias} cuentas={cuentas} deleteTransaction={deleteTransaction} />
+      </ErrorBoundary>
+    ),
+    PORTFOLIO: (
+      <ErrorBoundary fallback={<div className="p-10 text-center text-gray-400">Error al cargar Portfolio</div>}>
+        <PortfolioView activos={activos} deleteAsset={deleteAsset} openAssetDrawer={() => setAssetDrawerOpen(true)} />
+      </ErrorBoundary>
+    ),
+    "AI ADVISOR": (
+      <ErrorBoundary fallback={<div className="p-10 text-center text-gray-400">Error al cargar AI Advisor</div>}>
+        <AIInsightsView />
+      </ErrorBoundary>
+    ),
+    SETTINGS: (
+      <ErrorBoundary fallback={<div className="p-10 text-center text-gray-400">Error al cargar Ajustes</div>}>
+        <SettingsView />
+      </ErrorBoundary>
+    ),
   };
+
+  if (authLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Cargando sistema...</div>;
+  if (!user) return null; // Middleware will redirect
 
   return (
     <>

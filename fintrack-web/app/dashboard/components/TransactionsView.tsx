@@ -4,6 +4,7 @@ import React, { useState, useMemo, useRef } from "react";
 import { fmt } from "../../../lib/utils";
 import { EmptyState } from "./ui/EmptyState";
 import { useAuth } from "../../../context/AuthContext";
+import { Search, X, Upload, Filter } from "lucide-react";
 
 export function TransactionsView({ transactions, categorias, cuentas, deleteTransaction, refreshData }: any) {
   const { user } = useAuth();
@@ -48,19 +49,15 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
     setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
-    // Para simplificar, insertamos en la primera cuenta que tenga el usuario.
     formData.append("id_cuenta", cuentas[0].id_cuenta.toString());
 
-    const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    const token = typeof window !== "undefined" ? localStorage.getItem("fintrack_token") : "";
+    const API = process.env.NEXT_PUBLIC_API_URL;
 
     try {
-      const res = await fetch(`${API}/transacciones/csv`, {
+      const res = await fetch(`${API}/transactions/csv`, {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        },
-        body: formData
+        body: formData,
+        credentials: "include"
       });
       const data = await res.json();
       
@@ -72,86 +69,116 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
       alert(`❌ Error: ${err.message}`);
     } finally {
       setIsUploading(false);
-      // reset file input
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const COL = "100px 3fr 1.5fr 1.1fr 130px 100px 40px";
   return (
-    <div className="vu" style={{ padding: "44px 48px" }}>
-      <input type="file" ref={fileInputRef} onChange={onFileChange} style={{ display: 'none' }} accept=".csv" />
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 32 }}>
+    <div className="vu px-4 md:px-12 py-8 md:py-11">
+      <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" accept=".csv" />
+      
+      {/* Header Area */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
-          <h2 style={{ fontSize: 26, fontWeight: 300, color: "#F4F4F5", letterSpacing: "-0.02em", marginBottom: 8 }}>Historial de Transacciones</h2>
+          <h2 className="text-2xl md:text-[26px] font-light text-[#F4F4F5] tracking-tight mb-2">Historial de Transacciones</h2>
           <span className="lbl">{filtered.length} ENTRADAS ENCONTRADAS</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+        
+        <div className="flex flex-wrap items-center gap-4 md:gap-5">
           <button 
             onClick={handleCsvImport}
             disabled={isUploading}
-            style={{ 
-              display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.05)", 
-              color: user?.subscription_tier === "enterprise" ? "#E8FF47" : "white", 
-              fontWeight: 700, letterSpacing: "0.07em", fontSize: 9, padding: "8px 12px", 
-              border: user?.subscription_tier === "enterprise" ? "1px solid rgba(232, 255, 71, 0.4)" : "1px solid #27272A", 
-              cursor: isUploading ? "wait" : "pointer", borderRadius: 1 
-            }}
+            className={`flex items-center gap-2 bg-white/5 font-bold tracking-[0.07em] text-[9px] px-3 py-2 border rounded-sm transition-all hover:bg-white/10 ${user?.subscription_tier === 'enterprise' ? 'text-[#E8FF47] border-[#E8FF47]/40' : 'text-zinc-400 border-zinc-800'}`}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+            <Upload size={12} />
             {isUploading ? "IMPORTANDO..." : "IMPORTAR CSV"}
           </button>
           
-          <div style={{ width: 1, height: 16, background: "#1C1C1F", margin: "0 10px" }} />
-          <span className="mono" style={{ fontSize: 11, color: "#10B981" }}>IN +€{fmt(totals.income, 0)}</span>
-          <div style={{ width: 1, height: 16, background: "#1C1C1F" }} />
-          <span className="mono" style={{ fontSize: 11, color: "#F87171" }}>OUT −€{fmt(totals.expense, 0)}</span>
+          <div className="hidden sm:block w-px h-4 bg-[#1C1C1F] mx-2" />
+          
+          <div className="flex items-center gap-4">
+            <span className="mono text-[11px] text-[#10B981] whitespace-nowrap">IN +€{fmt(totals.income, 0)}</span>
+            <div className="w-px h-4 bg-[#1C1C1F]" />
+            <span className="mono text-[11px] text-[#F87171] whitespace-nowrap">OUT −€{fmt(totals.expense, 0)}</span>
+          </div>
         </div>
       </div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "#0D0D0F", border: "1px solid #1C1C1F", padding: "0 16px", height: 40 }}>
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#3F3F46" strokeWidth="1.5"><circle cx="5" cy="5" r="4" /><path d="M11 11L8 8" /></svg>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre…"
-            style={{ background: "transparent", border: "none", outline: "none", fontSize: 12, color: "#E4E4E7", flex: 1, fontFamily: "'IBM Plex Mono', monospace" }} />
-          {search && <button onClick={() => setSearch("")} style={{ color: "#52525B", background: "none", border: "none", cursor: "pointer", fontSize: 16 }}>×</button>}
+
+      {/* Filters & Search */}
+      <div className="flex flex-col md:flex-row gap-2.5 mb-4">
+        <div className="flex-1 flex items-center gap-3 bg-[#0D0D0F] border border-[#1C1C1F] px-4 h-10 transition-colors focus-within:border-zinc-700">
+          <Search size={14} className="text-[#3F3F46]" />
+          <input 
+            value={search} 
+            onChange={e => setSearch(e.target.value)} 
+            placeholder="Buscar por descripción…"
+            className="bg-transparent border-none outline-none text-[12px] text-[#E4E4E7] flex-1 font-mono placeholder:text-zinc-800"
+          />
+          {search && <button onClick={() => setSearch("")} className="text-[#52525B] hover:text-white p-1"><X size={14}/></button>}
         </div>
-        <div style={{ display: "flex", border: "1px solid #1C1C1F", overflow: "hidden" }}>
-          {FILTERS.map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              style={{ padding: "0 16px", fontSize: 10, fontWeight: 600, letterSpacing: "0.05em", cursor: "pointer", background: filter === f ? "#27272A" : "transparent", color: filter === f ? "#F4F4F5" : "#52525B", height: 40, border: "none", borderRight: "1px solid #1C1C1F", whiteSpace: "nowrap", textTransform: "uppercase" }}>
+        
+        <div className="flex border border-[#1C1C1F] overflow-hidden rounded-sm overflow-x-auto no-scrollbar">
+          {FILTERS.map((f, i) => (
+            <button 
+              key={f} 
+              onClick={() => setFilter(f)}
+              className={`px-4 text-[10px] font-semibold tracking-wider h-10 border-none transition-colors whitespace-nowrap uppercase ${filter === f ? "bg-zinc-800 text-[#F4F4F5]" : "bg-transparent text-[#52525B] hover:text-zinc-400"} ${i < FILTERS.length - 1 ? "border-r border-[#1C1C1F]" : ""}`}
+            >
               {f === "ALL" ? "TODOS" : f}
             </button>
           ))}
         </div>
       </div>
-      <div style={{ border: "1px solid #1C1C1F", overflow: "hidden" }}>
-        <div style={{ display: "grid", padding: "12px 24px", borderBottom: "1px solid #1C1C1F", background: "rgba(255,255,255,0.015)", gridTemplateColumns: COL }}>
-          {["FECHA", "DESCRIPCIÓN", "CATEGORÍA", "CUENTA", "IMPORTE (EUR)", "ESTADO", ""].map((h, i) => (
-            <span key={i} className="lbl" style={{ textAlign: i >= 4 && i < 6 ? "right" : "left" }}>{h}</span>
-          ))}
-        </div>
-        <div style={{ maxHeight: "calc(100vh - 310px)", overflowY: "auto", minHeight: 200 }}>
-          {filtered.length === 0 ? <div style={{ padding: "64px 0", textAlign: "center" }} className="lbl">Sin resultados. Añade tu primera entrada arriba o importa un CSV.</div> :
-            filtered.map((tx: any) => {
-              const pos = tx.tipo === "ingreso";
-              const cat = categorias?.find((c: any) => c.id_categoria === tx.id_categoria);
-              const cuenta = cuentas?.find((c: any) => c.id_cuenta === tx.id_cuenta);
-              return (
-                <div key={tx.id_transaccion} className="row" style={{ display: "grid", padding: "16px 24px", borderBottom: "1px solid rgba(28,28,31,0.6)", alignItems: "center", gridTemplateColumns: COL }}>
-                  <span className="mono" style={{ fontSize: 10, color: "#52525B" }}>{tx.fecha ? new Date(tx.fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "2-digit" }).toUpperCase() : "—"}</span>
-                  <span style={{ fontSize: 12, fontWeight: 500, color: "#E4E4E7" }}>{tx.nombre}</span>
-                  <span style={{ fontSize: 11, color: cat ? "#A1A1AA" : "#3F3F46" }}>{cat ? cat.nombre : "—"}</span>
-                  <span style={{ fontSize: 10, color: "#52525B" }}>{cuenta ? cuenta.nombre : `Cuenta #${tx.id_cuenta}`}</span>
-                  <span className="mono" style={{ fontSize: 12, fontWeight: 500, textAlign: "right", color: pos ? "#10B981" : "#D4D4D8" }}>{pos ? "+" : "−"}€{fmt(Math.abs(tx.cantidad))}</span>
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.07em", padding: "4px 8px", border: "1px solid", borderColor: tx.estado === "completada" ? "#1C1C1F" : "rgba(251,191,36,0.3)", color: tx.estado === "completada" ? "#3F3F46" : "#FBBF24", background: tx.estado === "pendiente" ? "rgba(251,191,36,0.04)" : "transparent", textTransform: "uppercase" }}>{tx.estado === "pendiente" ? "PENDIENTE" : tx.estado}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
-                    <button onClick={() => deleteTransaction && deleteTransaction(tx.id_transaccion)} style={{ background: "transparent", border: "none", color: "#52525B", cursor: "pointer", fontSize: 16 }} title="Eliminar registro">×</button>
-                  </div>
-                </div>
-              );
-            })}
+
+      {/* Table - Horizontally scrollable on mobile */}
+      <div className="border border-[#1C1C1F] rounded-sm overflow-hidden bg-[#09090B]">
+        <div className="overflow-x-auto no-scrollbar">
+          <div className="min-w-[800px] md:min-w-0">
+            {/* Table Header */}
+            <div className="grid grid-cols-[100px_3fr_1.5fr_1.1fr_130px_100px_40px] px-6 py-3 border-b border-[#1C1C1F] bg-white/[0.015]">
+              {["FECHA", "DESCRIPCIÓN", "CATEGORÍA", "CUENTA", "IMPORTE (EUR)", "ESTADO", ""].map((h, i) => (
+                <span key={i} className={`lbl ${i >= 4 && i < 6 ? "text-right" : "text-left"}`}>{h}</span>
+              ))}
+            </div>
+
+            {/* Table Body */}
+            <div className="max-h-[calc(100vh-360px)] overflow-y-auto min-h-[200px]">
+              {filtered.length === 0 ? (
+                <div className="py-16 text-center lbl opacity-40">Sin resultados. Añade tu primera entrada arriba o importa un CSV.</div>
+              ) : (
+                filtered.map((tx: any) => {
+                  const pos = tx.tipo === "ingreso";
+                  const cat = categorias?.find((c: any) => c.id_categoria === tx.id_categoria);
+                  const cuenta = cuentas?.find((c: any) => c.id_cuenta === tx.id_cuenta);
+                  return (
+                    <div 
+                      key={tx.id_transaccion} 
+                      className="grid grid-cols-[100px_3fr_1.5fr_1.1fr_130px_100px_40px] px-6 py-4 items-center border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors"
+                    >
+                      <span className="mono text-[10px] text-[#52525B]">{tx.date ? new Date(tx.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" }).toUpperCase() : "—"}</span>
+                      <span className="text-[12px] font-medium text-[#E4E4E7] truncate pr-4">{tx.nombre}</span>
+                      <span className="text-[11px] text-zinc-500 truncate">{cat ? cat.nombre : "—"}</span>
+                      <span className="text-[10px] text-zinc-600 truncate">{cuenta ? cuenta.nombre : `Cuenta #${tx.id_cuenta}`}</span>
+                      <span className={`mono text-[12px] font-medium text-right ${pos ? "text-[#10B981]" : "text-zinc-300"}`}>
+                        {pos ? "+" : "−"}€{fmt(Math.abs(tx.cantidad))}
+                      </span>
+                      <div className="flex justify-end pr-2">
+                        <span className={`text-[9px] font-bold tracking-widest px-2 py-0.5 border rounded-xs uppercase ${tx.estado === 'pendiente' ? 'border-[#FBBF24]/30 text-[#FBBF24] bg-[#FBBF24]/5' : 'border-zinc-800 text-zinc-500'}`}>
+                          {tx.estado}
+                        </span>
+                      </div>
+                      <div className="flex justify-end items-center">
+                        <button 
+                          onClick={() => deleteTransaction && deleteTransaction(tx.id_transaccion)} 
+                          className="text-zinc-600 hover:text-red-400 p-1 opacity-40 hover:opacity-100 transition-all text-lg"
+                        >×</button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
