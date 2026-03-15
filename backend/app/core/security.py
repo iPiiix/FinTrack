@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.config import settings
@@ -42,5 +43,3 @@ def verificar_token(token: str) -> dict | None:
         return payload
     except JWTError:
         return None
-
-from typing import Optional
