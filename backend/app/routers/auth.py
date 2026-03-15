@@ -133,15 +133,15 @@ async def login(
         value=access_token,
         httponly=True,
         secure=True,
-        samesite="lax",
-        max_age=15 * 60 # 15 mins
+        samesite="none", # Required for cross-domain (Render -> Vercel)
+        max_age=settings.access_token_expire_minutes * 60
     )
     response.set_cookie(
         key="refresh_token",
         value=refresh_token_plain,
         httponly=True,
         secure=True,
-        samesite="lax",
+        samesite="none", # Required for cross-domain
         max_age=30 * 24 * 60 * 60 # 30 days
     )
 
@@ -185,8 +185,8 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
     db.add(new_db_token)
     db.commit()
     
-    response.set_cookie(key="access_token", value=new_access_token, httponly=True, secure=True, samesite="lax", max_age=15*60)
-    response.set_cookie(key="refresh_token", value=new_refresh_token_plain, httponly=True, secure=True, samesite="lax", max_age=30*24*3600)
+    response.set_cookie(key="access_token", value=new_access_token, httponly=True, secure=True, samesite="none", max_age=settings.access_token_expire_minutes*60)
+    response.set_cookie(key="refresh_token", value=new_refresh_token_plain, httponly=True, secure=True, samesite="none", max_age=30*24*3600)
     
     return {"status": "refreshed"}
 
@@ -209,6 +209,6 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
         db.query(RefreshToken).filter(RefreshToken.token_hash == token_hash).update({"revoked": True})
         db.commit()
         
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+    response.delete_cookie("access_token", httponly=True, secure=True, samesite="none")
+    response.delete_cookie("refresh_token", httponly=True, secure=True, samesite="none")
     return {"status": "logged out"}
