@@ -20,6 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+    print("--- [DEBUG] Starting migration 41aecffa0c89 (upgrade) ---")
     # Use IF NOT EXISTS to avoid errors if table was pre-created by SQLAlchemy
     op.execute("""
         CREATE TABLE IF NOT EXISTS refresh_tokens (
@@ -35,6 +36,7 @@ def upgrade() -> None:
     """)
     op.execute("CREATE INDEX IF NOT EXISTS ix_refresh_tokens_id ON refresh_tokens (id)")
     op.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_refresh_tokens_token_hash ON refresh_tokens (token_hash)")
+    print("--- [DEBUG] Migration 41aecffa0c89 finished successfully ---")
 
 
 def downgrade() -> None:

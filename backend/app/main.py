@@ -12,6 +12,7 @@ from sqlalchemy import text
 from app.database import engine, Base
 
 Base.metadata.create_all(bind=engine)
+print("--- [DEBUG] Base.metadata.create_all() finished ---")
 
 app = FastAPI(
     title="FinTrack API",
@@ -106,6 +107,7 @@ class AdminAuth(AuthenticationBackend):
     async def authenticate(self, request: Request) -> bool:
         return request.session.get("authenticated", False)
 
+print("--- [DEBUG] Main App Script reached end of module load ---")
 
 admin = Admin(
     app, engine,
