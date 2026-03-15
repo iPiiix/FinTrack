@@ -111,6 +111,10 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     return {"message": "Email verificado"}
 
 @router.post("/login")
+async def login(
+    response: Response,
+    db: Session = Depends(get_db), 
+    form_data: OAuth2PasswordRequestForm = Depends(),
     turnstile_token: str = Form(None)
 ):
     print(f"--- [DEBUG] Login start for email: {form_data.username} ---")
