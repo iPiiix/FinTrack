@@ -162,7 +162,7 @@ export function MonteCarloChart({ className }: MonteCarloChartProps) {
             <Tooltip
               contentStyle={{ background: "#09090B", border: "1px solid #27272A", borderRadius: 4, fontSize: 11 }}
               labelStyle={{ color: "#71717A", fontSize: 10 }}
-              formatter={(val: number, name: string) => [`€${fmt(val)}`, name.toUpperCase()]}
+              formatter={((val: any, name: any) => [`€${fmt(val ?? 0)}`, (name ?? "").toUpperCase()]) as any}
             />
             <Area type="monotone" dataKey="p90" stroke="transparent" fill="url(#mc-p90)" />
             <Area type="monotone" dataKey="p75" stroke="transparent" fill="url(#mc-p75)" />
