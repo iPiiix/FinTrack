@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import secrets
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.database import get_db
 from app.models.usuario import Usuario
 from app.models.token import RefreshToken
 from app.schemas.usuario import UsuarioCreate, UsuarioResponse
-from app.core.security import hashear_password, verificar_password, crear_token, crear_refresh_token, hashear_password as hash_token
+from app.core.security import hashear_password, verificar_password, crear_token, crear_refresh_token
 from app.config import settings
 from fastapi.security import OAuth2PasswordRequestForm
 from app.routers.deps import get_current_user
@@ -60,12 +60,12 @@ async def register(
         client_ip = request.client.host if request.client else "unknown"
     
     if client_ip != "unknown" and client_ip not in ["127.0.0.1", "::1"]:
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
         recent_ip_accounts = db.query(Usuario).filter(
             Usuario.ip_address == client_ip,
             Usuario.creado_en >= thirty_days_ago
         ).count()
-        if recent_ip_accounts >= 1:
+        if recent_ip_accounts >= 3:
             raise HTTPException(status_code=403, detail="Límite de creación de cuentas alcanzado.")
 
     if settings.turnstile_secret_key and not await verify_turnstile(usuario.turnstile_token):
@@ -80,7 +80,7 @@ async def register(
         contrasena=hashear_password(usuario.contrasena),
         email_verificado=False,
         token_verificacion=token_verificacion,
-        trial_ends_at=datetime.utcnow() + timedelta(days=14),
+        trial_ends_at=datetime.now(timezone.utc) + timedelta(days=14),
         subscription_tier="free",
         subscription_status="trialing",
         ip_address=client_ip,
@@ -135,7 +135,7 @@ async def login(
     db_refresh = RefreshToken(
         id_usuario=usuario.id_usuario,
         token_hash=get_token_hash(refresh_token_plain),
-        expires_at=datetime.utcnow() + timedelta(days=30)
+        expires_at=datetime.now(timezone.utc) + timedelta(days=30)
     )
     db.add(db_refresh)
     try:
@@ -181,7 +181,7 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
     db_token = db.query(RefreshToken).filter(
         RefreshToken.token_hash == token_hash,
         RefreshToken.revoked == False,
-        RefreshToken.expires_at > datetime.utcnow()
+        RefreshToken.expires_at > datetime.now(timezone.utc)
     ).first()
     
     if not db_token:
@@ -197,9 +197,17 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
     new_db_token = RefreshToken(
         id_usuario=usuario.id_usuario,
         token_hash=get_token_hash(new_refresh_token_plain),
-        expires_at=datetime.utcnow() + timedelta(days=30)
+        expires_at=datetime.now(timezone.utc) + timedelta(days=30)
     )
     db.add(new_db_token)
+    
+    # Cleanup: delete expired or revoked tokens for this user (exclude current)
+    db.query(RefreshToken).filter(
+        RefreshToken.id_usuario == db_token.id_usuario,
+        RefreshToken.id != db_token.id,
+        (RefreshToken.revoked == True) | (RefreshToken.expires_at < datetime.now(timezone.utc))
+    ).delete(synchronize_session=False)
+    
     db.commit()
     
     response.set_cookie(key="access_token", value=new_access_token, httponly=True, secure=True, samesite="none", max_age=settings.access_token_expire_minutes*60)
@@ -229,3 +237,46 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     response.delete_cookie("access_token", httponly=True, secure=True, samesite="none")
     response.delete_cookie("refresh_token", httponly=True, secure=True, samesite="none")
     return {"status": "logged out"}
+
+
+@router.get("/sessions")
+def list_sessions(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """List active (non-revoked, non-expired) sessions for the current user."""
+    active_tokens = db.query(RefreshToken).filter(
+        RefreshToken.id_usuario == current_user.id_usuario,
+        RefreshToken.revoked == False,
+        RefreshToken.expires_at > datetime.now(timezone.utc)
+    ).all()
+    
+    return [
+        {
+            "token_hash": t.token_hash[:12] + "...",
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+            "expires_at": t.expires_at.isoformat() if t.expires_at else None,
+            "id": t.id
+        }
+        for t in active_tokens
+    ]
+
+
+@router.delete("/sessions/{session_id}")
+def revoke_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Revoke a specific session by its ID."""
+    token = db.query(RefreshToken).filter(
+        RefreshToken.id == session_id,
+        RefreshToken.id_usuario == current_user.id_usuario
+    ).first()
+    
+    if not token:
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+    
+    token.revoked = True
+    db.commit()
+    return {"status": "session revoked"}

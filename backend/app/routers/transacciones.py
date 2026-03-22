@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, Query
+from fastapi.responses import StreamingResponse
 import csv
 import io
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import update
 from decimal import Decimal
-from typing import List
+from typing import List, Optional
+from pydantic import BaseModel
 from app.database import get_db
-from app.models.transaccion import Transaccion, TipoTransaccion
+from app.models.transaccion import Transaccion, TipoTransaccion, EstadoTransaccion
 from app.models.cuenta import Cuenta
 from app.models.usuario import Usuario
 from app.schemas.transaccion import TransaccionCreate, TransaccionResponse
@@ -85,6 +87,48 @@ def registrar_transaccion(
     return nueva_transaccion
 
 
+class TransaccionUpdate(BaseModel):
+    estado: Optional[EstadoTransaccion] = None
+    descripcion: Optional[str] = None
+    nombre: Optional[str] = None
+
+
+@router.get("/export")
+def exportar_transacciones(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    transacciones = (
+        db.query(Transaccion)
+        .join(Cuenta, Transaccion.id_cuenta == Cuenta.id_cuenta)
+        .filter(Cuenta.id_usuario == current_user.id_usuario)
+        .order_by(Transaccion.fecha.desc())
+        .all()
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Fecha", "Nombre", "Tipo", "Cantidad", "Estado", "Descripcion", "Cuenta"])
+
+    for tx in transacciones:
+        writer.writerow([
+            tx.fecha.strftime("%Y-%m-%d") if tx.fecha else "",
+            tx.nombre,
+            tx.tipo.value if tx.tipo else "",
+            float(tx.cantidad),
+            tx.estado.value if tx.estado else "",
+            tx.descripcion or "",
+            tx.id_cuenta
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=transacciones_fintrack.csv"}
+    )
+
+
 @router.post("/csv", status_code=status.HTTP_201_CREATED)
 async def importar_csv(
     file: UploadFile = File(...),
@@ -134,7 +178,7 @@ async def importar_csv(
                 tipo=tipo,
                 nombre=concepto[:255],
                 descripcion="Importado desde CSV",
-                estado="completada",
+                estado=EstadoTransaccion.completada,
                 id_cuenta=id_cuenta,
                 fecha=fecha
             )
@@ -205,3 +249,35 @@ def eliminar_transaccion(
         raise HTTPException(status_code=500, detail="Error al eliminar la transacción")
     
     return None
+
+
+@router.patch("/{id_transaccion}", response_model=TransaccionResponse)
+def actualizar_transaccion(
+    id_transaccion: int,
+    payload: TransaccionUpdate,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    transaccion = (
+        db.query(Transaccion)
+        .join(Cuenta, Transaccion.id_cuenta == Cuenta.id_cuenta)
+        .filter(
+            Transaccion.id_transaccion == id_transaccion,
+            Cuenta.id_usuario == current_user.id_usuario
+        )
+        .first()
+    )
+
+    if not transaccion:
+        raise HTTPException(status_code=404, detail="Transacción no encontrada")
+
+    if payload.estado is not None:
+        transaccion.estado = payload.estado
+    if payload.descripcion is not None:
+        transaccion.descripcion = payload.descripcion
+    if payload.nombre is not None:
+        transaccion.nombre = payload.nombre
+
+    db.commit()
+    db.refresh(transaccion)
+    return transaccion

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.routers.deps import get_active_subscription
@@ -6,7 +6,7 @@ from app.models.usuario import Usuario
 from app.models.transaccion import Transaccion
 from app.models.cuenta import Cuenta
 from app.models.categoria import Categoria
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 import google.generativeai as genai
 import json
@@ -14,8 +14,18 @@ from app.config import settings
 
 router = APIRouter()
 
-# The config is now evaluated inside the request to ensure any hot-reload 
-# successfully applies the key without needing a full server cold-restart.
+# Gemini singleton — configured lazily on first use
+_gemini_model = None
+
+def _get_gemini_model():
+    global _gemini_model
+    if _gemini_model is None and getattr(settings, "gemini_api_key", ""):
+        genai.configure(api_key=settings.gemini_api_key)
+        _gemini_model = genai.GenerativeModel(
+            'gemini-2.5-flash',
+            generation_config={"response_mime_type": "application/json"}
+        )
+    return _gemini_model
 
 @router.get("/insights")
 def get_ai_insights(
@@ -23,7 +33,7 @@ def get_ai_insights(
     current_user: Usuario = Depends(get_active_subscription)
 ):
     # Fetch user transactions
-    thirty_days_ago = datetime.now() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     
     # Recent Income
     income_last_30d = db.query(func.coalesce(func.sum(Transaccion.cantidad), 0)).join(Cuenta).filter(
@@ -41,7 +51,7 @@ def get_ai_insights(
     
     # Calculate current Total net worth
     cuentas = db.query(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).all()
-    current_net_worth = sum([c.balance for c in cuentas])
+    current_net_worth = sum(c.balance for c in cuentas)
     
     # Calculate savings rate
     savings_rate = 0
@@ -56,7 +66,7 @@ def get_ai_insights(
         Transaccion.id_categoria,
         Categoria.nombre.label('cat_nombre'),
         func.sum(Transaccion.cantidad).label('total')
-    ).join(Cuenta, Transaccion.id_cuenta == Cuenta.id_cuenta).join(Categoria, Transaccion.id_categoria == Categoria.id_categoria).filter(
+    ).join(Cuenta, Transaccion.id_cuenta == Cuenta.id_cuenta).outerjoin(Categoria, Transaccion.id_categoria == Categoria.id_categoria).filter(
         Cuenta.id_usuario == current_user.id_usuario,
         Transaccion.tipo == "gasto",
         Transaccion.fecha >= thirty_days_ago,
@@ -70,16 +80,16 @@ def get_ai_insights(
         "projected_change": projected_change,
         "savings_rate": savings_rate,
         "recommendations": [],
-        "anomalies": []
+        "anomalies": [],
+        "data_source": "heuristic"
     }
 
-    if not getattr(settings, "gemini_api_key", ""):
+    model = _get_gemini_model()
+    if not model:
         return handle_heuristic_fallback(savings_rate, expenses_last_30d, income_last_30d, top_categories, response_data)
 
-    # Use Gemini
+    # Use Gemini singleton
     try:
-        genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash', generation_config={"response_mime_type": "application/json"})
         
         # Prepare data context for prompt
         categories_context = ", ".join([f"Categoría '{c.cat_nombre}' (ID {c.id_categoria}): {float(c.total)} EU" for c in top_categories])
@@ -111,6 +121,7 @@ def get_ai_insights(
         # Merge AI answers into response
         response_data["recommendations"] = ai_result.get("recommendations", [])
         response_data["anomalies"] = ai_result.get("anomalies", [])
+        response_data["data_source"] = "gemini"
         
         return response_data
         
@@ -164,3 +175,51 @@ def handle_heuristic_fallback(savings_rate, expenses, income, top_categories, re
     response_data["anomalies"] = anomalies
 
     return response_data
+
+
+@router.get("/monte-carlo")
+def monte_carlo_projection(
+    months: int = Query(12, ge=6, le=36),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_active_subscription)
+):
+    from app.services.montecarlo_service import run_simulation
+    
+    # Get monthly cash flows for the past 12 months
+    twelve_months_ago = datetime.now(timezone.utc) - timedelta(days=365)
+    
+    transactions = db.query(Transaccion).join(
+        Cuenta, Transaccion.id_cuenta == Cuenta.id_cuenta
+    ).filter(
+        Cuenta.id_usuario == current_user.id_usuario,
+        Transaccion.fecha >= twelve_months_ago
+    ).all()
+    
+    if not transactions:
+        return {"error": "no_data", "message": "No hay transacciones para proyectar."}
+    
+    # Group transactions by month
+    from collections import defaultdict
+    monthly = defaultdict(float)
+    for tx in transactions:
+        if tx.fecha:
+            key = tx.fecha.strftime("%Y-%m")
+            amount = float(tx.cantidad)
+            if tx.tipo and tx.tipo.value == "gasto":
+                monthly[key] -= abs(amount)
+            else:
+                monthly[key] += abs(amount)
+    
+    monthly_flows = list(monthly.values())
+    
+    # Calculate current net worth
+    cuentas = db.query(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).all()
+    current_net_worth = sum(float(c.balance) for c in cuentas)
+    
+    result = run_simulation(
+        monthly_flows=monthly_flows,
+        current_net_worth=current_net_worth,
+        months_ahead=months
+    )
+    
+    return result

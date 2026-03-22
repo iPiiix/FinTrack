@@ -1,41 +1,62 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { fmt } from "../../../lib/utils";
+import { MonteCarloChart } from "./MonteCarloChart";
 
 export function AIInsightsView() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+  const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+  const API = "/api";
+
+  const fetchAI = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/analytics/ai/insights`, {
+        credentials: "include"
+      });
+      if (res.status === 401) {
+        setData(null);
+        return;
+      }
+      if (res.status === 402) {
+        setData({ error: 402 });
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch AI insights");
+      const json = await res.json();
+      setData(json);
+      setLastRefresh(Date.now());
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    const fetchAI = async () => {
-      try {
-        const API = process.env.NEXT_PUBLIC_API_URL || "/api";
-        const res = await fetch(`${API}/analytics/ai/insights`, {
-          credentials: "include"
-        });
-        if (res.status === 401) {
-          // Handled by AuthContext, but we can clear local state
-          if (active) setData(null);
-          return;
-        }
-        if (res.status === 402) {
-          if (active) setData({ error: 402 });
-          return;
-        }
-        if (!res.ok) throw new Error("Failed to fetch AI insights");
-        const json = await res.json();
-        if (active) setData(json);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
     fetchAI();
-    return () => { active = false; };
-  }, []);
+  }, [fetchAI]);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (lastRefresh === 0) return;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, COOLDOWN_MS - (Date.now() - lastRefresh));
+      setCooldown(remaining);
+      if (remaining === 0) clearInterval(interval);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lastRefresh]);
+
+  const handleRefresh = () => {
+    if (cooldown > 0) return;
+    fetchAI();
+  };
 
   if (loading) return <div className="vu" style={{ padding: "44px 48px" }}><span className="lbl">SINTETIZANDO DATOS...</span></div>;
   if (data?.error === 402) {
@@ -79,9 +100,32 @@ export function AIInsightsView() {
 
   return (
     <div className="vu" style={{ padding: "44px 48px", maxWidth: 1000, margin: "0 auto" }}>
-      <div style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 26, fontWeight: 300, color: "#F4F4F5", letterSpacing: "-0.02em", marginBottom: 8 }}>AI Advisor & Projections</h2>
-        <span className="lbl">MOTOR HEURÍSTICO FINANCIERO · MODELO LOCAL</span>
+      <div style={{ marginBottom: 40, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h2 style={{ fontSize: 26, fontWeight: 300, color: "#F4F4F5", letterSpacing: "-0.02em", marginBottom: 8 }}>AI Advisor & Projections</h2>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <span className="lbl">MOTOR FINANCIERO</span>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", padding: "3px 8px", border: `1px solid ${data?.data_source === "gemini" ? "rgba(16,185,129,0.3)" : "rgba(161,161,170,0.3)"}`, color: data?.data_source === "gemini" ? "#10B981" : "#A1A1AA", background: data?.data_source === "gemini" ? "rgba(16,185,129,0.06)" : "rgba(161,161,170,0.06)" }}>
+              {data?.data_source === "gemini" ? "GEMINI AI" : "HEURÍSTICO"}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={cooldown > 0 || loading}
+          style={{
+            fontSize: 10, fontWeight: 600, letterSpacing: "0.06em",
+            padding: "10px 20px",
+            border: "1px solid #27272A",
+            background: cooldown > 0 ? "transparent" : "rgba(255,255,255,0.04)",
+            color: cooldown > 0 ? "#52525B" : "#FAFAFA",
+            cursor: cooldown > 0 ? "not-allowed" : "pointer",
+            transition: "all 0.2s",
+            borderRadius: 2
+          }}
+        >
+          {cooldown > 0 ? `ESPERA ${Math.ceil(cooldown / 1000)}s` : "↻ ACTUALIZAR"}
+        </button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, marginBottom: 40 }}>
@@ -132,6 +176,11 @@ export function AIInsightsView() {
           </div>
         </div>
       )}
+
+      {/* Monte Carlo Projection */}
+      <div style={{ borderTop: "1px solid #1C1C1F", marginTop: 40 }}>
+        <MonteCarloChart />
+      </div>
     </div>
   );
 }

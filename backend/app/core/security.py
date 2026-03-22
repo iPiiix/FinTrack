@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -17,10 +17,10 @@ def hashear_password(password: str) -> str:
 def crear_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     datos = data.copy()
     if expires_delta:
-        expira = datetime.utcnow() + expires_delta
+        expira = datetime.now(timezone.utc) + expires_delta
     else:
         # Align with settings (default: 30 days)
-        expira = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+        expira = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
         
     datos.update({"exp": expira})
     return jwt.encode(

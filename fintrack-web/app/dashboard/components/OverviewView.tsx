@@ -1,8 +1,7 @@
 import React, { useRef, useMemo, useEffect } from "react";
 import { fmt, groupByMonth, groupByCategory, loadChart } from "../../../lib/utils";
+import { DONUT_COLORS } from "../../../lib/constants";
 import { EmptyState } from "./ui/EmptyState";
-
-const DONUT_COLORS = ["#E8FF47", "#10B981", "#3B82F6", "#8B5CF6", "#EC4899", "#F59E0B", "#64748B", "#A1A1AA"];
 
 export function OverviewView({ analytics, loading, transactions, categorias, openAccountDrawer, deleteTransaction }: any) {
   const chartRef = useRef<HTMLCanvasElement>(null);

@@ -45,7 +45,7 @@ def get_current_user(
     return user
 
 def get_active_subscription(current_user: Usuario = Depends(get_current_user)):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     if current_user.subscription_status == 'active':
         return current_user

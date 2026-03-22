@@ -1,14 +1,17 @@
 import os
+import logging
 from typing import Optional
 from pydantic import Field, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger("fintrack.config")
 
 class Settings(BaseSettings):
     # Use defaults to prevent validation crashes during startup/logs
     database_url: str = Field("missing", validation_alias=AliasChoices("DATABASE_URL", "database_url"))
     secret_key: str = Field("missing", validation_alias=AliasChoices("SECRET_KEY", "secret_key"))
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 43200
+    access_token_expire_minutes: int = 15
     smtp_email: str = ""
     smtp_password: str = ""
     admin_email: str = ""
@@ -47,28 +50,25 @@ class Settings(BaseSettings):
         populate_by_name=True
     )
 
-# --- DEBUGGING LOGS FOR RENDER ---
+# --- Environment diagnostics for Render ---
 if os.getenv("RENDER"):
-    print("--- [DEBUG] RENDER ENVIRONMENT CHECK ---")
-    # List important keys found in environment (not their values for security)
+    logger.info("--- RENDER ENVIRONMENT CHECK ---")
     important_keys = ["DATABASE_URL", "SECRET_KEY", "GEMINI_API_KEY", "PORT"]
     for key in important_keys:
         val = os.getenv(key)
-        print(f"{key} is {'PRESENT' if val else 'MISSING'}")
+        logger.info(f"{key} is {'PRESENT' if val else 'MISSING'}")
     
-    # Also check if they are in the environment with lowercase
     for key in ["database_url", "secret_key"]:
         val = os.getenv(key)
         if val:
-            print(f"Heads up: Found lowercase {key} in environment")
+            logger.warning(f"Found lowercase {key} in environment")
 
 try:
     settings = Settings()
     if settings.database_url == "missing" or settings.secret_key == "missing":
-        print("--- [WARNING] SETTINGS LOADED WITH DEFAULT 'missing' VALUES ---")
-        print(f"DB URL: {settings.database_url}")
-        print(f"Secret Key: {'found' if settings.secret_key != 'missing' else 'missing'}")
+        logger.warning("SETTINGS LOADED WITH DEFAULT 'missing' VALUES")
+        logger.warning(f"DB URL: {settings.database_url}")
+        logger.warning(f"Secret Key: {'found' if settings.secret_key != 'missing' else 'missing'}")
 except Exception as e:
-    print(f"--- [CRITICAL] SETTINGS LOAD ERROR: {e} ---")
-    # Re-raise to let gunicorn know we failed
-    raise e
+    logger.critical(f"SETTINGS LOAD ERROR: {e}")
+    raise e

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import stripe
+import logging
 from pydantic import BaseModel
 from typing import Optional
 
@@ -99,7 +100,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.stripe_webhook_secret
+            payload, sig_header, settings.stripe_webhook_secret,
+            tolerance=300
         )
     except ValueError as e:
         # Invalid payload
@@ -158,8 +160,8 @@ def _handle_checkout_completed(session_obj, db: Session):
                user.subscription_tier = "pro"
            elif price_id == settings.stripe_enterprise_price_id:
                user.subscription_tier = "enterprise"
-        except:
-           pass
+        except Exception as e:
+            logging.warning(f"Failed to retrieve subscription tier for {subscription_id}: {e}")
 
         if not user.stripe_customer_id:
            user.stripe_customer_id = customer_id
@@ -182,8 +184,8 @@ def _handle_subscription_changed(subscription_obj, db: Session):
                user.subscription_tier = "pro"
            elif price_id == settings.stripe_enterprise_price_id:
                user.subscription_tier = "enterprise"
-        except:
-           pass
+        except Exception as e:
+            logging.warning(f"Failed to determine subscription tier: {e}")
            
         db.commit()
 

@@ -3,20 +3,73 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqladmin import Admin
 from sqladmin.authentication import AuthenticationBackend
 from starlette.middleware.sessions import SessionMiddleware
+from contextlib import asynccontextmanager
+import os
+
 from app.routers import auth, transacciones, analytics, cuentas, categorias, portfolio, usuarios, ai, subscriptions
 from app.admin import UsuarioAdmin, CuentaAdmin, TransaccionAdmin, CategoriaAdmin
 from app.config import settings
 import app.models
 from sqlalchemy import text
 
-from app.database import engine, Base
+from app.database import engine, Base, SessionLocal
+from app.models.categoria import Categoria
 
-Base.metadata.create_all(bind=engine)
+# Fail fast in production if admin_panel_secret is not configured
+if os.environ.get("RENDER") or os.environ.get("ENV") == "production":
+    if not settings.admin_panel_secret or settings.admin_panel_secret == "temporary-secret-key-for-admin":
+        raise RuntimeError(
+            "CRITICAL: admin_panel_secret is not configured. "
+            "Set ADMIN_PANEL_SECRET environment variable in production."
+        )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # --- Startup tasks ---
+    # Only auto-create tables in development (Alembic controls production migrations)
+    if os.environ.get("ENV") != "production":
+        Base.metadata.create_all(bind=engine)
+    
+    db = SessionLocal()
+    try:
+        # 1. Ensure Schema (Add missing columns that create_all misses)
+        try:
+            db.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ip_address VARCHAR(100)"))
+            db.commit()
+        except Exception:
+            db.rollback() 
+            
+        # 2. Seed default categories
+        default_categories = [
+            {"nombre": "Nómina / Salario", "descripcion": "Ingresos regulares del trabajo"},
+            {"nombre": "Vivienda", "descripcion": "Alquiler, hipoteca, comunidad"},
+            {"nombre": "Alimentación", "descripcion": "Supermercado y comida"},
+            {"nombre": "Transporte", "descripcion": "Gasolina, transporte público"},
+            {"nombre": "Ocio y Restaurantes", "descripcion": "Salidas, cine, restaurantes"}
+        ]
+        
+        existing = {c.nombre for c in db.query(Categoria).all()}
+        new_cats = [Categoria(**c) for c in default_categories if c["nombre"] not in existing]
+        
+        if new_cats:
+            db.add_all(new_cats)
+            db.commit()
+    except Exception as e:
+        print(f"Error in startup tasks: {e}")
+    finally:
+        db.close()
+    
+    yield  # App runs here
+    
+    # --- Shutdown tasks (if needed) ---
+
 
 app = FastAPI(
     title="FinTrack API",
     description="Personal Finance Intelligence Platform",
-    version="1.1.0"
+    version="1.2.0",
+    lifespan=lifespan
 )
 
 # Standard CORSMiddleware for Production
@@ -42,41 +95,6 @@ app.add_middleware(
     SessionMiddleware, 
     secret_key=settings.admin_panel_secret or "temporary-secret-key-for-admin"
 )
-
-from app.database import SessionLocal
-from app.models.categoria import Categoria
-
-@app.on_event("startup")
-def startup_tasks():
-    db = SessionLocal()
-    try:
-        # 1. Ensure Schema (Add missing columns that create_all misses)
-        try:
-            db.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ip_address VARCHAR(100)"))
-            db.commit()
-        except Exception:
-            db.rollback() 
-            
-        # 2. Seed default categories
-        default_categories = [
-            {"nombre": "Nómina / Salario", "descripcion": "Ingresos regulares del trabajo"},
-            {"nombre": "Vivienda", "descripcion": "Alquiler, hipoteca, comunidad"},
-            {"nombre": "Alimentación", "descripcion": "Supermerkado y comida"},
-            {"nombre": "Transporte", "descripcion": "Gasolina, transporte público"},
-            {"nombre": "Ocio y Restaurantes", "descripcion": "Salidas, cine, restaurantes"}
-        ]
-        
-        existing = {c.nombre for c in db.query(Categoria).all()}
-        new_cats = [Categoria(**c) for c in default_categories if c["nombre"] not in existing]
-        
-        if new_cats:
-            db.add_all(new_cats)
-            db.commit()
-    except Exception as e:
-        print(f"Error in startup tasks: {e}")
-    finally:
-        db.close()
-
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(cuentas.router, prefix="/cuentas", tags=["Cuentas"])
@@ -122,6 +140,6 @@ def root():
     return {
         "app": "FinTrack",
         "tagline": "Know your numbers. Own your future.",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "status": "operational"
     }

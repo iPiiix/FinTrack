@@ -155,7 +155,7 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
                       key={tx.id_transaccion} 
                       className="grid grid-cols-[100px_3fr_1.5fr_1.1fr_130px_100px_40px] px-6 py-4 items-center border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors"
                     >
-                      <span className="mono text-[10px] text-[#52525B]">{tx.date ? new Date(tx.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" }).toUpperCase() : "—"}</span>
+                      <span className="mono text-[10px] text-[#52525B]">{tx.fecha ? new Date(tx.fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "short" }).toUpperCase() : "—"}</span>
                       <span className="text-[12px] font-medium text-[#E4E4E7] truncate pr-4">{tx.nombre}</span>
                       <span className="text-[11px] text-zinc-500 truncate">{cat ? cat.nombre : "—"}</span>
                       <span className="text-[10px] text-zinc-600 truncate">{cuenta ? cuenta.nombre : `Cuenta #${tx.id_cuenta}`}</span>

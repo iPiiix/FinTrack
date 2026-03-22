@@ -7,6 +7,7 @@ from app.models.usuario import Usuario
 from app.models.cuenta import Cuenta
 from app.models.transaccion import Transaccion
 from app.models.activo import Activo
+from app.models.token import RefreshToken
 from app.core.security import verificar_password, hashear_password
 
 router = APIRouter()
@@ -47,28 +48,34 @@ def update_name(
     db.refresh(current_user)
     return current_user
 
+
+def _delete_user_financial_data(db: Session, user_id: int):
+    """Delete all financial data for a user using efficient subqueries."""
+    # 1. Delete Activos
+    db.query(Activo).filter(Activo.id_usuario == user_id).delete(synchronize_session=False)
+    
+    # 2. Delete Transacciones via subquery (no N+1)
+    cuenta_ids_subq = db.query(Cuenta.id_cuenta).filter(
+        Cuenta.id_usuario == user_id
+    ).subquery()
+    db.query(Transaccion).filter(
+        Transaccion.id_cuenta.in_(cuenta_ids_subq)
+    ).delete(synchronize_session=False)
+    
+    # 3. Delete Cuentas
+    db.query(Cuenta).filter(Cuenta.id_usuario == user_id).delete(synchronize_session=False)
+    
+    # 4. Revoke all refresh tokens
+    db.query(RefreshToken).filter(RefreshToken.id_usuario == user_id).delete(synchronize_session=False)
+
+
 @router.delete("/me/data")
 def wipe_user_data(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
-    # This wipes all user-associated data (Activos, Transacciones, Cuentas)
-    # The models have cascade deletes if configured at DB level, but we manually delete to be safe.
-    
-    # 1. Delete Activos
-    db.query(Activo).filter(Activo.id_usuario == current_user.id_usuario).delete()
-    
-    # 2. Delete Transacciones tied to the user via Cuentas
-    # Since Transaccion doesn't have id_usuario, we filter by joining with Cuenta
-    transacciones_ids = [t.id_transaccion for t in db.query(Transaccion).join(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).all()]
-    if transacciones_ids:
-        db.query(Transaccion).filter(Transaccion.id_transaccion.in_(transacciones_ids)).delete(synchronize_session=False)
-    
-    # 3. Delete Cuentas
-    db.query(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).delete()
-    
+    _delete_user_financial_data(db, current_user.id_usuario)
     db.commit()
-    
     return {"message": "Todos tus datos financieros han sido eliminados"}
 
 
@@ -77,17 +84,7 @@ def delete_user_account(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
-    # This wipes entirely the user account and triggers cascade delete in DB (or manual here)
-    db.query(Activo).filter(Activo.id_usuario == current_user.id_usuario).delete()
-    
-    # Correct filtering for transactions
-    transacciones_ids = [t.id_transaccion for t in db.query(Transaccion).join(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).all()]
-    if transacciones_ids:
-        db.query(Transaccion).filter(Transaccion.id_transaccion.in_(transacciones_ids)).delete(synchronize_session=False)
-        
-    db.query(Cuenta).filter(Cuenta.id_usuario == current_user.id_usuario).delete()
-    
+    _delete_user_financial_data(db, current_user.id_usuario)
     db.delete(current_user)
     db.commit()
-    
     return {"message": "Cuenta eliminada correctamente"}

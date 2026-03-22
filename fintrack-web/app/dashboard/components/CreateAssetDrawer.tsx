@@ -24,10 +24,10 @@ export function CreateAssetDrawer({ isOpen, onClose, onSave }: CreateAssetDrawer
     
     setLoading(true); setError("");
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("fintrack_token") : null;
       const res = await fetch(`${API}/portfolio/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           ticker: ticker.toUpperCase(),
           cantidad: parseFloat(cantidad),

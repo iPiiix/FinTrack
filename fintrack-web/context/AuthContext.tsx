@@ -17,7 +17,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (userData: User) => void;
   logout: () => void;
-  checkAuth: () => Promise<void>;
+  checkAuth: (retried?: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const API_URL = "/api";
 
-  const checkAuth = async () => {
+  const checkAuth = async (retried = false) => {
     try {
       const res = await fetch(`${API_URL}/auth/me`, {
         credentials: "include",
@@ -38,15 +38,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const userData = await res.json();
         setUser(userData);
-      } else if (res.status === 401) {
-        // Try refresh
+      } else if (res.status === 401 && !retried) {
+        // Try refresh only once
         const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
           method: "POST",
           credentials: "include",
         });
         
         if (refreshRes.ok) {
-          return checkAuth(); // Retry auth/me after refresh
+          return checkAuth(true); // Retry auth/me after refresh (only once)
         }
         setUser(null);
       } else {

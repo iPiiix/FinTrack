@@ -4,14 +4,6 @@ import React, { useState } from "react";
 
 const API = "/api";
 
-function getToken() { 
-  return typeof window !== "undefined" ? localStorage.getItem("fintrack_token") : null; 
-}
-
-function authHeaders() { 
-  return { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" }; 
-}
-
 export function CreateAccountDrawer({ isOpen, onClose, onSave }: any) {
   const [nombre, setNombre] = useState("");
   const [tipo, setTipo] = useState("debito");
@@ -33,12 +25,13 @@ export function CreateAccountDrawer({ isOpen, onClose, onSave }: any) {
     try {
       const res = await fetch(`${API}/cuentas/`, {
         method: "POST", 
-        headers: authHeaders(),
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ 
           nombre: nombre.trim(), 
           tipo: tipo, 
           balance: balance === "" ? 0 : parseFloat(balance),
-          divisa: "EUR" // Default to EUR for now as per schema
+          divisa: "EUR"
         }),
       });
       
