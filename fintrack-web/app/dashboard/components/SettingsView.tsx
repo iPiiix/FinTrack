@@ -8,7 +8,7 @@ export function SettingsView() {
   const router = useRouter();
   const { user, logout } = useAuth();
   
-  const safeUser = user || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("fintrack_user") || "{}") : {});
+  const safeUser: any = user || {};
 
   const [nombre, setNombre] = useState(safeUser.nombre || "");
   const [apellidos, setApellidos] = useState(safeUser.apellidos || "");
