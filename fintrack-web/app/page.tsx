@@ -242,9 +242,9 @@ function Nav() {
             </a>
           ))}
         </div>
-        <Link href="/auth/login" className="flex items-center gap-2 border border-zinc-800 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-400 transition-colors duration-200 hover:text-white hover:border-zinc-600">
-          ENTRAR / REGISTRO GRATIS
-        </Link>
+        <a href="https://github.com/iPiiix/FinTrack" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-zinc-800 px-5 py-2.5 font-mono text-[10px] tracking-[0.18em] text-zinc-400 transition-colors duration-200 hover:text-white hover:border-zinc-600">
+          VER DEMO TÉCNICA
+        </a>
       </div>
     </nav>
   );
@@ -519,18 +519,18 @@ function Hero() {
           </p>
           <div className="mt-4 flex items-center gap-3 font-mono text-[10px] tracking-[0.15em] text-[#10B981]">
             <div className="h-1.5 w-1.5 rounded-full bg-[#10B981]" style={{ animation: "pls 2s ease-in-out infinite" }} />
-            GRATIS PARA SIEMPRE + 14 DÍAS DE PRUEBA PRO
+            PROYECTO DE ARQUITECTURA FINANCIERA — OPEN SOURCE
           </div>
         </div>
 
         {/* CTAs */}
         <div className="flex flex-col items-end gap-3">
           <div className="flex items-center gap-3 reveal-up" style={{ transitionDelay: "90ms" }}>
-            <Link href="/auth/register" className="flex items-center gap-2.5 bg-[#E8FF47] text-black px-7 py-4 font-mono text-[10px] tracking-[0.22em] font-bold transition-all duration-200 hover:bg-[#d4ed36]">
-              CREAR CUENTA GRATIS
-            </Link>
+            <a href="https://github.com/iPiiix/FinTrack" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 bg-[#E8FF47] text-black px-7 py-4 font-mono text-[10px] tracking-[0.22em] font-bold transition-all duration-200 hover:bg-[#d4ed36]">
+              VER ARQUITECTURA EN GITHUB
+            </a>
             <a href="#capabilities" className="border border-zinc-700 px-7 py-4 font-mono text-[10px] tracking-[0.22em] text-zinc-500 transition-all duration-200 hover:border-zinc-500 hover:text-zinc-200">
-              VER FUNCIONES PRO
+              VER FUNCIONES
             </a>
           </div>
           <span className="reveal-up font-mono text-[9px] tracking-[0.2em] text-zinc-700" style={{ transitionDelay: "180ms" }}>
@@ -965,56 +965,25 @@ function HowItWorks() {
 }
 
 /* ============================================================
-   EARLY ACCESS FORM
+   OPEN SOURCE CTA
 ============================================================ */
-function EarlyAccessForm() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !email.includes("@")) return;
-    const existing = JSON.parse(localStorage.getItem("fintrack_waitlist") || "[]");
-    existing.push({ email, date: new Date().toISOString() });
-    localStorage.setItem("fintrack_waitlist", JSON.stringify(existing));
-    setSubmitted(true);
-  };
-
-  if (submitted) {
-    return (
-      <div className="flex flex-col items-center gap-3 border border-[#E8FF47]/20 bg-[#E8FF47]/[0.03] px-9 py-6">
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-[#E8FF47]" />
-          <span className="font-mono text-[11px] tracking-[0.22em] text-[#E8FF47]">REGISTRADO</span>
-        </div>
-        <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-500">TE NOTIFICAREMOS EN EL LANZAMIENTO</p>
-      </div>
-    );
-  }
-
+function OpenSourceCTA() {
   return (
     <div className="flex flex-col gap-4">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="flex">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@email.com"
-            className="flex-1 border border-zinc-700 border-r-0 bg-zinc-950 px-5 py-4 font-mono text-[11px] tracking-[0.1em] text-zinc-300 outline-none transition-colors placeholder:text-zinc-700 focus:border-zinc-500 md:min-w-[260px]"
-          />
-          <button
-            type="submit"
-            className="flex items-center gap-2 bg-[#E8FF47] px-7 py-4 font-mono text-[10px] font-bold tracking-[0.22em] text-black transition-all duration-200 hover:bg-[#d4eb3a] active:scale-[0.98]"
-          >
-            EARLY ACCESS
-            <ChevronRight size={12} />
-          </button>
-        </div>
-        <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-700">
-          ACCESO ANTICIPADO · SIN SPAM · SOLO NOVEDADES
-        </p>
-      </form>
+      <div className="flex flex-col gap-3 items-center sm:flex-row">
+        <a
+          href="https://github.com/iPiiix/FinTrack"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 bg-[#E8FF47] px-7 py-4 font-mono text-[10px] font-bold tracking-[0.22em] text-black transition-all duration-200 hover:bg-[#d4eb3a] active:scale-[0.98]"
+        >
+          VER ARQUITECTURA EN GITHUB
+          <ChevronRight size={12} />
+        </a>
+      </div>
+      <p className="font-mono text-center text-[9px] tracking-[0.18em] text-zinc-700">
+        PROYECTO DE ARQUITECTURA FINANCIERA — OPEN SOURCE
+      </p>
     </div>
   );
 }
@@ -1127,28 +1096,28 @@ export default function FinTrackLanding() {
             </div>
             <div className="text-right flex flex-col items-end">
               <p className="max-w-xs text-sm font-light leading-relaxed text-zinc-600 mb-2">
-                Todas las herramientas que necesitas para controlar tu flujo de caja de por vida. Integraciones con Inteligencia Artificial disponibles en licencias comerciales.
+                Todas las herramientas que necesitas para controlar tu flujo de caja de por vida. Arquitectura modular con integraciones de Inteligencia Artificial.
               </p>
               <span className="font-mono text-[9px] tracking-[0.2em] font-medium text-[#E8FF47] bg-[#E8FF47]/10 px-3 py-1.5 border border-[#E8FF47]/20">
-                LÍNEA BASE GRATUITA ILIMITADA
+                PLATAFORMA OPEN SOURCE
               </span>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-px bg-zinc-800 md:grid-cols-3">
-            <FeatureCard icon={Activity} label="LIBRO MAYOR — GRATIS INCLUIDO" title="La fuente de verdad definitiva"
+            <FeatureCard icon={Activity} label="LIBRO MAYOR" title="La fuente de verdad definitiva"
               description="Registra cada ingreso y gasto con precisión absoluta. Categoriza transacciones, gestiona múltiples cuentas y mantén un historial financiero impecable de por vida."
               accent className="md:col-span-2 md:row-span-2" />
-            <FeatureCard icon={BarChart2} label="FLUJO DE CAJA — GRATIS INCLUIDO" title="Controla tu tasa de gasto"
+            <FeatureCard icon={BarChart2} label="FLUJO DE CAJA" title="Controla tu tasa de gasto"
               description="Visualiza el capital entrante frente a los gastos salientes. Sigue tu tasa de ahorro mensual para alcanzar cada objetivo de capital." />
-            <FeatureCard icon={Globe} label="PORTFOLIO — FUNCIÓN PRO" title="Seguimiento avanzado de activos"
-              description="Gestiona acciones, crypto, inmuebles y liquidez en un dashboard avanzado bloqueado tras 14 días. Entiende exactamente dónde está desplegado tu patrimonio." />
-            <FeatureCard icon={TrendingUp} label="PATRIMONIO NETO — GRATIS INCLUIDO" title="Visualiza tu trayectoria"
+            <FeatureCard icon={Globe} label="PORTFOLIO" title="Seguimiento avanzado de activos"
+              description="Gestiona acciones, crypto, inmuebles y liquidez en un dashboard unificado. Entiende exactamente dónde está desplegado tu patrimonio." />
+            <FeatureCard icon={TrendingUp} label="PATRIMONIO NETO" title="Visualiza tu trayectoria"
               description="Observa cómo crece tu patrimonio con el tiempo. Los gráficos históricos comparan periodos actuales con anteriores de forma fluida." />
-            <FeatureCard icon={Zap} label="ENTRADA DE DATOS — GRATIS INCLUIDO" title="Actualizaciones sin fricción"
+            <FeatureCard icon={Zap} label="ENTRADA DE DATOS" title="Actualizaciones sin fricción"
               description="Un cajón de entrada rápida te permite registrar transacciones en segundos. Sin menús complejos, directo al registro. Diseñado para ser un hábito real." />
-            <FeatureCard icon={Lock} label="SEGURIDAD — GRATIS INCLUIDO" title="Cifrado AES-256"
+            <FeatureCard icon={Lock} label="SEGURIDAD" title="Cifrado AES-256"
               description="Tus datos están cifrados, son privados y nunca se venden ni monitorean. Tratamos tu historial financiero con seguridad criptográfica de nivel institucional." />
-            <FeatureCard icon={Shield} label="IA ADVISOR — FUNCIÓN PRO" title="Reportes mediante Inteligencia Artificial"
+            <FeatureCard icon={Shield} label="IA ADVISOR" title="Reportes mediante Inteligencia Artificial"
               description="Conexión hipersegura a LLMs que analizan matemáticamente tus gastos para arrojar consejos tácticos y estratégicos ultra-personalizados sobre cómo optimizar cada céntimo que gastas."
               className="md:col-span-3 bg-zinc-950/40" />
           </div>
@@ -1183,7 +1152,7 @@ export default function FinTrackLanding() {
                 </h2>
               </div>
               <div className="flex flex-col items-start gap-8 md:items-end">
-                <EarlyAccessForm />
+                <OpenSourceCTA />
                 
                 {/* 
                   TODO: PWA Implementation Steps for the future:
