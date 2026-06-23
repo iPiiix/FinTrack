@@ -15,6 +15,15 @@
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-white?style=flat-square&labelColor=09090B" />
 </p>
 
+<p align="center">
+  <a href="docs/index.md">Documentación</a> ·
+  <a href="docs/getting-started.md">Primeros pasos</a> ·
+  <a href="docs/features.md">Funcionalidades</a> ·
+  <a href="docs/architecture.md">Arquitectura</a> ·
+  <a href="docs/faq.md">FAQ</a> ·
+  <a href="https://github.com/iPiiix/FinTrack/releases">Releases</a>
+</p>
+
 FinTrack es una app de escritorio para gestión de finanzas personales. Registra ingresos y gastos, analiza tu flujo de caja, visualiza tu patrimonio y obtén proyecciones con IA. Todo **100 % local**: los datos viven en tu dispositivo en SQLite. Sin suscripciones, sin registro, sin telemetría.
 
 Si quieres controlar tu dinero de forma privada, rápida y sin depender de servicios externos, esto es lo que buscas.
@@ -159,6 +168,18 @@ O conecta el repo en [vercel.com](https://vercel.com) y establece el **Root Dire
 ## Licencia
 
 MIT — úsalo, modifícalo, distribúyelo. Ver [LICENSE](LICENSE).
+
+---
+
+## Documentación completa
+
+| | |
+|---|---|
+| [Primeros pasos](docs/getting-started.md) | Instalación, primer arranque, backup |
+| [Funcionalidades](docs/features.md) | Guía detallada de cada módulo |
+| [Arquitectura](docs/architecture.md) | Stack, esquema SQLite, flujos de datos |
+| [Desarrollo](docs/development.md) | Build desde fuente, contribuir, variables de entorno |
+| [FAQ](docs/faq.md) | Preguntas frecuentes |
 
 ---
 
