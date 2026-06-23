@@ -18,21 +18,40 @@
     "appId": "com.fintrack.app",
     "productName": "FinTrack",
     "copyright": "Copyright © 2026 FinTrack",
-    "directories": { "output": "dist" },
+    "directories": {
+      "output": "dist"
+    },
     "afterPack": "./scripts/afterPack.js",
     "files": [
       "electron/**/*",
       "package.json"
     ],
     "extraResources": [],
-    "asarUnpack": ["node_modules/better-sqlite3/**/*"],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
+    ],
     "mac": {
-      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
       "category": "public.app-category.finance",
       "icon": "public/png.png"
     },
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "public/png.png"
     },
     "nsis": {
@@ -42,9 +61,6 @@
     }
   },
   "dependencies": {
-    "@react-three/drei": "^9.105.6",
-    "@react-three/fiber": "^8.16.1",
-    "three": "^0.163.0",
     "@marsidev/react-turnstile": "^1.4.2",
     "@stripe/stripe-js": "^8.9.0",
     "bcryptjs": "^3.0.3",
@@ -64,7 +80,6 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
-    "@types/three": "^0.163.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.27",
