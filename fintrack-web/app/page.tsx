@@ -8,9 +8,10 @@ import ErrorBoundary from "../components/ErrorBoundary";
 const ThreeBackground = dynamic(() => import("../components/ThreeBackground"), { ssr: false });
 
 const GITHUB = "https://github.com/iPiiix/FinTrack";
-const DL_ARM = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0-arm64.dmg";
-const DL_X64 = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0.dmg";
-const DL_WIN = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-Setup-1.0.0.exe";
+const RELEASES = "https://github.com/iPiiix/FinTrack/releases";
+const DL_ARM = RELEASES;
+const DL_X64 = RELEASES;
+const DL_WIN = RELEASES;
 
 const FEATURES = [
   {
@@ -40,9 +41,9 @@ const FEATURES = [
 ];
 
 const DOWNLOADS = [
-  { label: "Windows (.exe)", href: DL_WIN },
-  { label: "macOS — Apple Silicon (.dmg)", href: DL_ARM },
-  { label: "macOS — Intel (.dmg)", href: DL_X64 },
+  { label: "Windows (.exe)", href: RELEASES },
+  { label: "macOS — Apple Silicon (.dmg)", href: RELEASES },
+  { label: "macOS — Intel (.dmg)", href: RELEASES },
 ];
 
 export default function Landing() {
@@ -80,7 +81,7 @@ export default function Landing() {
 
             <div className="flex items-center gap-6">
               <a
-                href={`${GITHUB}/blob/main/AGENTS.md`}
+                href={`${GITHUB}/blob/main/docs/architecture.md`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden md:flex items-center gap-2 font-mono text-[10px] tracking-widest text-zinc-600 hover:text-zinc-300 transition-colors uppercase"
@@ -149,7 +150,8 @@ export default function Landing() {
               >
                 <a
                   href={DL_ARM}
-                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8FF47] text-zinc-950 rounded-full text-sm font-medium hover:bg-[#d4eb3a] transition-[background-color,transform] active:scale-[0.97]"
                 >
                   <Download size={14} />
@@ -157,7 +159,8 @@ export default function Landing() {
                 </a>
                 <a
                   href={DL_WIN}
-                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-100 text-zinc-950 rounded-full text-sm font-medium hover:bg-zinc-300 transition-[background-color,transform] active:scale-[0.97]"
                 >
                   <Download size={14} />
@@ -245,7 +248,8 @@ export default function Landing() {
                     <a
                       key={label}
                       href={href}
-                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="group flex items-center justify-between py-5 border-b border-zinc-900 hover:border-zinc-800 transition-colors last:border-0"
                     >
                       <span className="text-zinc-400 text-sm group-hover:text-zinc-100 transition-colors">
@@ -306,7 +310,7 @@ export default function Landing() {
           </span>
           <div className="flex items-center gap-8">
             <a
-              href={`${GITHUB}/blob/main/AGENTS.md`}
+              href={`${GITHUB}/blob/main/docs/architecture.md`}
               target="_blank"
               rel="noopener noreferrer"
               className="font-mono text-[10px] tracking-widest text-zinc-600 hover:text-[#E8FF47] transition-colors uppercase"

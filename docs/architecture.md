@@ -37,7 +37,7 @@ FinTrack es una aplicación Electron que embebe un servidor Next.js como proceso
 | Estilos | Tailwind CSS | 4 |
 | Animaciones | Framer Motion | 12 |
 | Gráficos | Chart.js, Recharts | 4 / 3 |
-| Fondo 3D (landing) | Three.js / React Three Fiber | 0.163 / 8 |
+| Fondo landing | Canvas 2D nativo | — |
 | Empaquetado desktop | electron-builder | 26 |
 
 ---
@@ -93,7 +93,7 @@ FinTrack/
 │   │   └── main.js                ← Main process: arranca Next.js + crea ventana
 │   │
 │   ├── components/
-│   │   ├── ThreeBackground.tsx    ← Fondo 3D de la landing
+│   │   ├── ThreeBackground.tsx    ← Glow CSS + Canvas 2D de la landing
 │   │   └── ErrorBoundary.tsx
 │   │
 │   ├── context/
