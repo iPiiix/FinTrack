@@ -9,9 +9,9 @@ const ThreeBackground = dynamic(() => import("../components/ThreeBackground"), {
 
 const GITHUB = "https://github.com/iPiiix/FinTrack";
 const RELEASES = "https://github.com/iPiiix/FinTrack/releases";
-const DL_ARM = RELEASES;
-const DL_X64 = RELEASES;
-const DL_WIN = RELEASES;
+const DL_ARM = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0-arm64.dmg";
+const DL_X64 = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0.dmg";
+const DL_WIN = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-Setup-1.0.0.exe";
 
 const FEATURES = [
   {
@@ -41,9 +41,9 @@ const FEATURES = [
 ];
 
 const DOWNLOADS = [
-  { label: "Windows (.exe)", href: RELEASES },
-  { label: "macOS — Apple Silicon (.dmg)", href: RELEASES },
-  { label: "macOS — Intel (.dmg)", href: RELEASES },
+  { label: "Windows (.exe)", href: DL_WIN },
+  { label: "macOS — Apple Silicon (.dmg)", href: DL_ARM },
+  { label: "macOS — Intel (.dmg)", href: DL_X64 },
 ];
 
 export default function Landing() {
