@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 // Standalone output is required for the Electron self-hosted server.
-// On Vercel (and CI) we skip it so the platform can manage its own output.
-const isElectronBuild = !process.env.VERCEL && !process.env.CI;
+// ELECTRON_BUILD=1 forces standalone even in CI (used by GitHub Actions).
+const isElectronBuild =
+  process.env.ELECTRON_BUILD === '1' || (!process.env.VERCEL && !process.env.CI);
 
 const nextConfig: NextConfig = {
   ...(isElectronBuild && { output: "standalone" }),
