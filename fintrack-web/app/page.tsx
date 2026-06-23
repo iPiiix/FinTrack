@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { Download, Github, FileCode2 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import dynamic from "next/dynamic";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 const ThreeBackground = dynamic(() => import("../components/ThreeBackground"), { ssr: false });
 
@@ -46,8 +47,10 @@ export default function Landing() {
 
   return (
     <>
-      {/* 3D Background */}
-      <ThreeBackground />
+      {/* 3D Background — isolated boundary so WebGL errors don't crash the page */}
+      <ErrorBoundary fallback={null}>
+        <ThreeBackground />
+      </ErrorBoundary>
 
       <div className="min-h-screen text-zinc-50 font-sans flex flex-col selection:bg-[#E8FF47]/20 selection:text-white">
         
