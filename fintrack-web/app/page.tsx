@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
 import { Download, Github, FileCode2 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -8,10 +7,10 @@ import ErrorBoundary from "../components/ErrorBoundary";
 
 const ThreeBackground = dynamic(() => import("../components/ThreeBackground"), { ssr: false });
 
-const GITHUB   = "https://github.com/iPiiix/FinTrack";
-const DL_ARM   = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0-arm64.dmg";
-const DL_X64   = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0.dmg";
-const DL_WIN   = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-Setup-1.0.0.exe";
+const GITHUB = "https://github.com/iPiiix/FinTrack";
+const DL_ARM = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0-arm64.dmg";
+const DL_X64 = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0.dmg";
+const DL_WIN = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-Setup-1.0.0.exe";
 
 const FEATURES = [
   {
@@ -40,203 +39,256 @@ const FEATURES = [
   },
 ];
 
+const DOWNLOADS = [
+  { label: "Windows (.exe)", href: DL_WIN },
+  { label: "macOS — Apple Silicon (.dmg)", href: DL_ARM },
+  { label: "macOS — Intel (.dmg)", href: DL_X64 },
+];
+
 export default function Landing() {
   const { scrollYProgress } = useScroll();
-  const yHero = useTransform(scrollYProgress, [0, 1], [0, 400]);
-  const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const yHero = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
+  const opacityHero = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
 
   return (
     <>
-      {/* 3D Background — isolated boundary so WebGL errors don't crash the page */}
       <ErrorBoundary fallback={null}>
         <ThreeBackground />
       </ErrorBoundary>
 
       <div className="min-h-screen text-zinc-50 font-sans flex flex-col selection:bg-[#E8FF47]/20 selection:text-white">
-        
-        {/* Nav with Glassmorphism */}
-        <nav className="border-b border-white/5 sticky top-0 bg-[#09090B]/60 backdrop-blur-2xl z-50">
-          <div className="max-w-7xl mx-auto px-6 sm:px-12 h-20 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <img src="/png.png" alt="FinTrack" className="w-5 h-5 object-contain" />
-              <span className="font-mono text-xs tracking-[0.4em] text-white">FINTRACK</span>
+
+        {/* Nav */}
+        <nav className="border-b border-zinc-900 sticky top-0 bg-zinc-950/80 backdrop-blur-xl z-50">
+          <div className="px-6 sm:px-12 md:px-24 xl:px-48 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img src="/png.png" alt="FinTrack" className="w-4 h-4 object-contain opacity-90" />
+              <span className="font-mono text-[11px] tracking-widest text-zinc-400">FINTRACK</span>
             </div>
 
-            <div className="hidden sm:flex items-center gap-12">
+            <div className="hidden sm:flex items-center gap-10">
               {[["Funciones", "#features"], ["Instalar", "#install"]].map(([label, href]) => (
-                <a key={label} href={href} className="font-mono text-[10px] tracking-[0.25em] text-zinc-400 hover:text-white transition-colors uppercase">
+                <a
+                  key={label}
+                  href={href}
+                  className="font-mono text-[10px] tracking-widest text-zinc-600 hover:text-zinc-300 transition-colors uppercase"
+                >
                   {label}
                 </a>
               ))}
             </div>
 
-            <div className="flex items-center gap-8">
-              <a href={`${GITHUB}/blob/main/AGENTS.md`} target="_blank" rel="noopener noreferrer" className="hidden md:flex items-center gap-2 font-mono text-[10px] tracking-[0.25em] text-zinc-400 hover:text-[#E8FF47] transition-colors uppercase">
-                <FileCode2 size={14} />
-                ARQUITECTURA
+            <div className="flex items-center gap-6">
+              <a
+                href={`${GITHUB}/blob/main/AGENTS.md`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden md:flex items-center gap-2 font-mono text-[10px] tracking-widest text-zinc-600 hover:text-zinc-300 transition-colors uppercase"
+              >
+                <FileCode2 size={13} />
+                Arquitectura
               </a>
-              <a href={GITHUB} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 font-mono text-[10px] tracking-[0.25em] text-zinc-400 hover:text-white transition-colors uppercase">
-                <Github size={14} />
-                GITHUB
+              <a
+                href={GITHUB}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 font-mono text-[10px] tracking-widest text-zinc-600 hover:text-zinc-300 transition-colors uppercase"
+              >
+                <Github size={13} />
+                GitHub
               </a>
             </div>
           </div>
         </nav>
 
         <main className="flex-1 relative z-10">
-          {/* Hero Section with Parallax */}
-          <section className="relative h-[90vh] flex flex-col justify-center max-w-7xl mx-auto px-6 sm:px-12">
-            <motion.div style={{ y: yHero, opacity: opacityHero }}>
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              >
-                <span className="font-mono text-[11px] tracking-[0.4em] text-[#E8FF47] bg-[#E8FF47]/10 border border-[#E8FF47]/20 px-4 py-2 rounded-sm inline-block mb-12 backdrop-blur-md">
-                  v1.0.0 · OPEN SOURCE · MIT LICENSE
-                </span>
-              </motion.div>
 
-              <motion.h1 
-                className="font-['Bebas_Neue'] text-[5rem] sm:text-[9rem] md:text-[12rem] leading-[0.85] tracking-tight mb-12 text-white"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          {/* Hero */}
+          <section className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-center px-6 sm:px-12 md:px-24 xl:px-48 py-20 overflow-hidden">
+            <motion.div style={{ y: yHero, opacity: opacityHero }}>
+
+              <motion.p
+                initial={{ opacity: 0, filter: "blur(8px)", y: -10 }}
+                animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+                className="font-mono text-xs tracking-widest text-zinc-500 uppercase mb-6"
               >
-                OWN YOUR FUTURE.<br />
-                <span className="text-[#E8FF47]">KNOW YOUR NUMBERS.</span>
+                v1.0.0 · Open Source · MIT
+              </motion.p>
+
+              <motion.h1
+                className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-[-0.035em] leading-[1.1] mb-8 max-w-4xl"
+                initial={{ opacity: 0, y: 24, filter: "blur(12px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+              >
+                <span className="bg-gradient-to-b from-zinc-100 via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+                  Own Your Future.
+                </span>
+                <br />
+                <span className="bg-gradient-to-b from-[#E8FF47] via-[#cce040] to-[#a8b830] bg-clip-text text-transparent">
+                  Know Your Numbers.
+                </span>
               </motion.h1>
 
-              <motion.p 
-                className="text-zinc-300 text-base sm:text-lg leading-relaxed max-w-2xl mb-16 font-light"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 0.3 }}
+              <motion.p
+                className="text-zinc-400 text-lg sm:text-xl max-w-xl leading-relaxed mb-10"
+                initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
               >
                 Registra ingresos y gastos, analiza tu flujo de caja y visualiza tu patrimonio.
                 Una sola app, instalada en tu dispositivo, sin suscripciones ni rastreo.
               </motion.p>
 
-              <motion.div 
-                className="flex flex-col sm:flex-row gap-6 mb-8"
-                initial={{ opacity: 0, y: 20 }}
+              <motion.div
+                className="flex flex-wrap items-center gap-3"
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.6 }}
               >
-                <a href={DL_WIN} download className="flex items-center justify-center gap-3 bg-white hover:bg-zinc-200 text-black px-8 py-5 font-mono text-xs font-medium tracking-[0.25em] transition-colors rounded-sm">
-                  <Download size={16} />
-                  WINDOWS
+                <a
+                  href={DL_ARM}
+                  download
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8FF47] text-zinc-950 rounded-full text-sm font-medium hover:bg-[#d4eb3a] transition-[background-color,transform] active:scale-[0.97]"
+                >
+                  <Download size={14} />
+                  macOS
                 </a>
-                <a href={DL_ARM} download className="flex items-center justify-center gap-3 bg-[#E8FF47] hover:bg-[#d4eb3a] text-black px-8 py-5 font-mono text-xs font-medium tracking-[0.25em] transition-colors rounded-sm shadow-[0_0_30px_rgba(232,255,71,0.2)]">
-                  <Download size={16} />
-                  MACOS
+                <a
+                  href={DL_WIN}
+                  download
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-100 text-zinc-950 rounded-full text-sm font-medium hover:bg-zinc-300 transition-[background-color,transform] active:scale-[0.97]"
+                >
+                  <Download size={14} />
+                  Windows
                 </a>
-                <a href={GITHUB} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-3 border border-white/20 hover:border-white/40 hover:bg-white/5 backdrop-blur-md text-white px-8 py-5 font-mono text-xs tracking-[0.25em] transition-all rounded-sm">
-                  <Github size={16} />
-                  GITHUB
+                <a
+                  href={GITHUB}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 border border-zinc-800 text-zinc-400 rounded-full text-sm hover:border-zinc-600 hover:text-zinc-200 transition-colors"
+                >
+                  <Github size={14} />
+                  GitHub
                 </a>
               </motion.div>
 
-              <motion.p 
-                className="font-mono text-[10px] tracking-[0.3em] text-zinc-500"
+              <motion.p
+                className="font-mono text-[10px] tracking-widest text-zinc-600 mt-6 uppercase"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 0.6 }}
+                transition={{ duration: 1, delay: 0.8 }}
               >
-                MACOS (APPLE SILICON & INTEL) · WINDOWS · GRATIS
+                Apple Silicon · Intel · Windows · Gratis
               </motion.p>
             </motion.div>
           </section>
 
           {/* Features */}
-          <section id="features" className="max-w-7xl mx-auto px-6 sm:px-12 py-40">
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
+          <section id="features" className="px-6 sm:px-12 md:px-24 xl:px-48 py-32 border-t border-zinc-900">
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
-              className="font-mono text-[11px] tracking-[0.5em] text-[#E8FF47] mb-24 border-l-2 border-[#E8FF47] pl-4"
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="font-mono text-xs tracking-widest text-zinc-500 uppercase mb-16"
             >
-              FUNCIONALIDADES
+              Funcionalidades
             </motion.p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-16 gap-y-24">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {FEATURES.map((f, i) => (
-                <motion.div 
-                  key={f.name} 
-                  className="group relative"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                <motion.div
+                  key={f.name}
+                  initial={{ opacity: 0, filter: "blur(4px)", y: 20 }}
+                  whileInView={{ opacity: 1, filter: "blur(0px)", y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.6, delay: i * 0.1 }}
+                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: i * 0.07 }}
+                  className="group bg-zinc-900/60 border border-zinc-800/50 rounded-sm p-6 hover:border-zinc-700 transition-colors"
                 >
-                  <div className="absolute -inset-6 bg-white/0 group-hover:bg-white/5 transition-colors rounded-lg -z-10" />
-                  <div className="font-['Bebas_Neue'] text-3xl tracking-wide text-white group-hover:text-[#E8FF47] transition-colors mb-6">
-                    {f.name.toUpperCase()}
-                  </div>
-                  <p className="text-base text-zinc-400 leading-loose group-hover:text-zinc-300 transition-colors">
-                    {f.desc}
-                  </p>
+                  <h3 className="text-zinc-100 text-sm font-medium mb-2 group-hover:text-[#E8FF47] transition-colors">
+                    {f.name}
+                  </h3>
+                  <p className="text-zinc-500 text-xs leading-relaxed">{f.desc}</p>
                 </motion.div>
               ))}
             </div>
           </section>
 
-          <div className="border-t border-white/5 w-full" />
-
           {/* Install */}
-          <section id="install" className="max-w-7xl mx-auto px-6 sm:px-12 py-40">
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
+          <section id="install" className="px-6 sm:px-12 md:px-24 xl:px-48 py-32 border-t border-zinc-900">
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
-              className="font-mono text-[11px] tracking-[0.5em] text-[#E8FF47] mb-24 border-l-2 border-[#E8FF47] pl-4"
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="font-mono text-xs tracking-widest text-zinc-500 uppercase mb-16"
             >
-              INSTALACIÓN
+              Instalación
             </motion.p>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-start">
+
               {/* Downloads */}
               <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
+                whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
               >
-                <p className="font-mono text-[11px] tracking-[0.35em] text-zinc-400 mb-8">DESCARGA DIRECTA</p>
-                <div className="flex flex-col gap-4">
-                  <a href={DL_WIN} download className="flex items-center justify-between group border border-white/10 hover:border-white/30 bg-black/40 backdrop-blur-md px-8 py-6 transition-all rounded-sm">
-                    <span className="font-mono text-xs tracking-[0.25em] text-zinc-300 group-hover:text-white">WINDOWS (.EXE)</span>
-                    <Download size={16} className="text-zinc-600 group-hover:text-white" />
-                  </a>
-                  <a href={DL_ARM} download className="flex items-center justify-between group border border-white/10 hover:border-[#E8FF47]/50 bg-black/40 hover:bg-[#E8FF47]/5 backdrop-blur-md px-8 py-6 transition-all rounded-sm">
-                    <span className="font-mono text-xs tracking-[0.25em] text-zinc-300 group-hover:text-[#E8FF47]">MACOS — APPLE SILICON</span>
-                    <Download size={16} className="text-zinc-600 group-hover:text-[#E8FF47]" />
-                  </a>
-                  <a href={DL_X64} download className="flex items-center justify-between group border border-white/10 hover:border-white/30 bg-black/40 backdrop-blur-md px-8 py-6 transition-all rounded-sm">
-                    <span className="font-mono text-xs tracking-[0.25em] text-zinc-300 group-hover:text-white">MACOS — INTEL (.DMG)</span>
-                    <Download size={16} className="text-zinc-600 group-hover:text-white" />
-                  </a>
+                <p className="font-mono text-[10px] tracking-widest text-zinc-600 uppercase mb-8">
+                  Descarga directa
+                </p>
+                <div className="flex flex-col">
+                  {DOWNLOADS.map(({ label, href }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      download
+                      className="group flex items-center justify-between py-5 border-b border-zinc-900 hover:border-zinc-800 transition-colors last:border-0"
+                    >
+                      <span className="text-zinc-400 text-sm group-hover:text-zinc-100 transition-colors">
+                        {label}
+                      </span>
+                      <Download
+                        size={14}
+                        className="text-zinc-700 group-hover:text-zinc-400 transition-colors shrink-0"
+                      />
+                    </a>
+                  ))}
                 </div>
               </motion.div>
 
-              {/* Terminal */}
+              {/* Code */}
               <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
+                whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2 }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
               >
-                <p className="font-mono text-[11px] tracking-[0.35em] text-zinc-400 mb-8">CÓDIGO FUENTE</p>
-                <div className="bg-black/60 backdrop-blur-xl border border-white/10 p-8 rounded-sm shadow-2xl">
-                  <div className="font-mono text-sm leading-loose text-zinc-300">
-                    <div><span className="text-zinc-600 select-none">$ </span>git clone https://github.com/iPiiix/FinTrack</div>
-                    <div><span className="text-zinc-600 select-none">$ </span>cd FinTrack/fintrack-web</div>
-                    <div><span className="text-zinc-600 select-none">$ </span>npm install && npm run dev</div>
-                    <div className="mt-6 text-xs text-[#E8FF47]">→ localhost:3000</div>
+                <p className="font-mono text-[10px] tracking-widest text-zinc-600 uppercase mb-8">
+                  Código fuente
+                </p>
+                <div className="bg-zinc-900/60 border border-zinc-800/50 rounded-sm p-6">
+                  <div className="font-mono text-sm leading-loose text-zinc-400">
+                    <div>
+                      <span className="text-zinc-700 select-none">$ </span>
+                      git clone https://github.com/iPiiix/FinTrack
+                    </div>
+                    <div>
+                      <span className="text-zinc-700 select-none">$ </span>
+                      cd FinTrack/fintrack-web
+                    </div>
+                    <div>
+                      <span className="text-zinc-700 select-none">$ </span>
+                      npm install && npm run dev
+                    </div>
+                    <div className="mt-5 text-xs text-[#E8FF47]">→ localhost:3000</div>
                   </div>
                 </div>
-                <p className="font-mono text-[10px] tracking-[0.25em] text-zinc-500 mt-6">
-                  Node.js 18+ REQUERIDO
+                <p className="font-mono text-[10px] tracking-widest text-zinc-600 mt-5 uppercase">
+                  Node.js 18+ requerido
                 </p>
               </motion.div>
             </div>
@@ -244,21 +296,30 @@ export default function Landing() {
         </main>
 
         {/* Footer */}
-        <div className="border-t border-white/5 relative z-10 bg-[#09090B]/80 backdrop-blur-lg" />
-        <footer className="max-w-7xl mx-auto w-full px-6 sm:px-12 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10 bg-[#09090B]/80 backdrop-blur-lg">
-          <div className="flex items-center gap-4 opacity-60 hover:opacity-100 transition-opacity">
+        <footer className="px-6 sm:px-12 md:px-24 xl:px-48 py-10 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+          <div className="flex items-center gap-3 opacity-50 hover:opacity-100 transition-opacity">
             <img src="/png.png" alt="" className="w-4 h-4 object-contain" />
-            <span className="font-mono text-[11px] tracking-[0.4em] text-zinc-300">FINTRACK</span>
+            <span className="font-mono text-[10px] tracking-widest text-zinc-400">FINTRACK</span>
           </div>
-          <span className="font-mono text-[10px] tracking-[0.3em] text-zinc-500">
-            © 2026 · MIT LICENSE
+          <span className="font-mono text-[10px] tracking-widest text-zinc-600">
+            © 2026 · MIT License
           </span>
           <div className="flex items-center gap-8">
-            <a href={`${GITHUB}/blob/main/AGENTS.md`} target="_blank" rel="noopener noreferrer" className="font-mono text-[10px] tracking-[0.3em] text-zinc-500 hover:text-[#E8FF47] transition-colors">
-              ARQUITECTURA
+            <a
+              href={`${GITHUB}/blob/main/AGENTS.md`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-[10px] tracking-widest text-zinc-600 hover:text-[#E8FF47] transition-colors uppercase"
+            >
+              Arquitectura
             </a>
-            <a href={GITHUB} target="_blank" rel="noopener noreferrer" className="font-mono text-[10px] tracking-[0.3em] text-zinc-500 hover:text-white transition-colors">
-              GITHUB ↗
+            <a
+              href={GITHUB}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-[10px] tracking-widest text-zinc-600 hover:text-zinc-300 transition-colors uppercase"
+            >
+              GitHub ↗
             </a>
           </div>
         </footer>

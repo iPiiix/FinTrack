@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Geist, DM_Mono } from "next/font/google";
 import { AuthProvider } from "../context/AuthContext";
 import ErrorBoundary from "../components/ErrorBoundary";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const dmMono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-dm-mono" });
 
 export const metadata: Metadata = {
   title: "FinTrack — Control Financiero Inteligente | Own Your Future",
@@ -41,16 +45,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="antialiased">
+    <html lang="es" suppressHydrationWarning className={`${geist.variable} ${dmMono.variable}`}>
+      <head />
+      <body className="antialiased font-sans">
         <ErrorBoundary>
           <AuthProvider>{children}</AuthProvider>
         </ErrorBoundary>
