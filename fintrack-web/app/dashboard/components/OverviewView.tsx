@@ -65,7 +65,7 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
   const kpis = [
     { label: "PATRIMONIO TOTAL", unit: "EUR", value: loading ? "——" : `€ ${fmt(analytics?.patrimonio_neto || 0, 0)}`, bright: !loading, extra: <div style={{ marginTop: 10, height: 16, borderBottom: "1px solid", borderImage: "linear-gradient(to right, rgba(255,255,255,0.2), transparent) 1" }} /> },
     { label: "BALANCE MENSUAL", unit: "EUR", value: loading ? "——" : `${(analytics?.flujo_caja_neto || 0) >= 0 ? "+" : "−"}€ ${fmt(analytics?.flujo_caja_neto || 0, 0)}`, bright: !loading, sub: (analytics?.flujo_caja_neto || 0) >= 0 ? "POSITIVO" : "NEGATIVO", subPos: (analytics?.flujo_caja_neto || 0) >= 0 },
-    { label: "INGRESOS TOTALES", unit: "EUR", value: loading ? "——" : `€ ${fmt(analytics?.total_ingresos || 0, 0)}`, bright: !loading, extra: <div style={{ marginTop: 10, height: 16 }} /> },
+    { label: "INGRESOS (MES)", unit: "EUR", value: loading ? "——" : `€ ${fmt(analytics?.total_ingresos || 0, 0)}`, bright: !loading, extra: <div style={{ marginTop: 10, height: 16 }} /> },
     { label: "TASA DE AHORRO", unit: "%", value: loading ? "——" : `${savingsRate >= 0 ? "+" : "−"}${fmt(Math.abs(savingsRate), 1)}%`, bright: !loading, sub: savingsRate >= 20 ? "EXCELENTE" : savingsRate >= 0 ? "PUEDE MEJORAR" : "CRÍTICO (DEUDA)", subPos: savingsRate >= 20,
       extra: <div style={{ marginTop: 14, height: 2, background: "#1C1C1F", overflow: "hidden", borderRadius: 1 }}><div style={{ height: "100%", background: savingsRate >= 0 ? "rgba(255,255,255,0.35)" : "rgba(239, 68, 68, 0.4)", width: `${Math.min(Math.max(savingsRate, 0), 100)}%`, transition: "width 1.2s cubic-bezier(0.16,1,0.3,1)", borderRadius: 1 }} /></div> },
   ];

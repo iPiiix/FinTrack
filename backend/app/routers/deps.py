@@ -52,7 +52,12 @@ def get_active_subscription(current_user: Usuario = Depends(get_current_user)):
         
     if current_user.trial_ends_at:
         # 1-hour grace period
-        if now < (current_user.trial_ends_at + timedelta(hours=1)):
+        # trial_ends_at comes back as a naive datetime from the TIMESTAMP column;
+        # attach UTC so the comparison with `now` doesn't raise TypeError.
+        trial_end = current_user.trial_ends_at
+        if trial_end.tzinfo is None:
+            trial_end = trial_end.replace(tzinfo=timezone.utc)
+        if now < (trial_end + timedelta(hours=1)):
             return current_user
             
     raise HTTPException(

@@ -1,37 +1,47 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+
+@theme inline {
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-bebas: "Bebas Neue", var(--font-sans);
+  --color-zinc-950: #09090b;
+}
 
 :root {
-  --bg: #000000;
-  --text: #ffffff;
-  --muted: #444444; /* Gris muy oscuro para elementos discretos */
-  --muted-bright: #888888; /* Gris medio para etiquetas */
-  --border: rgba(255, 255, 255, 0.08); /* Borde muy sutil */
+  --background: #09090b;
+  --foreground: #fafafa;
+  --border: rgba(255, 255, 255, 0.08);
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: 'system-ui', sans-serif; /* Tipografía limpia y nativa */
-  font-weight: 300;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
   overflow-x: hidden;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Animaciones suaves */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { animation: fadeIn 0.5s ease forwards; }
+/* Smooth fade-in animations */
+@keyframes fadeIn { 
+  from { opacity: 0; transform: translateY(12px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
+.animate-fade-in { 
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+  opacity: 0;
+}
 
-/* Scrollbar casi invisible */
-::-webkit-scrollbar { width: 1px; height: 1px;}
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #222; }
+::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
-/* Tipografía */
-.font-mono { font-family: 'DM Mono', monospace; }
-.metric-value { font-family: 'DM Mono', monospace; font-weight: 400; letter-spacing: -0.01em; line-height: 1; }
-.metric-label { font-size: 10px; color: var(--muted-bright); font-family: 'DM Mono', monospace; letter-spacing: 0.15em; text-transform: uppercase; }
-
-/* Data Table */
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted-bright); font-family: 'DM Mono', monospace; padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; font-weight: 400; }
-.data-table td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #F0F0F5;}
+/* Custom text selection */
+::selection {
+  background-color: rgba(232, 255, 71, 0.2);
+  color: #fff;
+}

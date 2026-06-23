@@ -19,7 +19,6 @@ def crear_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     if expires_delta:
         expira = datetime.now(timezone.utc) + expires_delta
     else:
-        # Align with settings (default: 30 days)
         expira = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
         
     datos.update({"exp": expira})

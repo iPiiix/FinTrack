@@ -139,7 +139,7 @@ export default function DashboardPage() {
     ),
     TRANSACTIONS: (
       <ErrorBoundary fallback={<div className="p-10 text-center text-gray-400">Error al cargar Transacciones</div>}>
-        <TransactionsView transactions={transactions} categorias={categorias} cuentas={cuentas} deleteTransaction={deleteTransaction} />
+        <TransactionsView transactions={transactions} categorias={categorias} cuentas={cuentas} deleteTransaction={deleteTransaction} refreshData={fetchAll} addToast={addToast} />
       </ErrorBoundary>
     ),
     PORTFOLIO: (
@@ -178,8 +178,8 @@ export default function DashboardPage() {
       <CreateAssetDrawer isOpen={assetDrawerOpen} onClose={() => setAssetDrawerOpen(false)} onSave={handleAssetSave} />
       <div style={{ position: "fixed", bottom: 24, right: 24, display: "flex", flexDirection: "column", gap: 8, zIndex: 300 }}>
         {toasts.map(t => (
-          <div key={t.id} className="toast" style={{ display: "flex", alignItems: "center", gap: 12, background: "#18181B", border: "1px solid", borderColor: t.type === "success" ? "rgba(16,185,129,0.25)" : "#27272A", padding: "14px 20px", minWidth: 280, boxShadow: "0 12px 40px rgba(0,0,0,0.7)" }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", flexShrink: 0, background: t.type === "success" ? "#10B981" : "white" }} />
+          <div key={t.id} className="toast" style={{ display: "flex", alignItems: "center", gap: 12, background: "#18181B", border: "1px solid", borderColor: t.type === "success" ? "rgba(16,185,129,0.25)" : t.type === "error" ? "rgba(248,113,113,0.25)" : "#27272A", padding: "14px 20px", minWidth: 280, boxShadow: "0 12px 40px rgba(0,0,0,0.7)" }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", flexShrink: 0, background: t.type === "success" ? "#10B981" : t.type === "error" ? "#F87171" : "#71717A" }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: "#E4E4E7" }}>{t.msg}</span>
           </div>
         ))}

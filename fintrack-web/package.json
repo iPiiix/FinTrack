@@ -1,18 +1,57 @@
 {
   "name": "fintrack-web",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:electron": "concurrently \"next dev --webpack\" \"wait-on http://localhost:3000 && electron .\"",
     "build": "next build",
+    "prepare:electron": "node scripts/prepare-electron.js",
+    "build:electron": "next build && node scripts/prepare-electron.js && electron-builder",
+    "build:mac": "next build && node scripts/prepare-electron.js && electron-builder --mac",
+    "build:win": "next build && node scripts/prepare-electron.js && electron-builder --win",
     "start": "next start",
     "lint": "eslint"
   },
+  "build": {
+    "appId": "com.fintrack.app",
+    "productName": "FinTrack",
+    "copyright": "Copyright © 2026 FinTrack",
+    "directories": { "output": "dist" },
+    "afterPack": "./scripts/afterPack.js",
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [],
+    "asarUnpack": ["node_modules/better-sqlite3/**/*"],
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+      "category": "public.app-category.finance",
+      "icon": "public/png.png"
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "public/png.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  },
   "dependencies": {
+    "@react-three/drei": "^9.105.6",
+    "@react-three/fiber": "^8.16.1",
+    "three": "^0.163.0",
     "@marsidev/react-turnstile": "^1.4.2",
     "@stripe/stripe-js": "^8.9.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.11.1",
     "chart.js": "^4.5.1",
     "framer-motion": "^12.35.0",
+    "jose": "^6.2.3",
     "lucide": "^0.577.0",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
@@ -22,14 +61,21 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
+    "@types/three": "^0.163.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.27",
+    "concurrently": "^10.0.3",
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^9.0.10"
   }
 }

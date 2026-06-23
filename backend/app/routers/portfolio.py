@@ -12,10 +12,11 @@ router = APIRouter()
 @router.get("/", response_model=List[ActivoResponse])
 def read_activos(
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(get_active_subscription)
 ):
     """
-    Get all user investments (activos).
+    Get all user investments (activos). Requires active subscription so the
+    frontend receives 402 and shows the lock screen for free users.
     """
     return db.query(Activo).filter(Activo.id_usuario == current_user.id_usuario).all()
 

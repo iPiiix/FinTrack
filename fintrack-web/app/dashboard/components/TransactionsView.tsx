@@ -6,7 +6,7 @@ import { EmptyState } from "./ui/EmptyState";
 import { useAuth } from "../../../context/AuthContext";
 import { Search, X, Upload, Filter } from "lucide-react";
 
-export function TransactionsView({ transactions, categorias, cuentas, deleteTransaction, refreshData }: any) {
+export function TransactionsView({ transactions, categorias, cuentas, deleteTransaction, refreshData, addToast }: any) {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -25,13 +25,17 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
     expense: filtered.filter((t: any) => t.tipo === "gasto").reduce((s: number, t: any) => s + Math.abs(t.cantidad), 0),
   }), [filtered]);
 
+  const notify = (msg: string, type = "info") => {
+    if (addToast) addToast(msg, type);
+  };
+
   const handleCsvImport = () => {
     if (user?.subscription_tier !== "enterprise") {
-      alert("✨ La importación de CSV es una función exclusiva del plan Enterprise. \n¡Súbete de nivel hoy para desbloquear el máximo poder de FinTrack!");
+      notify("La importación CSV es una función exclusiva del plan Enterprise.", "error");
       return;
     }
     if (cuentas.length === 0) {
-      alert("Debes crear al menos una cuenta donde importar las transacciones.");
+      notify("Crea al menos una cuenta antes de importar transacciones.", "error");
       return;
     }
     fileInputRef.current?.click();
@@ -42,16 +46,15 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
     if (!file) return;
 
     if (!file.name.endsWith('.csv')) {
-      alert("El archivo debe tener extensión .csv");
+      notify("El archivo debe tener extensión .csv", "error");
       return;
     }
 
     setIsUploading(true);
+    const API = "/api";
     const formData = new FormData();
     formData.append("file", file);
     formData.append("id_cuenta", cuentas[0].id_cuenta.toString());
-
-    const API = "/api";
 
     try {
       const res = await fetch(`${API}/transactions/csv`, {
@@ -60,13 +63,11 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
         credentials: "include"
       });
       const data = await res.json();
-      
       if (!res.ok) throw new Error(data.detail || "Error en la importación");
-      
-      alert(`✅ Éxito: ${data.message}`);
+      notify(data.message || "CSV importado correctamente", "success");
       if (refreshData) refreshData();
     } catch (err: any) {
-      alert(`❌ Error: ${err.message}`);
+      notify(err.message || "Error al importar el CSV", "error");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

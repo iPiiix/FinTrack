@@ -20,6 +20,9 @@
 # production
 /build
 
+# electron builds (distributed via GitHub Releases, not git)
+/dist
+
 # misc
 .DS_Store
 *.pem
