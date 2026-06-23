@@ -1,0 +1,19 @@
+# Electron build output — distributed via GitHub Releases, not Vercel
+dist/
+
+# Electron binary entry point (not needed for web deploy)
+electron/
+
+# Local SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# Scripts only used for Electron packaging
+scripts/prepare-electron.js
+scripts/afterPack.js
+
+# Python/backend (lives in parent directory)
+../backend/
+../check_*.py
+../debug_*.py
