@@ -5,7 +5,11 @@ import { AuthProvider } from "../context/AuthContext";
 import ErrorBoundary from "../components/ErrorBoundary";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
-const dmMono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-dm-mono" });
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-dm-mono",
+});
 
 export const metadata: Metadata = {
   title: "FinTrack - Control Financiero Inteligente | Own Your Future",
@@ -22,9 +26,14 @@ export const metadata: Metadata = {
     "ahorro",
   ],
   icons: {
-    icon: "/png.png",
-    shortcut: "/png.png",
-    apple: "/png.png",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.png",
+    other: {
+      rel: "mask-icon",
+      url: "/favicon.png",
+      color: "#E8FF47",
+    },
   },
   openGraph: {
     title: "FinTrack - Own Your Future. Know Your Numbers.",
@@ -43,9 +52,17 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="es" suppressHydrationWarning className={`${geist.variable} ${dmMono.variable}`}>
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={`${geist.variable} ${dmMono.variable}`}
+    >
       <head />
       <body className="antialiased font-sans">
         <ErrorBoundary>

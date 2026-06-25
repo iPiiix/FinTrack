@@ -1,16 +1,95 @@
+# Python
 venv/
 env/
-
+.venv/
 .env
-
+.env.local
+.env.*.local
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
+# Database
 *.sqlite3
 *.db
+*.sqlite
 
-.vscode/
-
+# Testing & Debug Scripts
+check_*.py
+debug_*.py
+test_*.py
 *.session.sql
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment & Secrets
+.env*
+!.env.example
+.env.local
+.env.*.local
+
+# Node.js / Frontend
 node_modules/
-.vercel
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+/coverage
+/.next/
+/out/
+/build/
+/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.tsbuildinfo
+
+# Electron builds (distributed via GitHub Releases, not git)
+dist/
+*.exe
+*.dmg
+*.AppImage
+
+# Vercel & Deployment
+.vercel/
+
+# OS
+.DS_Store
+Thumbs.db
+*.pem
+
+# Project-specific
+*.lock
+skills-lock.json
+render.yaml
+token.json

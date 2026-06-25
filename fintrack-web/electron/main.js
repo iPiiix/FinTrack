@@ -1,20 +1,20 @@
-const { app, BrowserWindow, shell, dialog } = require('electron');
-const path = require('path');
-const { spawn } = require('child_process');
-const http = require('http');
-const fs = require('fs');
+const { app, BrowserWindow, shell, dialog } = require("electron");
+const path = require("path");
+const { spawn } = require("child_process");
+const http = require("http");
+const fs = require("fs");
 
 const PORT = 3000;
-const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_DEV = process.env.NODE_ENV === "development";
 
 let mainWindow = null;
 let nextServer = null;
 
 // ── Database path: writable user-data folder ──────────────────────────────────
 function getDbPath() {
-  const userData = app.getPath('userData');
+  const userData = app.getPath("userData");
   if (!fs.existsSync(userData)) fs.mkdirSync(userData, { recursive: true });
-  return path.join(userData, 'fintrack.db');
+  return path.join(userData, "fintrack.db");
 }
 
 // ── Loading HTML shown while the server boots ─────────────────────────────────
@@ -58,14 +58,17 @@ function getLoadingHTML() {
 function waitForServer(url, retries = 60) {
   return new Promise((resolve, reject) => {
     const attempt = (n) => {
-      http.get(url, (res) => {
-        if (res.statusCode < 500) resolve();
-        else if (n > 0) setTimeout(() => attempt(n - 1), 500);
-        else reject(new Error(`Server responded with status ${res.statusCode}`));
-      }).on('error', () => {
-        if (n > 0) setTimeout(() => attempt(n - 1), 500);
-        else reject(new Error('Server not reachable after all retries'));
-      });
+      http
+        .get(url, (res) => {
+          if (res.statusCode < 500) resolve();
+          else if (n > 0) setTimeout(() => attempt(n - 1), 500);
+          else
+            reject(new Error(`Server responded with status ${res.statusCode}`));
+        })
+        .on("error", () => {
+          if (n > 0) setTimeout(() => attempt(n - 1), 500);
+          else reject(new Error("Server not reachable after all retries"));
+        });
     };
     attempt(retries);
   });
@@ -77,12 +80,12 @@ function startNextServer() {
   if (IS_DEV) return Promise.resolve();
 
   // process.resourcesPath = <app>/Contents/Resources  (outside the ASAR)
-  const standaloneDir  = path.join(process.resourcesPath, 'standalone');
-  const serverScript   = path.join(standaloneDir, 'server.js');
+  const standaloneDir = path.join(process.resourcesPath, "standalone");
+  const serverScript = path.join(standaloneDir, "server.js");
 
   if (!fs.existsSync(serverScript)) {
     const msg = `Next.js standalone build not found at:\n${serverScript}\n\nThe app may not have been packaged correctly.`;
-    dialog.showErrorBox('FinTrack — Error de arranque', msg);
+    dialog.showErrorBox("FinTrack — Error de arranque", msg);
     throw new Error(msg);
   }
 
@@ -93,26 +96,30 @@ function startNextServer() {
     env: {
       ...process.env,
       // Make Electron binary behave as plain Node.js
-      ELECTRON_RUN_AS_NODE: '1',
-      PORT:          String(PORT),
-      NODE_ENV:      'production',
+      ELECTRON_RUN_AS_NODE: "1",
+      PORT: String(PORT),
+      NODE_ENV: "production",
       DATABASE_PATH: dbPath,
-      JWT_SECRET:    app.getPath('userData'),
+      JWT_SECRET: app.getPath("userData"),
       // Point to electron-builder's rebuilt native modules (correct ABI)
-      NODE_PATH: path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules'),
+      NODE_PATH: path.join(
+        process.resourcesPath,
+        "app.asar.unpacked",
+        "node_modules",
+      ),
     },
-    stdio: 'pipe',
+    stdio: "pipe",
   });
 
   // Log server output for debugging
-  let serverStderr = '';
-  nextServer.stdout.on('data', (d) => process.stdout.write(d));
-  nextServer.stderr.on('data', (d) => {
+  let serverStderr = "";
+  nextServer.stdout.on("data", (d) => process.stdout.write(d));
+  nextServer.stderr.on("data", (d) => {
     process.stderr.write(d);
     serverStderr += d.toString();
   });
 
-  nextServer.on('exit', (code) => {
+  nextServer.on("exit", (code) => {
     console.error(`[FinTrack] Next.js server exited with code ${code}`);
     if (code !== 0 && mainWindow && !mainWindow.isDestroyed()) {
       const errorHTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
@@ -126,11 +133,13 @@ function startNextServer() {
         <div class="c">
           <h2>Error del servidor (código ${code})</h2>
           <p>El servidor interno de FinTrack se ha detenido inesperadamente.</p>
-          <pre>${serverStderr.slice(-500).replace(/</g, '&lt;')}</pre>
+          <pre>${serverStderr.slice(-500).replace(/</g, "&lt;")}</pre>
           <button onclick="location.reload()">Reintentar</button>
         </div>
       </body></html>`;
-      mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(errorHTML)}`);
+      mainWindow.loadURL(
+        `data:text/html;charset=utf-8,${encodeURIComponent(errorHTML)}`,
+      );
     }
   });
 
@@ -140,48 +149,63 @@ function startNextServer() {
 // ── Create the browser window ─────────────────────────────────────────────────
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width:  1280,
+    width: 1280,
     height: 800,
-    minWidth:  900,
+    minWidth: 900,
     minHeight: 600,
-    title: 'FinTrack',
+    title: "FinTrack",
     show: false,
+    icon: path.join(
+      IS_DEV ? __dirname : process.resourcesPath,
+      "..",
+      "public",
+      "png.png",
+    ),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
     },
     // macOS traffic-light buttons
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-    backgroundColor: '#09090B',
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
+    backgroundColor: "#09090B",
   });
 
   // Show loading screen immediately
-  mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(getLoadingHTML())}`);
+  mainWindow.loadURL(
+    `data:text/html;charset=utf-8,${encodeURIComponent(getLoadingHTML())}`,
+  );
   mainWindow.show();
 
   // Open external links in the system browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.startsWith(`http://localhost:${PORT}`)) {
       shell.openExternal(url);
-      return { action: 'deny' };
+      return { action: "deny" };
     }
-    return { action: 'allow' };
+    return { action: "allow" };
   });
 
   // Detect navigation failures to prevent permanent black screen
-  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
-    console.error(`[FinTrack] Failed to load: ${validatedURL} — ${errorDescription} (${errorCode})`);
-    if (validatedURL.includes('localhost')) {
-      // Server might not be ready yet, retry after a delay
-      setTimeout(() => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.loadURL(`http://localhost:${PORT}/api/auth/auto-local`);
-        }
-      }, 2000);
-    }
-  });
+  mainWindow.webContents.on(
+    "did-fail-load",
+    (_event, errorCode, errorDescription, validatedURL) => {
+      console.error(
+        `[FinTrack] Failed to load: ${validatedURL} — ${errorDescription} (${errorCode})`,
+      );
+      if (validatedURL.includes("localhost")) {
+        // Server might not be ready yet, retry after a delay
+        setTimeout(() => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.loadURL(`http://localhost:${PORT}/api/auth/auto-local`);
+          }
+        }, 2000);
+      }
+    },
+  );
 
-  mainWindow.on('closed', () => { mainWindow = null; });
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 }
 
 // ── App lifecycle ─────────────────────────────────────────────────────────────
@@ -194,23 +218,26 @@ app.whenReady().then(async () => {
       mainWindow.loadURL(`http://localhost:${PORT}/api/auth/auto-local`);
     }
   } catch (e) {
-    console.error('[FinTrack] Startup error:', e);
+    console.error("[FinTrack] Startup error:", e);
     if (mainWindow && !mainWindow.isDestroyed()) {
-      dialog.showErrorBox('FinTrack — Error', `No se pudo iniciar FinTrack:\n\n${e.message}`);
+      dialog.showErrorBox(
+        "FinTrack — Error",
+        `No se pudo iniciar FinTrack:\n\n${e.message}`,
+      );
     }
     app.quit();
   }
 });
 
-app.on('window-all-closed', () => {
+app.on("window-all-closed", () => {
   if (nextServer) nextServer.kill();
-  if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== "darwin") app.quit();
 });
 
-app.on('activate', () => {
+app.on("activate", () => {
   if (mainWindow === null) createWindow();
 });
 
-app.on('before-quit', () => {
+app.on("before-quit", () => {
   if (nextServer) nextServer.kill();
 });

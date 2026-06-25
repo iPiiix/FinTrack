@@ -41,7 +41,7 @@
         }
       ],
       "category": "public.app-category.finance",
-      "icon": "public/png.png"
+      "icon": "public/favicon.icns"
     },
     "win": {
       "target": [
@@ -52,7 +52,7 @@
           ]
         }
       ],
-      "icon": "public/png.png"
+      "icon": "public/favicon.ico"
     },
     "nsis": {
       "oneClick": false,
