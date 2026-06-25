@@ -137,7 +137,7 @@ export function CreateAccountDrawer({ isOpen, onClose, onSave }: any) {
             onClick={handleSave} 
             disabled={saving}
             style={{ flex: 2, padding: "12px 0", background: "#E8FF47", color: "black", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", border: "none", cursor: "pointer", opacity: saving ? 0.5 : 1 }}>
-            {saving ? "CREANDO..." : "COMMIT ACCOUNT"}
+            {saving ? "CREANDO..." : "CREAR CUENTA"}
           </button>
         </div>
       </div>

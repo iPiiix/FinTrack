@@ -75,11 +75,11 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
   };
 
   return (
-    <div className="vu px-4 md:px-12 py-8 md:py-11">
+    <div className="vu flex flex-col gap-6">
       <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" accept=".csv" />
       
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h2 className="text-2xl md:text-[26px] font-light text-[#F4F4F5] tracking-tight mb-2">Historial de Transacciones</h2>
           <span className="lbl">{filtered.length} ENTRADAS ENCONTRADAS</span>
@@ -98,16 +98,16 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
           <div className="hidden sm:block w-px h-4 bg-[#1C1C1F] mx-2" />
           
           <div className="flex items-center gap-4">
-            <span className="mono text-[11px] text-[#10B981] whitespace-nowrap">IN +€{fmt(totals.income, 0)}</span>
+            <span className="mono text-[11px] text-[#10B981] whitespace-nowrap">INGRESOS +€{fmt(totals.income, 0)}</span>
             <div className="w-px h-4 bg-[#1C1C1F]" />
-            <span className="mono text-[11px] text-[#F87171] whitespace-nowrap">OUT −€{fmt(totals.expense, 0)}</span>
+            <span className="mono text-[11px] text-[#F87171] whitespace-nowrap">GASTOS −€{fmt(totals.expense, 0)}</span>
           </div>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="flex flex-col md:flex-row gap-2.5 mb-4">
-        <div className="flex-1 flex items-center gap-3 bg-[#0D0D0F] border border-[#1C1C1F] px-4 h-10 transition-colors focus-within:border-zinc-700">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 mb-6">
+        <div className="w-full lg:w-96 flex items-center gap-3 bg-[#0D0D0F] border border-[#1C1C1F] px-4 h-10 transition-colors focus-within:border-zinc-700 rounded-sm">
           <Search size={14} className="text-[#3F3F46]" />
           <input 
             value={search} 
@@ -118,16 +118,28 @@ export function TransactionsView({ transactions, categorias, cuentas, deleteTran
           {search && <button onClick={() => setSearch("")} className="text-[#52525B] hover:text-white p-1"><X size={14}/></button>}
         </div>
         
-        <div className="flex border border-[#1C1C1F] overflow-hidden rounded-sm overflow-x-auto no-scrollbar">
-          {FILTERS.map((f, i) => (
-            <button 
-              key={f} 
-              onClick={() => setFilter(f)}
-              className={`px-4 text-[10px] font-semibold tracking-wider h-10 border-none transition-colors whitespace-nowrap uppercase ${filter === f ? "bg-zinc-800 text-[#F4F4F5]" : "bg-transparent text-[#52525B] hover:text-zinc-400"} ${i < FILTERS.length - 1 ? "border-r border-[#1C1C1F]" : ""}`}
-            >
-              {f === "ALL" ? "TODOS" : f}
-            </button>
-          ))}
+        <div 
+          className="flex border border-[#1C1C1F] bg-[#0D0D0F] overflow-hidden rounded-sm no-scrollbar shrink-0"
+          style={{ display: "flex", flexDirection: "row", flexShrink: 0 }}
+        >
+          {(() => {
+            const FILTER_LABELS: Record<string, string> = {
+              ALL: "TODOS",
+              ingreso: "INGRESOS",
+              gasto: "GASTOS",
+              transferencia: "TRANSFERENCIAS"
+            };
+            return FILTERS.map((f, i) => (
+              <button 
+                key={f} 
+                onClick={() => setFilter(f)}
+                className={`px-4 text-[10px] font-semibold tracking-wider h-10 border-none transition-colors whitespace-nowrap uppercase shrink-0 ${filter === f ? "bg-zinc-800 text-[#F4F4F5]" : "bg-transparent text-[#52525B] hover:text-zinc-400"} ${i < FILTERS.length - 1 ? "border-r border-[#1C1C1F]" : ""}`}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "40px" }}
+              >
+                {FILTER_LABELS[f] || f}
+              </button>
+            ));
+          })()}
         </div>
       </div>
 

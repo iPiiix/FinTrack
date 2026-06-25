@@ -167,7 +167,14 @@ export default function DashboardPage() {
       <DashboardStyles />
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#09090B" }}>
         <TopBar time={time} tab={tab} setTab={setTab} loading={loading} openDrawer={() => setDrawerOpen(true)} />
-        <main style={{ flex: 1, display: "flex", flexDirection: "column" }}>{views[tab]}</main>
+        <main style={{ flex: 1, display: "flex", flexDirection: "column", width: "100%" }}>
+          <div 
+            className="w-full px-4 md:px-8 py-8 flex flex-col gap-6 flex-1"
+            style={{ width: "100%", maxWidth: "1280px", marginLeft: "auto", marginRight: "auto" }}
+          >
+            {views[tab]}
+          </div>
+        </main>
         <footer style={{ borderTop: "1px solid #1C1C1F", padding: "14px 32px", display: "flex", justifyContent: "space-between", background: "#0C0C0E" }}>
           <span className="lbl">FINTRACK CORE SYSTEM v2.1 · ALL SYSTEMS NOMINAL</span>
           <span className="mono" style={{ fontSize: 10, color: "#3F3F46" }}>SECURE · AES-256-GCM · TLS 1.3</span>

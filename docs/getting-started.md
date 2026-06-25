@@ -21,7 +21,7 @@
 
 ### Windows
 
-1. Descarga el instalador: [FinTrack-Setup-1.0.0.exe](https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-Setup-1.0.0.exe)
+1. Descarga el instalador: [FinTrack.Setup.1.0.0.exe](https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack.Setup.1.0.0.exe)
 
 2. Ejecuta el instalador. Si Windows Defender SmartScreen aparece, haz clic en **"Más información" → "Ejecutar de todas formas"**.
 

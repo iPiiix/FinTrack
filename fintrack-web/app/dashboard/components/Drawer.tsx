@@ -189,7 +189,7 @@ export function Drawer({ isOpen, onClose, onSave, cuentas, categorias }: any) {
             disabled={saving}
             className="flex-[2] py-4 bg-white text-black font-bold text-[11px] tracking-[0.15em] transition-all hover:bg-zinc-200 active:scale-[0.98] disabled:opacity-50 rounded-sm"
           >
-            {saving ? "GUARDANDO…" : "COMMIT ENTRY"}
+            {saving ? "GUARDANDO…" : "REGISTRAR"}
           </button>
         </div>
       </div>

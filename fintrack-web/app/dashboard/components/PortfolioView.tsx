@@ -102,36 +102,44 @@ export function PortfolioView({ activos, deleteAsset, openAssetDrawer }: any) {
   }
 
   return (
-    <div className="vu px-4 md:px-12 py-8 md:py-11">
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 border-b border-[#1C1C1F] pb-8 md:pb-12 mb-8">
+    <div className="vu flex flex-col gap-6">
+      {/* Header Area */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h2 className="text-2xl md:text-[26px] font-light text-[#F4F4F5] tracking-tight mb-2">Portfolio</h2>
-          <span className="lbl text-zinc-500 uppercase">WEALTHTECH ENGINE · {tickers.length} ACTIVOS</span>
+          <span className="lbl text-zinc-500 uppercase">WEALTHTECH ENGINE · {tickers.length} {tickers.length === 1 ? "ACTIVO" : "ACTIVOS"}</span>
         </div>
-        <div>
-          <span className="lbl block mb-2 text-zinc-500">INVERSIÓN TOTAL</span>
-          <span className="mono text-lg md:text-xl text-[#E4E4E7]">€{fmt(totalInvestedGlobal, 2)}</span>
-        </div>
-        <div>
-          <span className="lbl block mb-2 text-zinc-500">VALOR ACTUAL</span>
-          <span className="mono text-lg md:text-xl text-[#E4E4E7]">€{fmt(totalValueGlobal, 2)}</span>
-        </div>
-        <div className="flex justify-between items-end lg:items-center">
-          <div>
-            <span className="lbl block mb-2 text-zinc-500">RETORNO (ROI)</span>
-            <span className={`mono text-lg md:text-xl ${globalPnL >= 0 ? "text-[#10B981]" : "text-[#F87171]"}`}>
-              {globalPnL >= 0 ? "+" : "−"}€{fmt(Math.abs(globalPnL), 2)}
-            </span>
-            <div className={`mono text-[11px] mt-1 ${globalPnL >= 0 ? "text-[#10B981]/70" : "text-[#F87171]/70"}`}>
-              {globalPnL >= 0 ? "+" : "−"}{fmt(Math.abs(globalPnLPct), 2)}%
-            </div>
+        <button onClick={openAssetDrawer}
+          className="flex items-center gap-2 bg-white text-black font-bold tracking-[0.07em] text-[10px] px-4 py-2 hover:bg-zinc-200 transition-colors rounded-sm"
+        >
+          <Plus size={14} /> AÑADIR ACTIVO
+        </button>
+      </div>
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="fintrack-card-outer">
+          <div className="fintrack-card-inner min-h-[100px] justify-between">
+            <span className="lbl text-zinc-500">INVERSIÓN TOTAL</span>
+            <span className="mono text-xl md:text-2xl text-[#E4E4E7] mt-3">€{fmt(totalInvestedGlobal, 2)}</span>
           </div>
-          <button onClick={openAssetDrawer}
-            className="hidden sm:flex items-center gap-2 bg-white text-black font-bold tracking-[0.07em] text-[10px] px-4 py-2 hover:bg-zinc-200 transition-colors rounded-sm"
-          >
-            <Plus size={14} /> NEW ASSET
-          </button>
+        </div>
+        <div className="fintrack-card-outer">
+          <div className="fintrack-card-inner min-h-[100px] justify-between">
+            <span className="lbl text-zinc-500">VALOR ACTUAL</span>
+            <span className="mono text-xl md:text-2xl text-[#E4E4E7] mt-3">€{fmt(totalValueGlobal, 2)}</span>
+          </div>
+        </div>
+        <div className="fintrack-card-outer">
+          <div className="fintrack-card-inner min-h-[100px] justify-between">
+            <span className="lbl text-zinc-500">RETORNO (ROI)</span>
+            <span className={`mono text-xl md:text-2xl mt-3 ${globalPnL >= 0 ? "text-[#10B981]" : "text-[#F87171]"}`}>
+              {globalPnL >= 0 ? "+" : "−"}€{fmt(Math.abs(globalPnL), 2)}
+              <span className="text-xs ml-2 font-normal opacity-90">
+                ({globalPnL >= 0 ? "+" : "−"}{fmt(Math.abs(globalPnLPct), 2)}%)
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -190,7 +198,7 @@ export function PortfolioView({ activos, deleteAsset, openAssetDrawer }: any) {
                       </div>
                       <div className="flex justify-end pr-1">
                         <button onClick={() => deleteAsset(group.originalIds[0])}
-                          className="text-[9px] font-bold tracking-widest text-zinc-600 border border-zinc-800 px-2 py-1 hover:bg-white/5 hover:text-zinc-400 transition-colors uppercase">SELL</button>
+                          className="text-[9px] font-bold tracking-widest text-zinc-600 border border-zinc-800 px-2 py-1 hover:bg-white/5 hover:text-zinc-400 transition-colors uppercase">VENDER</button>
                       </div>
                     </div>
                   );

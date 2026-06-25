@@ -5,26 +5,50 @@ import React from "react";
 export function DashboardStyles() {
   return (
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      body { background: #09090B; color: #FAFAF9; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+      body { background: #09090B; color: #FAFAF9; font-family: var(--font-sans), sans-serif; -webkit-font-smoothing: antialiased; }
       input, select, textarea, button { font-family: inherit; }
       select option { background: #18181B; }
-      .mono { font-family: 'IBM Plex Mono', monospace; }
-      .lbl { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #52525B; }
-      .kpi-num { font-family: 'IBM Plex Mono', monospace; font-size: 32px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; color: #FAFAFA; transition: color 0.4s; }
+      .mono { font-family: var(--font-mono), monospace; }
+      .lbl { font-family: var(--font-sans), sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #52525B; }
+      .kpi-num { font-family: var(--font-mono), monospace; font-size: 32px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; color: #FAFAFA; transition: color 0.4s; }
       .row { transition: background 0.18s ease; }
       .row:hover { background: rgba(255,255,255,0.025); }
-      .ptab { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; padding: 5px 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; color: #52525B; background: transparent; border-radius: 2px; }
+      .ptab { font-family: var(--font-sans), sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; padding: 5px 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; color: #52525B; background: transparent; border-radius: 2px; }
       .ptab:hover { color: #A1A1AA; background: rgba(255,255,255,0.03); }
       .ptab.on { color: #FAFAFA; border-color: #3F3F46; background: #27272A; }
-      .ntab { height: 100%; padding: 0 22px; border: none; border-left: 1px solid #27272A; background: transparent; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s ease; color: #52525B; white-space: nowrap; position: relative; }
+      .ntab { height: 100%; padding: 0 22px; border: none; border-left: 1px solid #27272A; background: transparent; font-family: var(--font-sans), sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s ease; color: #52525B; white-space: nowrap; position: relative; }
       .ntab:hover { color: #A1A1AA; background: rgba(255,255,255,0.02); }
       .ntab.on { background: rgba(255,255,255,0.03); color: #FAFAFA; font-weight: 600; }
       .ntab.on::after { content: ''; position: absolute; bottom: 0; left: 22px; right: 22px; height: 1px; background: rgba(255,255,255,0.3); }
-      .inp { width: 100%; background: #0D0D0F; border: 1px solid #27272A; padding: 11px 14px; color: #FAFAFA; font-size: 12px; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; display: block; }
+      .inp { width: 100%; background: #0D0D0F; border: 1px solid #27272A; padding: 11px 14px; color: #FAFAFA; font-size: 12px; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; display: block; border-radius: 6px; }
       .inp:focus { border-color: #52525B; box-shadow: 0 0 0 3px rgba(255,255,255,0.03); }
       .inp::placeholder { color: #3F3F46; }
+      .fintrack-card-outer {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        padding: 5px;
+        border-radius: 16px;
+        transition: border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+      }
+      .fintrack-card-outer:hover {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.035);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      }
+      .fintrack-card-inner {
+        background: #0C0C0E;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        border-radius: 11px;
+        padding: 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
       @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
       .vu { animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
       @keyframes slideRight { from { transform:translateX(100%); opacity: 0; } to { transform:translateX(0); opacity: 1; } }

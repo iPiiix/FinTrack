@@ -114,7 +114,7 @@ export function CreateAssetDrawer({ isOpen, onClose, onSave }: CreateAssetDrawer
             onClick={() => handleSubmit()} 
             disabled={loading}
             style={{ flex: 2, padding: "12px 0", background: "#E8FF47", color: "black", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", border: "none", cursor: "pointer", opacity: loading ? 0.5 : 1 }}>
-            {loading ? "PROCESANDO..." : "COMMIT ASSET"}
+            {loading ? "PROCESANDO..." : "REGISTRAR ACTIVO"}
           </button>
         </div>
       </div>
