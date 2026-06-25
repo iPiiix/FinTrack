@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Download,
   Github,
@@ -9,16 +10,19 @@ import {
   Plus,
   Minus,
   Check,
-  Copy
+  Copy,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
 const GITHUB = "https://github.com/iPiiix/FinTrack";
 const RELEASES = "https://github.com/iPiiix/FinTrack/releases";
-const DL_ARM = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0-arm64.dmg";
-const DL_X64 = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0.dmg";
-const DL_WIN = "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack.Setup.1.0.0.exe";
+const DL_ARM =
+  "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0-arm64.dmg";
+const DL_X64 =
+  "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack-1.0.0.dmg";
+const DL_WIN =
+  "https://github.com/iPiiix/FinTrack/releases/latest/download/FinTrack.Setup.1.0.0.exe";
 
 const FEATURES = [
   {
@@ -105,16 +109,27 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen text-zinc-100 font-sans flex flex-col selection:bg-zinc-800 selection:text-white">
-      
       {/* ─── Nav ─────────────────────────────────────────────────────── */}
       <nav className="border-b border-zinc-900/60 sticky top-0 bg-[#050507]/90 backdrop-blur-md z-50">
         <div className="px-6 sm:px-12 md:px-24 xl:px-48 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded bg-zinc-100 flex items-center justify-center">
-              <span className="text-zinc-950 text-[11px] font-bold">F</span>
+          <Link
+            href="/"
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          >
+            <div className="w-6 h-6 rounded overflow-hidden flex items-center justify-center flex-shrink-0">
+              <Image
+                src="/favicon.png"
+                alt="FinTrack Logo"
+                width={24}
+                height={24}
+                priority
+                className="w-full h-full object-cover"
+              />
             </div>
-            <span className="font-mono text-[10.5px] tracking-[0.25em] text-zinc-300 font-medium select-none">FINTRACK</span>
-          </div>
+            <span className="font-mono text-[10.5px] tracking-[0.25em] text-zinc-300 font-medium select-none">
+              FINTRACK
+            </span>
+          </Link>
 
           <div className="hidden md:flex items-center gap-10">
             {[
@@ -153,7 +168,6 @@ export default function Landing() {
       </nav>
 
       <main className="flex-1 relative z-10">
-
         {/* ─── Hero ─────────────────────────────────────────────────── */}
         <section className="relative min-h-[75dvh] flex flex-col justify-center px-6 sm:px-12 md:px-24 xl:px-48 py-20">
           <div className="max-w-3xl">
@@ -187,17 +201,27 @@ export default function Landing() {
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+              transition={{
+                duration: 0.7,
+                ease: [0.16, 1, 0.3, 1],
+                delay: 0.2,
+              }}
               className="text-zinc-400 text-sm sm:text-base max-w-xl leading-relaxed mb-8 text-wrap-pretty"
             >
-              Gestiona tus cuentas, transacciones y activos financieros en una base de datos local SQLite. Sin telemetría, sin servidores en la nube y sin suscripciones recurrentes.
+              Gestiona tus cuentas, transacciones y activos financieros en una
+              base de datos local SQLite. Sin telemetría, sin servidores en la
+              nube y sin suscripciones recurrentes.
             </motion.p>
 
             {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+              transition={{
+                duration: 0.7,
+                ease: [0.16, 1, 0.3, 1],
+                delay: 0.3,
+              }}
               className="flex flex-wrap items-center gap-3.5"
             >
               <a
@@ -215,16 +239,21 @@ export default function Landing() {
                 className="group inline-flex items-center gap-2.5 px-5.5 py-3 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-700 hover:text-white transition-all active:scale-[0.97]"
               >
                 Documentación Técnica
-                <ArrowRight size={13.5} className="text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight
+                  size={13.5}
+                  className="text-zinc-500 group-hover:translate-x-0.5 transition-transform"
+                />
               </Link>
             </motion.div>
           </div>
         </section>
 
         {/* ─── Features (Typographic Editorial Layout) ───────────────── */}
-        <section id="features" className="px-6 sm:px-12 md:px-24 xl:px-48 py-28 border-t border-zinc-900/60 relative">
+        <section
+          id="features"
+          className="px-6 sm:px-12 md:px-24 xl:px-48 py-28 border-t border-zinc-900/60 relative"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-            
             {/* Header Column */}
             <div className="lg:col-span-5">
               <h2 className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4">
@@ -234,7 +263,9 @@ export default function Landing() {
                 Diseñado para profesionales que valoran su privacidad
               </h3>
               <p className="text-zinc-500 text-xs mt-4 leading-relaxed text-wrap-pretty max-w-sm">
-                FinTrack prescinde de la arquitectura tradicional en la nube. Todo el procesamiento y almacenamiento se realiza en el hardware que posees.
+                FinTrack prescinde de la arquitectura tradicional en la nube.
+                Todo el procesamiento y almacenamiento se realiza en el hardware
+                que posees.
               </p>
             </div>
 
@@ -246,7 +277,11 @@ export default function Landing() {
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-60px" }}
-                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: i * 0.05 }}
+                  transition={{
+                    duration: 0.6,
+                    ease: [0.16, 1, 0.3, 1],
+                    delay: i * 0.05,
+                  }}
                   className="grid grid-cols-1 sm:grid-cols-12 py-7 border-b border-zinc-900/80 items-start gap-4 sm:gap-2 hover:bg-zinc-900/10 transition-colors"
                 >
                   <div className="sm:col-span-2 font-mono text-xs text-zinc-600">
@@ -261,12 +296,14 @@ export default function Landing() {
                 </motion.div>
               ))}
             </div>
-
           </div>
         </section>
 
         {/* ─── How it works ─────────────────────────────────────────── */}
-        <section id="how" className="px-6 sm:px-12 md:px-24 xl:px-48 py-28 border-t border-zinc-900/60">
+        <section
+          id="how"
+          className="px-6 sm:px-12 md:px-24 xl:px-48 py-28 border-t border-zinc-900/60"
+        >
           <div className="mb-16 text-left">
             <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-100 max-w-lg leading-tight text-wrap-balance">
               De cero a control total en tres pasos
@@ -280,21 +317,33 @@ export default function Landing() {
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: i * 0.08 }}
+                transition={{
+                  duration: 0.6,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: i * 0.08,
+                }}
                 className="pt-6 border-t border-zinc-900/80 flex flex-col text-left"
               >
-                <span className="font-mono text-xs text-zinc-600 mb-3">{step.number}</span>
-                <h4 className="text-zinc-200 text-sm font-semibold mb-2">{step.title}</h4>
-                <p className="text-zinc-500 text-xs leading-relaxed max-w-[240px] text-wrap-pretty">{step.desc}</p>
+                <span className="font-mono text-xs text-zinc-600 mb-3">
+                  {step.number}
+                </span>
+                <h4 className="text-zinc-200 text-sm font-semibold mb-2">
+                  {step.title}
+                </h4>
+                <p className="text-zinc-500 text-xs leading-relaxed max-w-[240px] text-wrap-pretty">
+                  {step.desc}
+                </p>
               </motion.div>
             ))}
           </div>
         </section>
 
         {/* ─── Install / Downloads (Minimalist design) ────────────────── */}
-        <section id="install" className="px-6 sm:px-12 md:px-24 xl:px-48 py-28 border-t border-zinc-900/40 relative">
+        <section
+          id="install"
+          className="px-6 sm:px-12 md:px-24 xl:px-48 py-28 border-t border-zinc-900/40 relative"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-            
             {/* Info Column */}
             <div className="lg:col-span-5">
               <h2 className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4">
@@ -304,14 +353,18 @@ export default function Landing() {
                 Descarga e instalación
               </h3>
               <p className="text-zinc-500 text-xs mt-3 leading-relaxed text-wrap-pretty">
-                Obtén el ejecutable empaquetado para tu sistema. No se requiere registro, conexión a internet obligatoria, ni configuración de base de datos externa.
+                Obtén el ejecutable empaquetado para tu sistema. No se requiere
+                registro, conexión a internet obligatoria, ni configuración de
+                base de datos externa.
               </p>
             </div>
 
             {/* Downloads List Column */}
             <div className="lg:col-span-7 font-mono">
-              <span className="text-[9px] text-zinc-600 uppercase tracking-widest block mb-6">// BINARIOS DISPONIBLES</span>
-              
+              <span className="text-[9px] text-zinc-600 uppercase tracking-widest block mb-6">
+                // BINARIOS DISPONIBLES
+              </span>
+
               <div className="flex flex-col divide-y divide-zinc-900/60">
                 {DOWNLOADS.map(({ label, href }) => (
                   <a
@@ -325,7 +378,9 @@ export default function Landing() {
                       {label}
                     </span>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[9.5px] text-zinc-600 uppercase tracking-wider group-hover:text-zinc-400 transition-colors">Descargar</span>
+                      <span className="text-[9.5px] text-zinc-600 uppercase tracking-wider group-hover:text-zinc-400 transition-colors">
+                        Descargar
+                      </span>
                       <ArrowRight
                         size={11}
                         className="text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0"
@@ -337,17 +392,24 @@ export default function Landing() {
 
               <div className="mt-8 flex justify-between items-center text-[10px] text-zinc-600 font-mono">
                 <span>* MIT Licensed</span>
-                <a href={RELEASES} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-400 underline underline-offset-2">
+                <a
+                  href={RELEASES}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-zinc-400 underline underline-offset-2"
+                >
                   GitHub Releases
                 </a>
               </div>
             </div>
-
           </div>
         </section>
 
         {/* ─── FAQ Section (ServicesFAQ Accordions) ────────────────────── */}
-        <section id="faq-section" className="px-6 sm:px-12 md:px-24 xl:px-48 py-28 border-t border-zinc-900/40 relative">
+        <section
+          id="faq-section"
+          className="px-6 sm:px-12 md:px-24 xl:px-48 py-28 border-t border-zinc-900/40 relative"
+        >
           <div className="max-w-2xl mx-auto divide-y divide-zinc-900/60">
             {FAQ_ITEMS.map((item, idx) => {
               const isOpen = openFaq === idx;
@@ -361,7 +423,11 @@ export default function Landing() {
                       {item.q}
                     </span>
                     <span className="shrink-0 mt-0.5 text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                      {isOpen ? <Minus className="w-4 h-4 text-zinc-300" /> : <Plus className="w-4 h-4" />}
+                      {isOpen ? (
+                        <Minus className="w-4 h-4 text-zinc-300" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
                     </span>
                   </button>
                   <AnimatePresence initial={false}>
@@ -374,7 +440,9 @@ export default function Landing() {
                         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                         className="overflow-hidden"
                       >
-                        <p className="pt-3 text-zinc-400 text-xs sm:text-[12.5px] leading-relaxed text-wrap-pretty">{item.a}</p>
+                        <p className="pt-3 text-zinc-400 text-xs sm:text-[12.5px] leading-relaxed text-wrap-pretty">
+                          {item.a}
+                        </p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -387,11 +455,23 @@ export default function Landing() {
         {/* ─── CTA Banner ───────────────────────────────────────────── */}
         <section className="px-6 sm:px-12 md:px-24 xl:px-48 py-20 border-t border-zinc-900/40">
           <div className="rounded-xl border border-zinc-900 bg-zinc-950/20 p-12 sm:p-16 text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-12 h-12 rounded overflow-hidden flex items-center justify-center">
+                <Image
+                  src="/favicon.png"
+                  alt="FinTrack Logo"
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-4 text-zinc-100">
               Toma el control absoluto de tu patrimonio
             </h2>
             <p className="text-zinc-500 text-xs sm:text-sm max-w-md mx-auto mb-8 leading-relaxed text-wrap-pretty">
-              Comienza hoy mismo con una base de datos local y privada. Sin registros obligatorios y con total soberanía.
+              Comienza hoy mismo con una base de datos local y privada. Sin
+              registros obligatorios y con total soberanía.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3">
@@ -422,30 +502,47 @@ export default function Landing() {
       <footer className="border-t border-zinc-900/40 relative z-10 bg-zinc-950/10">
         <div className="px-6 sm:px-12 md:px-24 xl:px-48 py-12">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 mb-12">
-            
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-5 h-5 rounded bg-zinc-100 flex items-center justify-center">
-                  <span className="text-zinc-950 text-[10px] font-bold">F</span>
+              <Link
+                href="/"
+                className="flex items-center gap-3 mb-4 hover:opacity-80 transition-opacity w-fit"
+              >
+                <div className="w-5 h-5 rounded overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <Image
+                    src="/favicon.png"
+                    alt="FinTrack Logo"
+                    width={20}
+                    height={20}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <span className="font-mono text-[10.5px] tracking-[0.2em] text-zinc-300 font-semibold select-none">FINTRACK</span>
-              </div>
+                <span className="font-mono text-[10.5px] tracking-[0.2em] text-zinc-300 font-semibold select-none">
+                  FINTRACK
+                </span>
+              </Link>
               <p className="text-zinc-600 text-xs leading-relaxed max-w-xs text-wrap-pretty">
-                Soberanía de datos financieros. Código abierto, privacidad absoluta y base de datos local SQLite.
+                Soberanía de datos financieros. Código abierto, privacidad
+                absoluta y base de datos local SQLite.
               </p>
             </div>
 
             {/* Links */}
             <div>
-              <p className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase mb-4">// PRODUCTO</p>
+              <p className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase mb-4">
+                // PRODUCTO
+              </p>
               <div className="flex flex-col gap-2.5">
                 {[
                   ["Funciones", "#features"],
                   ["Instalación", "#install"],
                   ["Cómo funciona", "#how"],
                 ].map(([label, href]) => (
-                  <a key={label} href={href} className="text-zinc-500 text-xs hover:text-zinc-300 transition-colors">
+                  <a
+                    key={label}
+                    href={href}
+                    className="text-zinc-500 text-xs hover:text-zinc-300 transition-colors"
+                  >
                     {label}
                   </a>
                 ))}
@@ -454,7 +551,9 @@ export default function Landing() {
 
             {/* Resources */}
             <div>
-              <p className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase mb-4">// RECURSOS</p>
+              <p className="font-mono text-[9px] tracking-widest text-zinc-500 uppercase mb-4">
+                // RECURSOS
+              </p>
               <div className="flex flex-col gap-2.5">
                 {[
                   ["Repositorio GitHub", GITHUB, true],
@@ -464,7 +563,9 @@ export default function Landing() {
                   <a
                     key={label as string}
                     href={href as string}
-                    {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    {...(external
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
                     className="text-zinc-500 text-xs hover:text-zinc-300 transition-colors"
                   >
                     {label as string}
