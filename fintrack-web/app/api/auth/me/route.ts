@@ -13,5 +13,7 @@ export async function GET() {
     email_verificado: true,
     subscription_tier: 'free',
     subscription_status: 'active',
+    has_api_key: !!user.api_key,
+    ai_provider: user.ai_provider || 'openai',
   });
 }

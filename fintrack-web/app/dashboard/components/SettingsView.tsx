@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
-import { Shield, User, LogOut, Trash2, CreditCard, Lock } from "lucide-react";
+import { Shield, User, LogOut, Trash2, CreditCard, Lock, Bot } from "lucide-react";
 
 export function SettingsView() {
   const router = useRouter();
@@ -15,6 +15,8 @@ export function SettingsView() {
   const [apellidos, setApellidos] = useState(safeUser.apellidos || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [aiProvider, setAiProvider] = useState(safeUser.ai_provider || "openai");
+  const [apiKey, setApiKey] = useState("");
   
   const [statusMsg, setStatusMsg] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
@@ -43,6 +45,30 @@ export function SettingsView() {
       showStatus("Nombre actualizado correctamente", "success");
     } catch (err: any) {
       showStatus(err.message || "Error al actualizar perfil", "error");
+    }
+    setLoading(false);
+  };
+
+  const handleUpdateAI = async () => {
+    setLoading(true);
+    try {
+      const payload: any = { ai_provider: aiProvider };
+      if (apiKey.trim()) payload.api_key = apiKey.trim();
+
+      const res = await fetch(`${API}/usuarios/me`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Error al actualizar IA");
+      }
+      showStatus("Configuración de IA guardada", "success");
+      setApiKey("");
+    } catch (err: any) {
+      showStatus(err.message || "Error al actualizar IA", "error");
     }
     setLoading(false);
   };
@@ -91,27 +117,6 @@ export function SettingsView() {
     setLoading(false);
   };
 
-  const handleManageSubscription = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API}/subscriptions/create-portal-session`, {
-        method: "POST",
-        credentials: "include"
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 400 || (data.detail && data.detail.includes("cliente"))) {
-          router.push("/pricing");
-          return;
-        }
-        throw new Error(data.detail || "Error al acceder al portal");
-      }
-      if (data.url) window.location.href = data.url;
-    } catch (err: any) {
-      showStatus(err.message || "Error al acceder al portal", "error");
-    }
-    setLoading(false);
-  };
 
   const initials = safeUser.nombre ? safeUser.nombre.charAt(0).toUpperCase() : "?";
 
@@ -171,11 +176,40 @@ export function SettingsView() {
             </div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <button onClick={handleUpdateName} disabled={loading} className="settings-btn primary">GUARDAR CAMBIOS</button>
-              <button onClick={handleManageSubscription} disabled={loading} className="settings-btn accent">
-                <CreditCard size={12} />
-                GESTIONAR SUSCRIPCIÓN
-              </button>
+
             </div>
+          </div>
+        </div>
+
+        {/* AI Config Card */}
+        <div style={{ border: "1px solid #1C1C1F", borderRadius: 6, overflow: "hidden", marginBottom: 24 }}>
+          <div style={{ padding: "16px 24px", borderBottom: "1px solid #1C1C1F", background: "rgba(255,255,255,0.015)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Bot size={14} className="text-[#E8FF47]" />
+              <span className="lbl" style={{ color: "#E8FF47" }}>INTEGRACIÓN IA</span>
+            </div>
+            {safeUser.has_api_key && <span className="mono" style={{ fontSize: 10, color: "#10B981" }}>CONFIGURADO ✓</span>}
+          </div>
+          
+          <div style={{ padding: "24px" }}>
+            <p style={{ fontSize: 12, color: "#A1A1AA", marginBottom: 20, lineHeight: 1.5 }}>
+              FinTrack procesa localmente tus finanzas y envía un prompt simplificado a la IA de tu elección para arrojar consejos tácticos. Tu API Key se cifra en la base de datos local y nunca se comparte con terceros.
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+              <div>
+                <label className="lbl" style={{ display: "block", marginBottom: 8 }}>Proveedor AI</label>
+                <select className="inp" value={aiProvider} onChange={e => setAiProvider(e.target.value)}>
+                  <option value="openai">OpenAI (Recomendado)</option>
+                  <option value="anthropic">Anthropic Claude</option>
+                  <option value="gemini">Google Gemini</option>
+                </select>
+              </div>
+              <div>
+                <label className="lbl" style={{ display: "block", marginBottom: 8 }}>Clave de API</label>
+                <input type="password" className="inp" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={safeUser.has_api_key ? "••••••••••••••••••••" : "sk-..."} />
+              </div>
+            </div>
+            <button onClick={handleUpdateAI} disabled={loading} className="settings-btn primary">GUARDAR API KEY</button>
           </div>
         </div>
 

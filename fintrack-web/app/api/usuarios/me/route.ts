@@ -27,6 +27,17 @@ export const PUT = withAuth(async (req: NextRequest, user) => {
     return ok({ message: 'Contraseña actualizada' });
   }
 
+  // Update AI config
+  if (body.api_key !== undefined || body.ai_provider !== undefined) {
+    const apiKey = body.api_key !== undefined ? body.api_key : user.api_key;
+    const aiProvider = body.ai_provider !== undefined ? body.ai_provider : user.ai_provider;
+    
+    db.prepare('UPDATE usuarios SET api_key = ?, ai_provider = ? WHERE id = ?')
+      .run(apiKey, aiProvider, user.id);
+      
+    return ok({ message: 'Configuración de IA actualizada' });
+  }
+
   return err('Petición no válida');
 });
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
-import { DashboardStyles } from "./components/ui/DashboardStyles";
+import "./dashboard.css";
 import { TopBar } from "./components/TopBar";
 import { Drawer } from "./components/Drawer";
 
@@ -164,8 +164,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <DashboardStyles />
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#09090B" }}>
+      <div className="dashboard-scope">
         <TopBar time={time} tab={tab} setTab={setTab} loading={loading} openDrawer={() => setDrawerOpen(true)} />
         <main style={{ flex: 1, display: "flex", flexDirection: "column", width: "100%" }}>
           <div 

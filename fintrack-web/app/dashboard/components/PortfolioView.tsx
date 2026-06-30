@@ -61,44 +61,7 @@ export function PortfolioView({ activos, deleteAsset, openAssetDrawer }: any) {
   const globalPnLPct = totalInvestedGlobal > 0 ? (globalPnL / totalInvestedGlobal) * 100 : 0;
 
   if (activos?.error === 402) {
-    return (
-      <div className="vu relative flex min-h-[70vh] items-center justify-center overflow-hidden m-4 md:m-6 p-6 md:p-12 border border-[#1C1C1F] bg-[#0A0A0C]">
-        <div className="absolute inset-0 z-0 flex flex-col gap-4 p-8 opacity-[0.035] blur-[3px] pointer-events-none select-none">
-          <div className="flex justify-between border-b border-zinc-800 pb-4">
-            <div className="h-6 w-32 bg-zinc-700" />
-            <div className="h-6 w-24 bg-zinc-700" />
-          </div>
-          {Array(5).fill(0).map((_, i) => (
-            <div key={i} className="flex justify-between py-3 border-b border-zinc-800/50">
-              <div className="flex gap-4">
-                <div className="h-8 w-8 rounded-full bg-zinc-700" />
-                <div className="h-8 w-24 rounded-sm bg-zinc-700" />
-              </div>
-              <div className="h-8 w-32 rounded-sm bg-zinc-700" />
-            </div>
-          ))}
-        </div>
-        
-        <div className="relative z-10 flex max-w-lg flex-col items-center justify-center text-center">
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-sm border border-zinc-800 bg-zinc-900/50">
-            <Lock size={20} className="text-zinc-500" />
-          </div>
-          <h2 className="mb-4 font-['Bebas_Neue'] text-3xl md:text-5xl tracking-wide text-[#FAFAF9] leading-none uppercase">
-            ASIGNACIÓN DE <span className="text-[#E8FF47]">ACTIVOS</span>
-          </h2>
-          <span className="lbl mb-6 inline-block bg-[#E8FF47]/10 text-[#E8FF47] px-2 py-1 uppercase">FUNCIÓN PRO BLOQUEADA</span>
-          <p className="mb-8 font-light leading-relaxed text-zinc-400 text-sm md:text-base px-4">
-            Controla tu asignación en bolsa, criptomonedas y materias primas centralizado en una única fuente de la verdad con datos directos del mercado.
-          </p>
-          <button 
-            onClick={() => window.location.href = "/pricing"}
-            className="flex items-center gap-2 bg-[#E8FF47] px-8 py-3.5 font-mono text-[10px] font-bold tracking-[0.22em] text-black transition-all hover:bg-[#d4ed36] hover:scale-105"
-          >
-            DESBLOQUEAR PORTFOLIO
-          </button>
-        </div>
-      </div>
-    );
+    return <div className="vu m-4 md:m-6 p-6 md:p-12 text-center text-zinc-500">Error de conexión al cargar portfolio</div>;
   }
 
   return (

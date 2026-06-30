@@ -229,31 +229,7 @@ export function OverviewView({ analytics, loading, transactions, categorias, ope
           </div>
         </div>
 
-        {/* Right Column: AI Advisor Promo Card */}
-        <div className="fintrack-card-outer">
-          <div className="fintrack-card-inner flex flex-col justify-between gap-6">
-            <div>
-              <span className="lbl block mb-3.5 text-[#71717A]">INFORMACIÓN Y CONSEJOS</span>
-              <p className="text-[11px] text-[#71717A] leading-relaxed mb-4">Las categorías te permiten entender de forma sencilla en qué áreas se concentra tu mayor salida de dinero. Mantén un registro limpio para ayudar a proyectar tus ahorros a futuro.</p>
-            </div>
-            
-            <div className="relative overflow-hidden rounded-md border border-zinc-800/60 bg-gradient-to-br from-zinc-900/50 to-black p-5 transition-colors hover:border-[#E8FF47]/30">
-              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-[#E8FF47]/5 opacity-50 blur-xl"></div>
-              <div className="mb-4 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 rounded-sm bg-[#E8FF47]/10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#E8FF47] shadow-[0_0_10px_rgba(232,255,71,0.1)]">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  AI ADVISOR
-                </span>
-              </div>
-              <h4 className="mb-2 font-['Bebas_Neue'] text-2xl text-[#FAFAF9] tracking-wider leading-none">INTELIGENCIA ARTIFICIAL</h4>
-              <p className="mb-6 text-[11px] text-[#A1A1AA] leading-relaxed">Desbloquea simulaciones tácticas y recomendaciones automáticas de ahorro basadas en tu patrimonio real.</p>
-              <button onClick={() => window.location.href = "/pricing"} className="group relative flex w-full items-center justify-between overflow-hidden rounded-sm bg-zinc-800/50 px-4 py-2.5 border border-zinc-700/50 transition-all hover:bg-[#E8FF47]/10 hover:border-[#E8FF47]/40 text-[#FAFAF9] hover:text-[#E8FF47]">
-                <span className="relative z-10 text-[10px] font-bold tracking-[0.15em]">EXPLORAR PLAN PRO</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-1"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
-              </button>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );
