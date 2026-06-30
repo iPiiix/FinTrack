@@ -19,6 +19,8 @@ export type DbUser = {
   fecha_nacimiento: string | null;
   contrasena: string;
   creado_en: string;
+  api_key?: string | null;
+  ai_provider?: string | null;
 };
 
 export async function getUser(_req?: NextRequest): Promise<DbUser | null> {
