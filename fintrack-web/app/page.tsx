@@ -121,7 +121,7 @@ export default function Landing() {
           </Link>
           <div className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-[10px] font-mono tracking-widest uppercase text-white/60 hover:text-white transition-colors">Características</a>
-            <a href="#install" className="text-[10px] font-mono tracking-widest uppercase text-white/60 hover:text-white transition-colors">Instalación</a>
+            <Link href="/docs" className="text-[10px] font-mono tracking-widest uppercase text-white/60 hover:text-white transition-colors">Documentación</Link>
           </div>
         </div>
       </nav>
