@@ -145,13 +145,13 @@ export default function Landing() {
             </p>
 
             <div className="hero-text flex flex-wrap justify-center items-center gap-4">
-              <a href={DL_WIN} className="group relative overflow-hidden flex items-center gap-2 px-8 py-4 bg-[#E8FF47] text-black rounded-lg text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform duration-500 ease-out">
+              <Link href="/docs" className="group relative overflow-hidden flex items-center gap-2 px-8 py-4 bg-[#E8FF47] text-black rounded-lg text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform duration-500 ease-out">
                 <span className="relative z-10 flex items-center gap-2">
-                  <Download size={14} />
-                  Descargar x64
+                  Documentación
+                  <ArrowRight size={14} />
                 </span>
                 <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-0" />
-              </a>
+              </Link>
               <a href={GITHUB} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-8 py-4 bg-transparent border border-white/20 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 hover:border-white/40 transition-all duration-500 ease-out">
                 <Github size={14} />
                 GitHub
