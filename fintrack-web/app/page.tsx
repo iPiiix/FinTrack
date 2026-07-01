@@ -134,10 +134,10 @@ export default function Landing() {
             
             <h1 className="hero-text text-[clamp(2.5rem,6vw,5.5rem)] font-bold tracking-[-0.04em] leading-[1.05] text-wrap-balance text-white mb-8 w-full max-w-6xl">
               Soberanía financiera,{" "}
-              <span className="inline-block w-16 h-10 md:w-28 md:h-14 rounded-full align-middle bg-cover bg-center mx-2 shadow-2xl overflow-hidden relative">
+              <span className="inline-flex w-16 h-10 md:w-28 md:h-14 rounded-full align-middle bg-zinc-800 mx-2 shadow-2xl overflow-hidden relative items-center justify-center">
                 <Image src="/assets/images/hero_wealth.png" alt="Wealth" fill className="object-cover opacity-80 mix-blend-luminosity filter grayscale contrast-125" />
               </span>{" "}
-              ejecutada en tu propio hardware.
+              ejecutada en tu hardware.
             </h1>
             
             <p className="hero-text text-zinc-400 text-sm md:text-base max-w-xl text-wrap-pretty font-light mb-12">
