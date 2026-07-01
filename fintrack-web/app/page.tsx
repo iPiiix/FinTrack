@@ -24,25 +24,25 @@ const FEATURES = [
     title: "Libro Mayor",
     desc: "Múltiples cuentas y categorías personalizadas.",
     span: "md:col-span-2 md:row-span-2",
-    img: "https://picsum.photos/seed/ledger13/800/600",
+    img: "/assets/images/bento_ledger.png",
   },
   {
     title: "Flujo de Caja",
     desc: "Tasa de ahorro en tiempo real.",
     span: "md:col-span-1 md:row-span-1",
-    img: "https://picsum.photos/seed/cashflow13/400/400",
+    img: "/assets/images/bento_cashflow.png",
   },
   {
     title: "Portfolio Global",
     desc: "Acciones, ETFs, criptoactivos y efectivo consolidado.",
     span: "md:col-span-1 md:row-span-2",
-    img: "https://picsum.photos/seed/portfolio13/400/800",
+    img: "/assets/images/bento_portfolio.png",
   },
   {
     title: "SQLite",
     desc: "Datos locales. Privacidad absoluta.",
     span: "md:col-span-1 md:row-span-1",
-    img: "https://picsum.photos/seed/sqlite13/400/400",
+    img: "/assets/images/bento_sqlite.png",
   },
 ];
 
@@ -135,7 +135,7 @@ export default function Landing() {
             <h1 className="hero-text text-[clamp(2.5rem,6vw,5.5rem)] font-bold tracking-[-0.04em] leading-[1.05] text-wrap-balance text-white mb-8 w-full max-w-6xl">
               Soberanía financiera,{" "}
               <span className="inline-block w-16 h-10 md:w-28 md:h-14 rounded-full align-middle bg-cover bg-center mx-2 shadow-2xl overflow-hidden relative">
-                <Image src="https://picsum.photos/seed/wealth13/400/200" alt="Wealth" fill className="object-cover opacity-80 mix-blend-luminosity filter grayscale contrast-125" />
+                <Image src="/assets/images/hero_wealth.png" alt="Wealth" fill className="object-cover opacity-80 mix-blend-luminosity filter grayscale contrast-125" />
               </span>{" "}
               ejecutada en tu propio hardware.
             </h1>
