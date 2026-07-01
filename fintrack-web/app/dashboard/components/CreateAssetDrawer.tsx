@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { DashboardStyles } from "./ui/DashboardStyles";
+
 
 interface CreateAssetDrawerProps {
   isOpen: boolean;
