@@ -8,6 +8,14 @@ const isElectronBuild =
 const nextConfig: NextConfig = {
   ...(isElectronBuild && { output: "standalone" }),
   turbopack: {},
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
+  },
   serverExternalPackages: ["better-sqlite3"],
   webpack: (config) => {
     config.externals = [...(config.externals ?? []), "better-sqlite3"];

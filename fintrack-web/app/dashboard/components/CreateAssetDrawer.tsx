@@ -62,13 +62,30 @@ export function CreateAssetDrawer({ isOpen, onClose, onSave }: CreateAssetDrawer
         <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 24 }}>
           <div>
             <label className="lbl" style={{ display: "block", marginBottom: 8 }}>TICKER / SÍMBOLO</label>
-            <input 
-              type="text" 
-              value={ticker} 
-              onChange={e => setTicker(e.target.value)} 
-              placeholder="Ej. AAPL, BTC-USD, MSFT" 
-              className="inp" 
-            />
+            <div style={{ display: "flex", gap: 8 }}>
+              <input 
+                type="text" 
+                value={ticker} 
+                onChange={e => setTicker(e.target.value)} 
+                onBlur={async () => {
+                  if (ticker) {
+                    try {
+                      const res = await fetch(`/api/quote?symbols=${ticker.toUpperCase()}`);
+                      if (res.ok) {
+                        const data = await res.json();
+                        if (data.quotes && data.quotes.length > 0) {
+                          setPrecioCompra(data.quotes[0].price.toString());
+                        }
+                      }
+                    } catch (e) { /* ignore */ }
+                  }
+                }}
+                placeholder="Ej. AAPL, BTC-USD, MSFT" 
+                className="inp" 
+                style={{ flex: 1 }}
+              />
+            </div>
+            <div style={{ fontSize: 10, color: "#71717A", marginTop: 6, fontWeight: 500 }}>El precio se autocompletará si el ticker es válido.</div>
           </div>
           
           <div>
