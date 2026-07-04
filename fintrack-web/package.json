@@ -1,6 +1,6 @@
 {
   "name": "fintrack-web",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -41,7 +41,7 @@
         }
       ],
       "category": "public.app-category.finance",
-      "icon": "public/favicon.icns"
+      "icon": "public/favicon.png"
     },
     "win": {
       "target": [
@@ -52,7 +52,7 @@
           ]
         }
       ],
-      "icon": "public/favicon.ico"
+      "icon": "public/favicon.png"
     },
     "nsis": {
       "oneClick": false,
