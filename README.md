@@ -28,12 +28,6 @@ FinTrack es una app de escritorio para gestión de finanzas personales. Registra
 
 ---
 
-## Demo
-*(Inserta aquí un GIF de 20-30 segundos mostrando el flujo completo: Dashboard, Portfolio, Cash Flow, Landing)*
-![Demo de FinTrack](docs/images/demo.gif)
-
----
-
 ## Descarga
 
 | Plataforma | Enlace |
